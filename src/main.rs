@@ -1,3 +1,8 @@
+// Work on contract deployment script.
+// Make a simple transaction happen using flashbots.
+// watch https://www.youtube.com/watch?v=wn8r674U1B4&t=3171s&ab_channel=RobertMiller aboput simple arbitrage
+
+
 #![deny(unsafe_code)]
 
 use dotenv::dotenv;
