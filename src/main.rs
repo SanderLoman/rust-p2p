@@ -1,15 +1,28 @@
 #![deny(unsafe_code)]
+
 use dotenv::dotenv;
+// use ethers::contract::abigen;
 use ethers::prelude::*;
 use ethers_flashbots::*;
 use eyre::Result;
 use std::convert::TryFrom;
 use url::Url;
 
+mod arbitrage;
+mod addresses;
+
+// Generate the ERC-20 contract bindings using `ethers-contract`
+// abigen!(
+//     "contracts/IERC20.sol",
+//     "contracts/ERC20.sol",
+// );
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv().ok();
     println!("Running MEV Bot");
+    arbitrage::arbitrage();
+    addresses::addresses();
 
     // Get the environment variables
     let goe_rpc_url: String = std::env::var("GOE_RPC_URL").expect("GOE_RPC_URL must be set");
@@ -43,26 +56,54 @@ async fn main() -> Result<()> {
     );
     println!("Client: {:?}\n", client.address());
 
-    let address: Address = "0x7B23298319Ea680e73059AE6eB1fF4162C9bD89e"
-        .parse()
-        .unwrap();
+    // The address of the ERC-20 token contract
+    // let token_address: Address = "0x8aa561B38c7f5aB263cf35CF388c87dCAA1A03D9"
+    //     .parse()
+    //     .unwrap();
 
-    // make sure the maxFeePerGas os higher than the baseFee of the block
+    // The amount of tokens to buy and sell
+    // let amount_to_buy: U256 = U256::from(1_000_000);
 
-    // Pay Vitalik using a Flashbots bundle!
-    let tx = TransactionRequest::pay(address, 1);
-    println!("Transaction: {}\n", serde_json::to_string(&tx)?);
+    // Get the balance of the ERC-20 token
+    // let token_contract = ERC20::new(token_address, client.provider());
+    // let balance: U256 = token_contract.balance_of(client.address()).await?;
+    println!("Token balance: {}\n", balance);
 
-    let pending_tx = client.send_transaction(tx, None).await?;
+    // Buy the tokens using Flashbots
+    // let buy_tx = token_contract
+    //     .transfer(client.address(), amount_to_buy)
+    //     .gas(500_000)
+    //     .unwrap()
+    //     .send()
+    //     .await?;
+    // println!(
+    //     "Bought {} tokens with tx hash: {:?}\n",
+    //     amount_to_buy, buy_tx.hash
+    // );
 
-    // Get the receipt
-    let receipt = pending_tx
-        .await?
-        .ok_or_else(|| eyre::format_err!("tx not included"))?;
-    let tx = client.get_transaction(receipt.transaction_hash).await?;
+    // // Approve the contract to spend the tokens
+    // let approve_tx = token_contract
+    //     .approve(client.address(), amount_to_buy)
+    //     .gas(500_000)
+    //     .unwrap()
+    //     .send()
+    //     .await?;
+    // println!(
+    //     "Approved contract to spend {} tokens with tx hash: {:?}\n",
+    //     amount_to_buy, approve_tx.hash
+    // );
 
-    println!("Sent transaction: {}\n", serde_json::to_string(&tx)?);
-    println!("Receipt: {}\n", serde_json::to_string(&receipt)?);
+    // // Sell the tokens using Flashbots
+    // let sell_tx = token_contract
+    //     .transfer(client.address(), amount_to_buy)
+    //     .gas(500_000)
+    //     .unwrap()
+    //     .send()
+    //     .await?;
+    // println!(
+    //     "Sold {} tokens with tx hash: {:?}\n",
+    //     amount_to_buy, sell_tx.hash
+    // );
 
     Ok(())
 }
