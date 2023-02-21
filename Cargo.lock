@@ -1971,6 +1971,7 @@ dependencies = [
  "dotenv",
  "ethers",
  "ethers-flashbots",
+ "ethers-solc",
  "eyre",
  "serde_json",
  "tokio",
