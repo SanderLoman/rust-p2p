@@ -5,18 +5,13 @@
 #![deny(unsafe_code)]
 
 use dotenv::dotenv;
-use ethers::{
-    // contract::abigen,
-    // contract::ContractFactory,
-    prelude::*,
-    // providers::{Http, Provider},
-    signers::LocalWallet,
-    // types::{Address, U256},
-};
-// use ethers_flashbots::*;
+use ethers::prelude::*;
+use ethers_flashbots::*;
 use eyre::Result;
-// use std::convert::TryFrom;
-// use url::Url;
+use std::convert::TryFrom;
+use url::Url;
+use ethabi::{Contract, Token};
+use std::fs;
 
 mod addresses;
 mod arbitrage;
@@ -30,17 +25,13 @@ async fn main() -> Result<()> {
     arbitrage::arbitrage();
     addresses::addresses();
 
-    // Get the environment variables
-    let goe_rpc_url: String = std::env::var("GOE_RPC_URL").expect("GOE_RPC_URL must be set") ;
+    let goe_rpc_url: String = std::env::var("ETH_RPC_URL").expect("ETH_RPC_URL must be set");
     let test_wallet_private_key: String =
         std::env::var("TESTWALLET_PRIVATE_KEY").expect("TESTWALLET_PRIVATE_KEY must be set");
 
-    // This signs transactions
-    let wallet = test_wallet_private_key.parse::<LocalWallet>()?;
-    println!("Wallet: {:?}\n", wallet.address());
+    let wallet_address = test_wallet_private_key.parse::<LocalWallet>()?;
 
-    // Connect to the network
-    // let provider = Provider::<Http>::try_from(goe_rpc_url)?;
-
+    let provider = Provider::<Http>::try_from(goe_rpc_url.as_str())?;
+    
     Ok(())
 }
