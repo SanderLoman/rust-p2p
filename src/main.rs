@@ -5,15 +5,17 @@
 #![deny(unsafe_code)]
 
 use dotenv::dotenv;
-use ethers::prelude::{rand::thread_rng, *};
+use ethers::{
+    prelude::{rand::thread_rng, *},
+    // utils::Ganache,
+    utils::GanacheInstance,
+};
 use ethers_flashbots::*;
 use eyre::Result;
-// use std::convert::TryFrom;
 use url::Url;
+// use std::convert::TryFrom;
 // use ethabi::{Contract, Token};
 // use std::fs;
-use ethers::utils::Ganache;
-// use serde_json::*;
 
 mod addresses;
 mod arbitrage;
@@ -48,9 +50,12 @@ async fn main() -> Result<()> {
         ),
         wallet_address,
     );
+    println!("Client: {:?}\n", client);
 
-    Ganache::new().spawn();
-
+    // let mut ganache: GanacheInstance = Ganache::new().spawn();
+    let mut ganache = GanacheInstance::new();
+    println!("Ganache: {}", ganache);
+    // maybe work with ganache and ganacheInstance together
 
     Ok(())
 }

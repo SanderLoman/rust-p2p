@@ -1502,6 +1502,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "ganache-cli"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ad63ad025ed27f53c5915028384735fbbbe6ef086216614a42091a82d51e5f2"
+
+[[package]]
 name = "generic-array"
 version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2022,6 +2028,7 @@ dependencies = [
  "ethers-flashbots",
  "ethers-solc",
  "eyre",
+ "ganache-cli",
  "revm",
  "serde_json",
  "tokio",
