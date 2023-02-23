@@ -7,8 +7,6 @@
 use dotenv::dotenv;
 use ethers::{
     prelude::{rand::thread_rng, *},
-    // utils::Ganache,
-    utils::GanacheInstance,
 };
 use ethers_flashbots::*;
 use eyre::Result;
@@ -16,6 +14,7 @@ use url::Url;
 // use std::convert::TryFrom;
 // use ethabi::{Contract, Token};
 // use std::fs;
+use ethers_core::utils::{Ganache, GanacheInstance};
 
 mod addresses;
 mod arbitrage;
@@ -30,7 +29,7 @@ async fn main() -> Result<()> {
     addresses::addresses();
 
     let eth_ws_url: String = std::env::var("ETH_WS_URL").expect("ETH_WS_URL must be set");
-    let url = Url::parse(&eth_ws_url)?;
+    let url:Url = Url::parse(&eth_ws_url)?;
     let provider: Provider<Ws> = Provider::<Ws>::connect(url).await?;
 
     let test_wallet_private_key: String =
@@ -52,9 +51,12 @@ async fn main() -> Result<()> {
     );
     println!("Client: {:?}\n", client);
 
+    let port:u16 = 8545;
+    let fork:Url = Url::parse(&eth_ws_url)?;
     // let mut ganache: GanacheInstance = Ganache::new().spawn();
-    let mut ganache = GanacheInstance::new();
-    println!("Ganache: {}", ganache);
+    let mut ganache:Ganache = Ganache::new().port(port).fork(fork);
+    let test123:String = serde_json::to_string(&ganache)?;
+    
     // maybe work with ganache and ganacheInstance together
 
     Ok(())
