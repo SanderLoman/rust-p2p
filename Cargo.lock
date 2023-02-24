@@ -2022,6 +2022,7 @@ dependencies = [
  "ethers-flashbots",
  "ethers-solc",
  "eyre",
+ "hex",
  "revm",
  "serde_json",
  "tokio",
