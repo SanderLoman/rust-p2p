@@ -7,23 +7,24 @@ use dotenv::dotenv;
 use ethers::prelude::{rand::thread_rng, *};
 use ethers_flashbots::*;
 use eyre::Result;
+// use std::convert::TryFrom;
 use url::Url;
+use ethers::utils::Ganache;
+
 // use hex;
 // use std::convert::TryFrom;
 // use ethabi::{Contract, Token};
 // use std::fs;
 
+mod abi;
 mod addresses;
 mod arbitrage;
 mod deploy;
+mod ganache;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv().ok();
-
-    deploy::deploy();
-    arbitrage::arbitrage();
-    addresses::addresses();
 
     let eth_ws_url: String = std::env::var("ETH_WS_URL").expect("ETH_WS_URL must be set");
     let url: Url = Url::parse(&eth_ws_url)?;
