@@ -24,19 +24,13 @@ mod ganache;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    dotenv().ok();
-
-    let eth_ws_url: String = std::env::var("ETH_WS_URL").expect("ETH_WS_URL must be set");
-    let url: Url = Url::parse(&eth_ws_url)?;
-    let provider: Provider<Ws> = Provider::<Ws>::connect(url).await?;
-
-    let test_wallet_private_key: String =
-        std::env::var("TESTWALLET_PRIVATE_KEY").expect("TESTWALLET_PRIVATE_KEY must be set");
-
+    let ganache = Ganache::new().spawn();
+    let provider = Provider::new(ganache.endpoint()).await?;
+    
     let bundle_signer = LocalWallet::new(&mut thread_rng());
     println!("Bundle Signer: {:?}", bundle_signer.address());
 
-    let wallet_address = test_wallet_private_key.parse::<LocalWallet>()?;
+    let wallet_address = "your-wallet-private-key".parse::<LocalWallet>()?;
     println!("Wallet Address: {:?}", wallet_address.address());
 
     let client = SignerMiddleware::new(
