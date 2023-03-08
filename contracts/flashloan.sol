@@ -12,3 +12,4 @@ contract Flashloan {
         return value;
     }
 }
+
