@@ -1,3 +1,1 @@
-pub fn abis() {
-
-}
+pub fn abis() {}

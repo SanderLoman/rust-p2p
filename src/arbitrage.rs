@@ -1,3 +1,1 @@
-pub fn arbitrage() {
-    println!("");
-}
+pub fn arbitrage() {}
