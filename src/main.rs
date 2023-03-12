@@ -6,6 +6,8 @@
 use dotenv::dotenv;
 use ethabi::Contract;
 use ethers::prelude::*;
+use ethers::utils::Ganache;
+use ethers_flashbots;
 use eyre::Result;
 use std::fs;
 
@@ -13,25 +15,30 @@ mod abi;
 mod addresses;
 mod arbitrage;
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 10)]
+#[tokio::main(flavor = "multi_thread", worker_threads = 20)]
 async fn main() -> Result<()> {
     dotenv().ok();
 
+    let test_wallet_private_key: String =
+        std::env::var("TESTWALLET_PRIVATE_KEY").expect("TESTWALLET_PRIVATE_KEY must be set");
+
     let eth_rpc_url: String = std::env::var("ETH_WS_URL").expect("ETH_WS_URL must be set");
-    
+
     let provider_eth = Provider::<Ws>::connect(eth_rpc_url).await?;
-    let sub  = provider_eth.watch_pending_transactions().await?;
-    
-    sub.for_each(|tx| async move {
-        println!("New pending transaction: https://etherscan.io/tx/{:?}", tx);
-    }).await;
 
-    // let ethereum_ca: Address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2".parse()?;
-    // let read_ethereum_abi: String = fs::read_to_string("abis/ethereum.json")?;
-    // let abi = Contract::load(read_ethereum_abi.as_bytes())?;
+    let ganache = Ganache::new().spawn();
+    let provider_ganache = Provider::<Ws>::connect(ganache.ws_endpoint()).await?;
 
-    // let ethereum_contract = ethers::contract::Contract::new(ethereum_ca, abi, provider_eth);
+    println!("Provider: {:?}", provider_ganache);
 
+    let wallet = test_wallet_private_key.parse::<LocalWallet>()?;
+    println!("Wallet address: {:?}", wallet.address());
+
+    let bundlesigning_wallet = LocalWallet::new(&mut rand::thread_rng());
+    println!(
+        "Bundle signing wallet: {:?}",
+        bundlesigning_wallet.address()
+    );
 
     abi::abis();
     addresses::addresses();
