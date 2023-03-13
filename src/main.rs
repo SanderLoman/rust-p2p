@@ -7,9 +7,11 @@ use dotenv::dotenv;
 use ethabi::Contract;
 use ethers::prelude::*;
 use ethers::utils::Ganache;
-use ethers_flashbots;
+use ethers_flashbots::{self, FlashbotsMiddleware};
 use eyre::Result;
+use serde_json::json;
 use std::fs;
+use url::Url;
 
 mod abi;
 mod addresses;
@@ -27,20 +29,24 @@ async fn main() -> Result<()> {
 
     let provider_eth = Provider::<Ws>::connect(eth_rpc_url).await?;
 
-    let port:u16 = 8545;
-    let ganache = Ganache::new().port(port).fork(eth_rpc_url_clone).spawn();
-    println!("ganache-cli: {:?}", ganache.ws_endpoint());
-    let provider_ganache = Provider::<Ws>::connect(ganache.ws_endpoint()).await?;
-
-    println!("ganache-cli: {:?}", provider_ganache);
-
-    let wallet = test_wallet_private_key.parse::<LocalWallet>()?;
-    println!("Wallet address: {:?}", wallet.address());
-
     let bundlesigning_wallet = LocalWallet::new(&mut rand::thread_rng());
     println!(
         "Bundle signing wallet: {:?}",
         bundlesigning_wallet.address()
+    );
+
+    let ganache = Ganache::new().fork(eth_rpc_url_clone).port(8545u16).spawn();
+    let provider_ganache = Provider::<Ws>::connect(ganache.ws_endpoint()).await?;
+
+    let wallet = test_wallet_private_key.parse::<LocalWallet>()?;
+
+    let client = SignerMiddleware::new(
+        FlashbotsMiddleware::new(
+            provider_eth,
+            Url::parse("https://relay-goerli.flashbots.net")?,
+            bundlesigning_wallet,
+        ),
+        wallet,
     );
 
     abi::abis();
