@@ -23,13 +23,16 @@ async fn main() -> Result<()> {
         std::env::var("TESTWALLET_PRIVATE_KEY").expect("TESTWALLET_PRIVATE_KEY must be set");
 
     let eth_rpc_url: String = std::env::var("ETH_WS_URL").expect("ETH_WS_URL must be set");
+    let eth_rpc_url_clone: String = eth_rpc_url.clone();
 
     let provider_eth = Provider::<Ws>::connect(eth_rpc_url).await?;
 
-    let ganache = Ganache::new().spawn();
+    let port:u16 = 8545;
+    let ganache = Ganache::new().port(port).fork(eth_rpc_url_clone).spawn();
+    println!("ganache-cli: {:?}", ganache.ws_endpoint());
     let provider_ganache = Provider::<Ws>::connect(ganache.ws_endpoint()).await?;
 
-    println!("Provider: {:?}", provider_ganache);
+    println!("ganache-cli: {:?}", provider_ganache);
 
     let wallet = test_wallet_private_key.parse::<LocalWallet>()?;
     println!("Wallet address: {:?}", wallet.address());

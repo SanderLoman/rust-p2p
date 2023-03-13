@@ -21,3 +21,9 @@ Ethereum address: 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
 
     let ethereum_contract = ethers::contract::Contract::new(ethereum_ca, abi, provider_eth);
 ```
+
+/home/sander/.cache/yarn/v6/npm-ganache-7.4.3-e995f1250697264efbb34d4241c374a2b0271415-integrity/node_modules/ganache/.bin/ganache-cli
+/mnt/c/Users/sande/.cargo/registry/index/github.com-1ecc6299db9ec823/.cache/ga/na/ganache-cli
+/mnt/c/Users/sande/AppData/Local/Yarn/Cache/v6/npm-ganache-7.4.3-e995f1250697264efbb34d4241c374a2b0271415-integrity/node_modules/ganache/.bin/ganache-cli
+/mnt/c/Users/sande/Rust/mev/node_modules/.bin/ganache-cli
+/mnt/c/Users/sande/Rust/mev/node_modules/@ethereum-waffle/provider/node_modules/.bin/ganache-cli
