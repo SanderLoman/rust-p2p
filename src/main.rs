@@ -4,13 +4,13 @@
 #![deny(unsafe_code)]
 
 use dotenv::dotenv;
-use ethabi::Contract;
+// use ethabi::Contract;
 use ethers::prelude::*;
-use ethers::utils::Ganache;
+// use ethers::utils::Ganache;
 use ethers_flashbots::{self, FlashbotsMiddleware};
 use eyre::Result;
-use serde_json::json;
-use std::fs;
+// use serde_json::json;
+// use std::fs;
 use url::Url;
 
 mod abi;
@@ -25,7 +25,6 @@ async fn main() -> Result<()> {
         std::env::var("TESTWALLET_PRIVATE_KEY").expect("TESTWALLET_PRIVATE_KEY must be set");
 
     let eth_rpc_url: String = std::env::var("ETH_WS_URL").expect("ETH_WS_URL must be set");
-    let eth_rpc_url_clone: String = eth_rpc_url.clone();
 
     let provider_eth = Provider::<Ws>::connect(eth_rpc_url).await?;
 
@@ -34,9 +33,6 @@ async fn main() -> Result<()> {
         "Bundle signing wallet: {:?}",
         bundlesigning_wallet.address()
     );
-
-    let ganache = Ganache::new().fork(eth_rpc_url_clone).port(8545u16).spawn();
-    let provider_ganache = Provider::<Ws>::connect(ganache.ws_endpoint()).await?;
 
     let wallet = test_wallet_private_key.parse::<LocalWallet>()?;
 
