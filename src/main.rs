@@ -18,6 +18,7 @@ struct LogEntry {
 }
 
 #[derive(Debug)]
+#[allow(unused)]
 enum LogLevel {
     Info,
     Warning,
@@ -27,14 +28,14 @@ enum LogLevel {
 
 impl fmt::Display for LogEntry {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let time_str = format!("{}", self.time.format("%m-%d | %H:%M:%S%.3f"));
+        let time_str = format!("{}", self.time.format("%m-%d|%H:%M:%S%.3f"));
         let msg_str = self.message.as_str();
 
         let level_str = match self.level {
-            LogLevel::Info => "[INFO]".green().bold(),
-            LogLevel::Warning => "[WARN]".yellow().bold(),
-            LogLevel::Error => "[ERRO]".red().bold(),
-            LogLevel::Critical => "[CRIT]".magenta().bold(),
+            LogLevel::Info => "INFO".green(),
+            LogLevel::Warning => "WARN".yellow(),
+            LogLevel::Error => "ERRO".red(),
+            LogLevel::Critical => "CRIT".magenta(),
         };
 
         write!(f, "{} [{}] {}", level_str, time_str, msg_str)
@@ -56,35 +57,25 @@ async fn main() -> Result<()> {
     let provider: Provider<Ws> = Provider::<Ws>::connect(localhost_rpc_url).await?;
     let block_number: U64 = provider.get_block_number().await?;
     let gas_price: U256 = provider.get_gas_price().await?;
+    let gas_price_p1: U256 = gas_price + 1u64;
+    let gas_price_m1: U256 = gas_price - 1u64;
 
-    let info_entry = LogEntry {
-        time: now,
-        level: LogLevel::Info,
-        message: format!("BN: {:?}", block_number),
-    };
+    for i in 0..1000 {
+        let block_n: U64 = block_number;
+        let gas_p: U256 = gas_price;
 
-    let warning_entry = LogEntry {
-        time: now,
-        level: LogLevel::Warning,
-        message: format!("BN: {:?}", gas_price),
-    };
+        let log_entry = LogEntry {
+            time: now,
+            level: LogLevel::Info,
+            message: format!(
+                "Block: {}, Gas Price: {}, Gas Price + 1: {}, Gas Price - 1: {}",
+                block_n, gas_p, gas_price_p1, gas_price_m1
+            ),
+        };
 
-    let error_entry = LogEntry {
-        time: now,
-        level: LogLevel::Error,
-        message: format!("BN: {:?}", block_number),
-    };
-
-    let critical_entry = LogEntry {
-        time: now,
-        level: LogLevel::Critical,
-        message: format!("BN: {:?}", gas_price),
-    };
-
-    println!("{}", info_entry);
-    println!("{}", warning_entry);
-    println!("{}", error_entry);
-    println!("{}", critical_entry);
+        println!("{}", log_entry);
+        let _ = i + 1;
+    }
 
     let bundle_signer: LocalWallet = LocalWallet::new(&mut thread_rng());
     // This signs transactions
