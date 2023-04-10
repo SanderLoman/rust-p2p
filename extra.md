@@ -6,7 +6,6 @@ SushiSwap address: 0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506
 
 Ethereum address: 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
 
-!!! RANDOM CODE !!!
 ```rust
     let sub = provider_eth.watch_pending_transactions().await?;
 
