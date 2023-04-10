@@ -48,10 +48,6 @@ impl fmt::Display for LogEntry {
 async fn main() -> Result<()> {
     dotenv().ok();
 
-    sandwhich::sandwhich().await?;
-    sandwhich::sandwhich_arb().await?;
-    sandwhich::sandwhich_arb_backrun().await?;
-
     let now: DateTime<Local> = Local::now();
 
     let test_wallet_private_key: String =
