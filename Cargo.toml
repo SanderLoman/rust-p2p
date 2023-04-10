@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 dotenv = "0.15.0"
-ethers = { version = "1.0.0", features = ["ws"] }
+ethers = { version = "2.0.2", features = ["ws"] }
 ethers-flashbots = { git = "https://github.com/onbjerg/ethers-flashbots" }
 tokio = { version = "1.25", features = ["full"] }
 eyre = "0.6.5"
@@ -15,4 +15,3 @@ ethers-solc = "1.0.2"
 revm = "3.0.0"
 ethabi = "18.0.0"
 hex = "0.4.3"
-android_logger = "0.13.1"
