@@ -6,8 +6,8 @@ edition = "2021"
 [dependencies]
 dotenv = "0.15.0"
 ethers = { version = "2.0.2", features = ["ws"] }
-ethers-flashbots = { git = "https://github.com/onbjerg/ethers-flashbots" }
-tokio = { version = "1.25", features = ["full"] }
+ethers-flashbots = "0.13.0"
+tokio = "1.27.0"
 eyre = "0.6.5"
 serde_json = "1.0.93"
 url = "2.3.1"

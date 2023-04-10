@@ -10,6 +10,8 @@ use eyre::Result;
 use std::fmt;
 use url::Url;
 
+mod sandwhich;
+
 #[derive(Debug)]
 struct LogEntry {
     time: DateTime<Local>,
@@ -46,6 +48,10 @@ impl fmt::Display for LogEntry {
 async fn main() -> Result<()> {
     dotenv().ok();
 
+    sandwhich::sandwhich().await?;
+    sandwhich::sandwhich_arb().await?;
+    sandwhich::sandwhich_arb_backrun().await?;
+
     let now: DateTime<Local> = Local::now();
 
     let test_wallet_private_key: String =
@@ -57,25 +63,8 @@ async fn main() -> Result<()> {
     let provider: Provider<Ws> = Provider::<Ws>::connect(localhost_rpc_url).await?;
     let block_number: U64 = provider.get_block_number().await?;
     let gas_price: U256 = provider.get_gas_price().await?;
-    let gas_price_p1: U256 = gas_price + 1u64;
-    let gas_price_m1: U256 = gas_price - 1u64;
-
-    for i in 0..1000 {
-        let block_n: U64 = block_number;
-        let gas_p: U256 = gas_price;
-
-        let log_entry = LogEntry {
-            time: now,
-            level: LogLevel::Info,
-            message: format!(
-                "Block: {}, Gas Price: {}, Gas Price + 1: {}, Gas Price - 1: {}",
-                block_n, gas_p, gas_price_p1, gas_price_m1
-            ),
-        };
-
-        println!("{}", log_entry);
-        let _ = i + 1;
-    }
+    let gas_price_p1: U256 = gas_price + 1u8;
+    let gas_price_m1: U256 = gas_price - 1u8;
 
     let bundle_signer: LocalWallet = LocalWallet::new(&mut thread_rng());
     // This signs transactions

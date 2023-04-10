@@ -1214,7 +1214,8 @@ dependencies = [
 [[package]]
 name = "ethers-flashbots"
 version = "0.13.0"
-source = "git+https://github.com/onbjerg/ethers-flashbots#e85fdcff5fde770891f4c55b1b71079e2abf0580"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dae626bd3cc9cf77cdf2f84d2b35c99f3a0d04e8d75c3903953d7d0d3747f69f"
 dependencies = [
  "async-trait",
  "chrono",
