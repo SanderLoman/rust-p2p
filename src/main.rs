@@ -1,3 +1,7 @@
+// Work on a script to find the fastest node on the network and then try to connect to those with geth.
+
+// use discv5 to find nodes
+
 #![deny(unsafe_code)]
 
 use chrono::{DateTime, Local};
@@ -67,11 +71,48 @@ async fn main() -> Result<()> {
     let client = SignerMiddleware::new(
         FlashbotsMiddleware::new(
             provider,
-            Url::parse("https://relay.flashbots.net")?,
+            Url::parse("https://relay-goerli.flashbots.net")?,
             bundle_signer,
         ),
         wallet,
     );
+
+    // let tx = {
+    //     let mut inner: TypedTransaction = TransactionRequest::new()
+    //         .to("0x8C66BA8157808cba80A57a0A29600221973FA29F")
+    //         .value(1)
+    //         .gas(gas_price)
+    //         .into();
+    //     client.fill_transaction(&mut inner, None).await?;
+    //     inner
+    // };
+
+    // println!(
+    //     "{}",
+    //     LogEntry {
+    //         time: now,
+    //         level: LogLevel::Info,
+    //         message: format!("Transaction: {:?}", tx)
+    //     }
+    // );
+
+    // let signature = client.signer().sign_transaction(&tx).await?;
+
+    // let bundle = BundleRequest::new()
+    //     .push_transaction(tx.rlp_signed(&signature))
+    //     .set_block(block_number + 1)
+    //     .set_simulation_block(block_number)
+    //     .set_simulation_timestamp(0);
+
+    // let simulated_bundle = client.inner().simulate_bundle(&bundle).await?;
+    // println!(
+    //     "{}",
+    //     LogEntry {
+    //         time: now,
+    //         level: LogLevel::Info,
+    //         message: format!("Simulated bundle: {:?}", simulated_bundle),
+    //     }
+    // );
 
     // let tx = {
     //     let mut inner: TypedTransaction = TransactionRequest::new()
