@@ -53,14 +53,11 @@ async fn main() -> Result<()> {
     let test_wallet_private_key: String =
         std::env::var("TESTWALLET_PRIVATE_KEY").expect("TESTWALLET_PRIVATE_KEY must be set");
 
-    let localhost_rpc_url: String =
-        std::env::var("LOCALHOST_WS_URL").expect("LOCALHOST_WS_URL must be set");
+    let localhost_rpc_url: String = std::env::var("GOE_WS_URL").expect("GOE_WS_URL must be set");
 
     let provider: Provider<Ws> = Provider::<Ws>::connect(localhost_rpc_url).await?;
     let block_number: U64 = provider.get_block_number().await?;
     let gas_price: U256 = provider.get_gas_price().await?;
-    let gas_price_p1: U256 = gas_price + 1u8;
-    let gas_price_m1: U256 = gas_price - 1u8;
 
     let bundle_signer: LocalWallet = LocalWallet::new(&mut thread_rng());
     // This signs transactions
