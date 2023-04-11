@@ -6,6 +6,7 @@
 
 use chrono::{DateTime, Local};
 use colored::*;
+use discv5::*;
 use dotenv::dotenv;
 use ethers::core::{rand::thread_rng, types::transaction::eip2718::TypedTransaction};
 use ethers::prelude::*;
@@ -13,7 +14,6 @@ use ethers_flashbots::*;
 use eyre::Result;
 use std::fmt;
 use url::Url;
-use discv5::*;
 
 mod sandwhich;
 
@@ -67,6 +67,7 @@ async fn main() -> Result<()> {
     let bundle_signer: LocalWallet = LocalWallet::new(&mut thread_rng());
     // This signs transactions
     let wallet: LocalWallet = test_wallet_private_key.parse()?;
+    let wallet_clone = wallet.clone();
 
     // Add signer and Flashbots middleware
     let client = SignerMiddleware::new(
@@ -78,42 +79,44 @@ async fn main() -> Result<()> {
         wallet,
     );
 
-    // let tx = {
-    //     let mut inner: TypedTransaction = TransactionRequest::new()
-    //         .to("0x8C66BA8157808cba80A57a0A29600221973FA29F")
-    //         .value(1)
-    //         .gas(gas_price)
-    //         .into();
-    //     client.fill_transaction(&mut inner, None).await?;
-    //     inner
-    // };
+    let tx = {
+        let mut inner: TypedTransaction = TransactionRequest::new()
+            .from(wallet_clone.address())
+            .to("0x8C66BA8157808cba80A57a0A29600221973FA29F")
+            .value(1)
+            .gas(gas_price)
+            .chain_id(5)
+            .into();
+        client.fill_transaction(&mut inner, None).await?;
+        inner
+    };
 
-    // println!(
-    //     "{}",
-    //     LogEntry {
-    //         time: now,
-    //         level: LogLevel::Info,
-    //         message: format!("Transaction: {:?}", tx)
-    //     }
-    // );
+    println!(
+        "{}",
+        LogEntry {
+            time: now,
+            level: LogLevel::Info,
+            message: format!("Transaction: {:?}", tx)
+        }
+    );
 
-    // let signature = client.signer().sign_transaction(&tx).await?;
+    let signature = client.signer().sign_transaction(&tx).await?;
 
-    // let bundle = BundleRequest::new()
-    //     .push_transaction(tx.rlp_signed(&signature))
-    //     .set_block(block_number + 1)
-    //     .set_simulation_block(block_number)
-    //     .set_simulation_timestamp(0);
+    let bundle = BundleRequest::new()
+        .push_transaction(tx.rlp_signed(&signature))
+        .set_block(block_number + 1)
+        .set_simulation_block(block_number)
+        .set_simulation_timestamp(0);
 
-    // let simulated_bundle = client.inner().simulate_bundle(&bundle).await?;
-    // println!(
-    //     "{}",
-    //     LogEntry {
-    //         time: now,
-    //         level: LogLevel::Info,
-    //         message: format!("Simulated bundle: {:?}", simulated_bundle),
-    //     }
-    // );
+    let simulated_bundle = client.inner().simulate_bundle(&bundle).await?;
+    println!(
+        "{}",
+        LogEntry {
+            time: now,
+            level: LogLevel::Info,
+            message: format!("Simulated bundle: {:?}", simulated_bundle),
+        }
+    );
 
     // let tx = {
     //     let mut inner: TypedTransaction = TransactionRequest::new()
