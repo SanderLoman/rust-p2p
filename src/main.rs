@@ -13,6 +13,7 @@ use ethers_flashbots::*;
 use eyre::Result;
 use std::fmt;
 use url::Url;
+use discv5::*;
 
 mod sandwhich;
 
