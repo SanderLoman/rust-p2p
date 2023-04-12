@@ -6,16 +6,16 @@
 
 use chrono::{DateTime, Local};
 use colored::*;
-// use discv5::*;
 use dotenv::dotenv;
-use ethers::core::{rand::thread_rng, types::transaction::eip2718::TypedTransaction};
+// use ethers::core::{rand::thread_rng, types::transaction::eip2718::TypedTransaction};
 use ethers::prelude::*;
-use ethers_flashbots::*;
+// use ethers_flashbots::*;
 use eyre::Result;
 use std::fmt;
-use url::Url;
+// use url::Url;
 
 mod sandwhich;
+mod beaconode_finder;
 
 #[derive(Debug)]
 struct LogEntry {
@@ -53,13 +53,15 @@ impl fmt::Display for LogEntry {
 async fn main() -> Result<()> {
     dotenv().ok();
 
-    let test_wallet_private_key: String =
-        std::env::var("TESTWALLET_PRIVATE_KEY").expect("TESTWALLET_PRIVATE_KEY must be set");
+    beaconode_finder::beaconnode_finder().await?;
 
-    let localhost_rpc_url: String = std::env::var("GOE_WS_URL").expect("GOE_WS_URL must be set");
+    // let test_wallet_private_key: String =
+    //     std::env::var("TESTWALLET_PRIVATE_KEY").expect("TESTWALLET_PRIVATE_KEY must be set");
+
+    let localhost_rpc_url: String = std::env::var("LOCAL_HOST_URL").expect("LOCAL_HOST_URL must be set");
 
     let provider: Provider<Ws> = Provider::<Ws>::connect(localhost_rpc_url).await?;
-    let block_number: U64 = provider.get_block_number().await?;
+    // let block_number: U64 = provider.get_block_number().await?;
     let gas_price: U256 = provider.get_gas_price().await?;
 
     println!(
@@ -71,110 +73,110 @@ async fn main() -> Result<()> {
         }
     );
 
-    let bundle_signer: LocalWallet = LocalWallet::new(&mut thread_rng());
-    // This signs transactions
-    let wallet: LocalWallet = test_wallet_private_key.parse()?;
-    let wallet_clone = wallet.clone();
+    // let bundle_signer: LocalWallet = LocalWallet::new(&mut thread_rng());
+    // // This signs transactions
+    // let wallet: LocalWallet = test_wallet_private_key.parse()?;
+    // let wallet_clone = wallet.clone();
 
-    // Add signer and Flashbots middleware
-    let client = SignerMiddleware::new(
-        FlashbotsMiddleware::new(
-            provider,
-            Url::parse("https://relay-goerli.flashbots.net")?,
-            bundle_signer,
-        ),
-        wallet,
-    );
+    // // Add signer and Flashbots middleware
+    // let client = SignerMiddleware::new(
+    //     FlashbotsMiddleware::new(
+    //         provider,
+    //         Url::parse("https://relay-goerli.flashbots.net")?,
+    //         bundle_signer,
+    //     ),
+    //     wallet,
+    // );
 
-    let tx = {
-        let mut inner: TypedTransaction = TransactionRequest::new()
-            .from(wallet_clone.address())
-            .to("0x8C66BA8157808cba80A57a0A29600221973FA29F")
-            .value(1)
-            .chain_id(5)
-            .into();
-        client.fill_transaction(&mut inner, None).await?;
-        inner
-    };
+    // let tx = {
+    //     let mut inner: TypedTransaction = TransactionRequest::new()
+    //         .from(wallet_clone.address())
+    //         .to("0x8C66BA8157808cba80A57a0A29600221973FA29F")
+    //         .value(1)
+    //         .chain_id(5)
+    //         .into();
+    //     client.fill_transaction(&mut inner, None).await?;
+    //     inner
+    // };
 
-    println!(
-        "{}",
-        LogEntry {
-            time: Local::now(),
-            level: LogLevel::Info,
-            message: format!("Transaction: {:?}", tx),
-        }
-    );
+    // println!(
+    //     "{}",
+    //     LogEntry {
+    //         time: Local::now(),
+    //         level: LogLevel::Info,
+    //         message: format!("Transaction: {:?}", tx),
+    //     }
+    // );
 
-    let signature = client.signer().sign_transaction(&tx).await?;
+    // let signature = client.signer().sign_transaction(&tx).await?;
 
-    let bundle = BundleRequest::new()
-        .push_transaction(tx.rlp_signed(&signature))
-        .set_block(block_number + 1)
-        .set_simulation_block(block_number)
-        .set_simulation_timestamp(0);
+    // let bundle = BundleRequest::new()
+    //     .push_transaction(tx.rlp_signed(&signature))
+    //     .set_block(block_number + 1)
+    //     .set_simulation_block(block_number)
+    //     .set_simulation_timestamp(0);
 
-    let simulated_bundle = client.inner().simulate_bundle(&bundle).await?;
+    // let simulated_bundle = client.inner().simulate_bundle(&bundle).await?;
 
-    println!(
-        "{}",
-        LogEntry {
-            time: Local::now(),
-            level: LogLevel::Info,
-            message: format!("Simulated bundle: {:?}", simulated_bundle),
-        }
-    );
+    // println!(
+    //     "{}",
+    //     LogEntry {
+    //         time: Local::now(),
+    //         level: LogLevel::Info,
+    //         message: format!("Simulated bundle: {:?}", simulated_bundle),
+    //     }
+    // );
 
-    println!(
-        "{}",
-        LogEntry {
-            time: Local::now(),
-            level: LogLevel::Info,
-            message: format!("BN {:?}", block_number),
-        }
-    );
+    // println!(
+    //     "{}",
+    //     LogEntry {
+    //         time: Local::now(),
+    //         level: LogLevel::Info,
+    //         message: format!("BN {:?}", block_number),
+    //     }
+    // );
+    
+    // let pending_bundle = client.inner().send_bundle(&bundle).await?;
 
-    let pending_bundle = client.inner().send_bundle(&bundle).await?;
+    // println!(
+    //     "{}",
+    //     LogEntry {
+    //         time: Local::now(),
+    //         level: LogLevel::Info,
+    //         message: format!("Pending bundle: {:?} BN {:?}", pending_bundle.bundle_hash, pending_bundle.block),
+    //     }
+    // );
 
-    println!(
-        "{}",
-        LogEntry {
-            time: Local::now(),
-            level: LogLevel::Info,
-            message: format!("Pending bundle: {:?} BN {:?}", pending_bundle.bundle_hash, pending_bundle.block),
-        }
-    );
-
-    match pending_bundle.await {
-        Ok(bundle_hash) => println!(
-            "{}",
-            LogEntry {
-                time: Local::now(),
-                level: LogLevel::Info,
-                message: format!("Bundle was included in block: {}", bundle_hash),
-            }
-        ),
-        Err(PendingBundleError::BundleNotIncluded) => {
-            println!(
-                "{}",
-                LogEntry {
-                    time: Local::now(),
-                    level: LogLevel::Warning,
-                    message: "Bundle was not included in any block".to_string(),
-                }
-            )
-        }
-        Err(e) => {
-            println!(
-                "{}",
-                LogEntry {
-                    time: Local::now(),
-                    level: LogLevel::Error,
-                    message: format!("{:?}", e),
-                }
-            )
-        }
-    }
+    // match pending_bundle.await {
+    //     Ok(bundle_hash) => println!(
+    //         "{}",
+    //         LogEntry {
+    //             time: Local::now(),
+    //             level: LogLevel::Info,
+    //             message: format!("Bundle was included in block: {}", bundle_hash),
+    //         }
+    //     ),
+    //     Err(PendingBundleError::BundleNotIncluded) => {
+    //         println!(
+    //             "{}",
+    //             LogEntry {
+    //                 time: Local::now(),
+    //                 level: LogLevel::Error,
+    //                 message: "Bundle was not included in any block".to_string(),
+    //             }
+    //         )
+    //     }
+    //     Err(e) => {
+    //         println!(
+    //             "{}",
+    //             LogEntry {
+    //                 time: Local::now(),
+    //                 level: LogLevel::Error,
+    //                 message: format!("{:?}", e),
+    //             }
+    //         )
+    //     }
+    // }
 
     Ok(())
 }
