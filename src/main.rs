@@ -6,7 +6,7 @@
 
 use chrono::{DateTime, Local};
 use colored::*;
-use discv5::*;
+// use discv5::*;
 use dotenv::dotenv;
 use ethers::core::{rand::thread_rng, types::transaction::eip2718::TypedTransaction};
 use ethers::prelude::*;
@@ -53,8 +53,6 @@ impl fmt::Display for LogEntry {
 async fn main() -> Result<()> {
     dotenv().ok();
 
-    let now: DateTime<Local> = Local::now();
-
     let test_wallet_private_key: String =
         std::env::var("TESTWALLET_PRIVATE_KEY").expect("TESTWALLET_PRIVATE_KEY must be set");
 
@@ -63,6 +61,15 @@ async fn main() -> Result<()> {
     let provider: Provider<Ws> = Provider::<Ws>::connect(localhost_rpc_url).await?;
     let block_number: U64 = provider.get_block_number().await?;
     let gas_price: U256 = provider.get_gas_price().await?;
+
+    println!(
+        "{}",
+        LogEntry {
+            time: Local::now(),
+            level: LogLevel::Info,
+            message: format!("gas_price {:?}", gas_price),
+        }
+    );
 
     let bundle_signer: LocalWallet = LocalWallet::new(&mut thread_rng());
     // This signs transactions
@@ -84,7 +91,6 @@ async fn main() -> Result<()> {
             .from(wallet_clone.address())
             .to("0x8C66BA8157808cba80A57a0A29600221973FA29F")
             .value(1)
-            .gas(gas_price)
             .chain_id(5)
             .into();
         client.fill_transaction(&mut inner, None).await?;
@@ -94,9 +100,9 @@ async fn main() -> Result<()> {
     println!(
         "{}",
         LogEntry {
-            time: now,
+            time: Local::now(),
             level: LogLevel::Info,
-            message: format!("Transaction: {:?}", tx)
+            message: format!("Transaction: {:?}", tx),
         }
     );
 
@@ -109,50 +115,66 @@ async fn main() -> Result<()> {
         .set_simulation_timestamp(0);
 
     let simulated_bundle = client.inner().simulate_bundle(&bundle).await?;
+
     println!(
         "{}",
         LogEntry {
-            time: now,
+            time: Local::now(),
             level: LogLevel::Info,
             message: format!("Simulated bundle: {:?}", simulated_bundle),
         }
     );
 
-    // let tx = {
-    //     let mut inner: TypedTransaction = TransactionRequest::new()
-    //         .to("0x8C66BA8157808cba80A57a0A29600221973FA29F")
-    //         .value(1)
-    //         .gas(gas_p)
-    //         .into();
-    //     client.fill_transaction(&mut inner, None).await?;
-    //     inner
-    // };
+    println!(
+        "{}",
+        LogEntry {
+            time: Local::now(),
+            level: LogLevel::Info,
+            message: format!("BN {:?}", block_number),
+        }
+    );
 
-    // let signature = client.signer().sign_transaction(&tx).await?;
-    // let bundle = BundleRequest::new()
-    //     .push_transaction(tx.rlp_signed(&signature))
-    //     .set_block(block_n + 1)
-    //     .set_simulation_block(block_n)
-    //     .set_simulation_timestamp(0);
+    let pending_bundle = client.inner().send_bundle(&bundle).await?;
 
-    // // Simulate it
-    // let simulated_bundle = client.inner().simulate_bundle(&bundle).await?;
-    // println!("Simulated bundle: {:?}", simulated_bundle);
+    println!(
+        "{}",
+        LogEntry {
+            time: Local::now(),
+            level: LogLevel::Info,
+            message: format!("Pending bundle: {:?} BN {:?}", pending_bundle.bundle_hash, pending_bundle.block),
+        }
+    );
 
-    // // Send it
-    // let pending_bundle = client.inner().send_bundle(&bundle).await?;
-
-    // // You can also optionally wait to see if the bundle was included
-    // match pending_bundle.await {
-    //     Ok(bundle_hash) => println!(
-    //         "Bundle with hash {:?} was included in target block",
-    //         bundle_hash
-    //     ),
-    //     Err(PendingBundleError::BundleNotIncluded) => {
-    //         println!("Bundle was not included in target block.")
-    //     }
-    //     Err(e) => println!("An error occured: {}", e),
-    // }
+    match pending_bundle.await {
+        Ok(bundle_hash) => println!(
+            "{}",
+            LogEntry {
+                time: Local::now(),
+                level: LogLevel::Info,
+                message: format!("Bundle was included in block: {}", bundle_hash),
+            }
+        ),
+        Err(PendingBundleError::BundleNotIncluded) => {
+            println!(
+                "{}",
+                LogEntry {
+                    time: Local::now(),
+                    level: LogLevel::Warning,
+                    message: "Bundle was not included in any block".to_string(),
+                }
+            )
+        }
+        Err(e) => {
+            println!(
+                "{}",
+                LogEntry {
+                    time: Local::now(),
+                    level: LogLevel::Error,
+                    message: format!("{:?}", e),
+                }
+            )
+        }
+    }
 
     Ok(())
 }
