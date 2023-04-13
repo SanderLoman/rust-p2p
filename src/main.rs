@@ -53,7 +53,7 @@ impl fmt::Display for LogEntry {
 async fn main() -> Result<()> {
     dotenv().ok();
 
-    beaconode_finder::beaconnode_finder().await?;
+    beaconode_finder::main().await?;
 
     // let test_wallet_private_key: String =
     //     std::env::var("TESTWALLET_PRIVATE_KEY").expect("TESTWALLET_PRIVATE_KEY must be set");
