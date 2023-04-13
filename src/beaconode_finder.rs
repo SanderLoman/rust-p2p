@@ -1,6 +1,14 @@
 use chrono::{DateTime, Local};
 use colored::*;
 use eyre::Result;
+use futures::prelude::*;
+use libp2p::{
+    core::Multiaddr,
+    gossipsub::{Gossipsub, GossipsubConfig, GossipsubEvent, MessageAuthenticity, Topic},
+    identity,
+    tcp::TokioTcpConfig,
+    PeerId, Swarm, Transport,
+};
 use reqwest::Client as AsyncClient;
 use serde::Serialize;
 use serde_json::Value;
@@ -10,18 +18,20 @@ use std::fs::{create_dir_all, File};
 use std::io::Write;
 use std::path::Path;
 
-#[derive(Debug, Serialize, Clone)]
-struct ResponseTime {
-    index: usize,
-    pubkey: String,
-    elapsed: std::time::Duration,
-}
+use std::time::Instant;
 
 #[derive(Debug)]
 struct LogEntry {
     time: DateTime<Local>,
     level: LogLevel,
     message: String,
+}
+
+#[derive(Debug, Serialize, Clone)]
+struct NodeResponseTime {
+    peer_id: PeerId,
+    multiaddr: Multiaddr,
+    elapsed: std::time::Duration,
 }
 
 #[derive(Debug)]
@@ -49,103 +59,94 @@ impl fmt::Display for LogEntry {
     }
 }
 
-pub async fn beaconnode_finder() -> Result<Vec<String>> {
-    let api_url = "http://127.0.0.1:5052/eth/v1/beacon/states/head/validators";
-    let client = AsyncClient::new();
-    let response = client.get(api_url).send().await?.json::<Value>().await?;
 
-    let data = response.get("data").unwrap_or(&Value::Null);
+async fn discover_nodes() -> Result<Vec<(PeerId, Multiaddr)>> {
+    let local_key = identity::Keypair::generate_ed25519();
+    let local_peer_id = PeerId::from(local_key.public());
+    let transport = TokioTcpConfig::new()
+        .upgrade(libp2p::core::upgrade::Version::V1)
+        .authenticate(libp2p::noise::NoiseConfig::xx(local_key))
+        .multiplex(libp2p::yamux::YamuxConfig::default())
+        .boxed();
 
-    // let max_files = 30;
-    let mut pubkeys = vec![];
+    let topic = Topic::new("eth2-gossip");
+    let gossipsub_config = GossipsubConfig::default();
+    let mut gossipsub = Gossipsub::new(MessageAuthenticity::Signed(local_key), gossipsub_config);
 
-    if let Value::Array(entries) = data {
-        // let entries_per_file = (entries.len() + max_files - 1) / max_files;
+    gossipsub.subscribe(topic.clone()).unwrap();
 
-        pubkeys = entries
-            .iter()
-            .filter_map(|entry| {
-                entry
-                    .get("validator")
-                    .and_then(|validator| validator.get("pubkey"))
-                    .and_then(|pubkey| pubkey.as_str().map(str::to_string))
-            })
-            .collect();
+    let mut swarm = {
+        let mut swarm = Swarm::new(transport, gossipsub, local_peer_id);
+        swarm.listen_on("/ip4/0.0.0.0/tcp/0".parse()?)?;
+        swarm
+    };
 
-        // let output_folder = Path::new("output_files");
-        // create_dir_all(&output_folder)?;
+    let mut discovered_nodes = vec![];
 
-        // let num_files = (entries.len() + entries_per_file - 1) / entries_per_file;
-        // for i in 0..num_files {
-        //     let start = i * entries_per_file;
-        //     let end = usize::min(start + entries_per_file, entries.len());
-        //     let output_str = format!("{:?}", &entries[start..end]);
-        //     let mut file = File::create(output_folder.join(format!("output_{}.txt", i + 1)))?;
-        //     file.write_all(output_str.as_bytes())?;
+    swarm
+        .for_each_concurrent(None, |event| async {
+            match event {
+                libp2p::swarm::SwarmEvent::NewListenAddr(addr) => {
+                    println!("Listening on {:?}", addr);
+                }
+                libp2p::swarm::SwarmEvent::ConnectionEstablished {
+                    peer_id, endpoint, ..
+                } => {
+                    println!("Connected to {:?}", peer_id);
+                    discovered_nodes.push((peer_id, endpoint.get_remote_address().clone()));
+                }
+                libp2p::swarm::SwarmEvent::Behaviour(GossipsubEvent::Message { .. }) => {}
+                _ => {}
+            }
+        })
+        .await;
 
-        //     println!(
-        //         "{}",
-        //         LogEntry {
-        //             time: Local::now(),
-        //             level: LogLevel::Info,
-        //             message: format!(
-        //                 "Wrote entries {}-{} to output_{}.json",
-        //                 start + 1,
-        //                 end,
-        //                 i + 1
-        //             ),
-        //         }
-        //     );
-        // }
-    }
-
-    Ok(pubkeys)
+    Ok(discovered_nodes)
 }
 
-async fn test_validator_response_time(pubkeys: Vec<String>) -> Result<()> {
-    let client = AsyncClient::new();
+async fn test_node_response_time(nodes: Vec<(PeerId, Multiaddr)>) -> Result<()> {
     let mut response_times = vec![];
 
-    for (index, pubkey) in pubkeys.iter().enumerate() {
-        let api_url = format!(
-            "http://127.0.0.1:5052/eth/v1/beacon/states/head/validators/{}",
-            pubkey
-        );
+    for (peer_id, multiaddr) in nodes {
+        let api_url = format!("http://{}/eth/v1/beacon/states/head/validators", multiaddr);
+        let client = reqwest::Client::new();
 
-        let start = std::time::Instant::now();
-        let response = client.get(&api_url).send().await?;
+        let start = Instant::now();
+        let response = client.get(&api_url).send().await;
         let elapsed = start.elapsed();
 
-        if response.status().is_success() {
-            response_times.push(ResponseTime {
-                index,
-                pubkey: pubkey.clone(),
-                elapsed,
-            });
-            println!(
-                "{}",
-                LogEntry {
-                    time: Local::now(),
-                    level: LogLevel::Info,
-                    message: format!(
-                        "Validator with index {} and pubkey {} responded in {:?}",
-                        index, pubkey, elapsed
-                    ),
-                }
-            );
-        } else {
-            println!(
-                "{}",
-                LogEntry {
-                    time: Local::now(),
-                    level: LogLevel::Warning,
-                    message: format!(
-                        "Validator with pubkey {} failed to respond: {}",
-                        pubkey,
-                        response.status()
-                    ),
-                }
-            );
+        match response {
+            Ok(_) => {
+                response_times.push(NodeResponseTime {
+                    peer_id: peer_id.clone(),
+                    multiaddr: multiaddr.clone(),
+                    elapsed,
+                });
+                println!(
+                    "{}",
+                    LogEntry {
+                        time: Local::now(),
+                        level: LogLevel::Info,
+                        message: format!(
+                            "Node with peer ID {} and multiaddr {} responded in {:?}",
+                            peer_id, multiaddr, elapsed
+                        ),
+                    }
+                );
+            }
+            Err(err) => {
+                println!(
+                    "{}",
+                    LogEntry {
+                        time: Local::now(),
+                        level: LogLevel::Warning,
+                        message: format!(
+                            "Node with peer ID {} and multiaddr {} failed to respond: {}",
+                            peer_id, multiaddr, err
+                        ),
+                    }
+                );
+            }
         }
     }
 
@@ -153,20 +154,20 @@ async fn test_validator_response_time(pubkeys: Vec<String>) -> Result<()> {
     response_times.sort_by(|a, b| match a.elapsed.cmp(&b.elapsed) {
         Ordering::Greater => Ordering::Greater,
         Ordering::Less => Ordering::Less,
-        Ordering::Equal => a.index.cmp(&b.index),
+        Ordering::Equal => a.peer_id.cmp(&b.peer_id),
     });
 
-    let top_50_response_times = response_times
+    let top_fastest_nodes = response_times
         .iter()
         .take(50)
         .cloned()
-        .collect::<Vec<ResponseTime>>();
+        .collect::<Vec<NodeResponseTime>>();
 
     // Create the responses directory and write the top 50 response times to a JSON file
     let responses_folder = Path::new("responses");
     create_dir_all(&responses_folder)?;
-    let output_file = responses_folder.join("top_50_response_times.json");
-    let json_data = serde_json::to_string_pretty(&top_50_response_times)?;
+    let output_file = responses_folder.join("top_fastest_nodes.json");
+    let json_data = serde_json::to_string_pretty(&top_fastest_nodes)?;
     let mut file = File::create(output_file)?;
     file.write_all(json_data.as_bytes())?;
 
@@ -175,21 +176,21 @@ async fn test_validator_response_time(pubkeys: Vec<String>) -> Result<()> {
         LogEntry {
             time: Local::now(),
             level: LogLevel::Info,
-            message:
-                "Top 50 fastest response times written to responses/top_50_response_times.json"
-                    .to_string(),
+            message: "Top 50 fastest response times written to responses/top_fastest_nodes.json"
+                .to_string(),
         }
     );
 
     Ok(())
 }
 
-pub async fn main() -> Result<()> {
-    // Call the beaconnode_finder function to get a list of public keys.
-    let pubkeys = beaconnode_finder().await?;
+#[tokio::main]
+async fn main() -> Result<()> {
+    // Call the discover_nodes function to get a list of discovered nodes.
+    let nodes = discover_nodes().await?;
 
-    // Call the test_validator_response_time function with the public keys.
-    test_validator_response_time(pubkeys).await?;
+    // Call the test_node_response_time function with the discovered nodes.
+    test_node_response_time(nodes).await?;
 
     Ok(())
 }
