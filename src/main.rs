@@ -53,12 +53,13 @@ impl fmt::Display for LogEntry {
 async fn main() -> Result<()> {
     dotenv().ok();
 
-    wagmi::wagmi().await;
+    wagmi::wagmi();
 
     // let test_wallet_private_key: String =
     //     std::env::var("TESTWALLET_PRIVATE_KEY").expect("TESTWALLET_PRIVATE_KEY must be set");
 
-    let localhost_rpc_url: String = std::env::var("GOE_WS_URL").expect("LOCAL_HOST_URL must be set");
+    let localhost_rpc_url: String =
+        std::env::var("LOCAL_HOST_URL").expect("LOCAL_HOST_URL must be set");
 
     let provider: Provider<Ws> = Provider::<Ws>::connect(localhost_rpc_url).await?;
     // let block_number: U64 = provider.get_block_number().await?;
@@ -135,7 +136,7 @@ async fn main() -> Result<()> {
     //         message: format!("BN {:?}", block_number),
     //     }
     // );
-    
+
     // let pending_bundle = client.inner().send_bundle(&bundle).await?;
 
     // println!(
