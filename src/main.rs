@@ -1,26 +1,22 @@
-// Work on a script to find the fastest node on the network and then try to connect to those with geth.
-
-// use discv5 to find nodes
+// use ethers::core::{rand::thread_rng, types::transaction::eip2718::TypedTransaction};
+// use ethers_flashbots::*;
+// use url::Url;
 
 #![deny(unsafe_code)]
-
 use chrono::{DateTime, Local};
 use colored::*;
 use dotenv::dotenv;
-// use ethers::core::{rand::thread_rng, types::transaction::eip2718::TypedTransaction};
 use ethers::prelude::*;
-// use ethers_flashbots::*;
 use eyre::Result;
-use std::fmt;
-// use url::Url;
-
-use std::error::Error;
-use std::path::Path;
 
 use serde::Serialize;
 use serde_json::Value;
 
-use reqwest::Client;
+use std::fmt;
+use std::path::Path;
+
+use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader};
+use tokio::net::UnixStream;
 
 mod liquidations;
 mod sandwhich;
@@ -46,7 +42,7 @@ impl fmt::Display for LogEntry {
         let time_str: String = format!("{}", self.time.format("%m-%d|%H:%M:%S%.3f"));
         let msg_str: &str = self.message.as_str();
 
-        let level_str = match self.level {
+        let level_str: ColoredString = match self.level {
             LogLevel::Info => "INFO".green(),
             LogLevel::Warning => "WARN".yellow(),
             LogLevel::Error => "ERRO".red(),
@@ -57,27 +53,20 @@ impl fmt::Display for LogEntry {
     }
 }
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 20)]
+#[tokio::main()]
 async fn main() -> Result<()> {
     dotenv().ok();
 
     liquidations::liquidations().await?;
 
-    let geth_rpc_endpoint: &str = "ws://localhost:8551";
+    let geth_rpc_endpoint: &str = "/home/sander/.ethereum/goerli/geth.ipc";
 
     // Replace with your desired static nodes' enode URLs
-    let static_nodes: Vec<&str> = vec![
-        "enode://node1@example.com:30303",
-        "enode://node2@example.com:30303",
-    ];
-
-    let client: Client = Client::new();
+    let static_nodes: Vec<&str> = vec![];
 
     for enode_url in static_nodes {
-        add_peer(Path::new(geth_rpc_endpoint), enode_url);
+        add_peer(Path::new(geth_rpc_endpoint), enode_url).await?;
     }
-
-    println!("Static nodes added successfully.");
 
     // let test_wallet_private_key: String =
     //     std::env::var("TESTWALLET_PRIVATE_KEY").expect("TESTWALLET_PRIVATE_KEY must be set");
@@ -101,10 +90,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-// use tokio::io::BufReader;
-use tokio_uds::UnixStream;
-
-async fn add_peer(ipc_path: &Path, enode_url: &str) -> Result<(), Box<dyn Error>> {
+async fn add_peer(ipc_path: &Path, enode_url: &str) -> Result<()> {
     #[derive(Serialize)]
     struct JsonRpcRequest<'a> {
         jsonrpc: &'a str,
@@ -113,21 +99,58 @@ async fn add_peer(ipc_path: &Path, enode_url: &str) -> Result<(), Box<dyn Error>
         params: Vec<&'a str>,
     }
 
-    let request = JsonRpcRequest {
+    let request: JsonRpcRequest = JsonRpcRequest {
         jsonrpc: "2.0",
         id: 1,
         method: "admin_addPeer",
         params: vec![enode_url],
     };
 
-    let request_data = serde_json::to_string(&request)?;
+    let request_data: String = serde_json::to_string(&request)?;
+    println!(
+        "{}",
+        LogEntry {
+            time: Local::now(),
+            level: LogLevel::Info,
+            message: format!("Sent request: {}", request_data),
+        }
+    );
 
-    let mut stream = UnixStream::connect(ipc_path);
+    let mut stream: UnixStream = UnixStream::connect(ipc_path).await?;
+    println!(
+        "{}",
+        LogEntry {
+            time: Local::now(),
+            level: LogLevel::Info,
+            message: format!("{}, {:?}", "Connected to geth", stream),
+        }
+    );
 
     // Send the request
     stream.write_all(request_data.as_bytes()).await?;
+    stream.shutdown().await?;
+
+    let mut response_data: String = String::new();
+    print!(
+        "{}",
+        LogEntry {
+            time: Local::now(),
+            level: LogLevel::Info,
+            message: format!("Reading response, {:?}", stream),
+        }
+    );
+    let mut buf_reader: BufReader<UnixStream> = BufReader::new(stream);
+    buf_reader.read_to_string(&mut response_data).await?;
 
     let response: Value = serde_json::from_str(&response_data)?;
+    println!(
+        "{}",
+        LogEntry {
+            time: Local::now(),
+            level: LogLevel::Info,
+            message: format!("Response: {:?}", response),
+        }
+    );
 
     if response.get("error").is_some() {
         println!(
@@ -138,6 +161,14 @@ async fn add_peer(ipc_path: &Path, enode_url: &str) -> Result<(), Box<dyn Error>
                 message: format!("Failed to add static node: {}", enode_url),
             }
         );
+        println!(
+            "{}",
+            LogEntry {
+                time: Local::now(),
+                level: LogLevel::Error,
+                message: format!("Error: {:?}", response.get("error")),
+            }
+        );
     } else {
         println!(
             "{}",
@@ -145,6 +176,14 @@ async fn add_peer(ipc_path: &Path, enode_url: &str) -> Result<(), Box<dyn Error>
                 time: Local::now(),
                 level: LogLevel::Info,
                 message: format!("Added static node: {}", enode_url),
+            }
+        );
+        println!(
+            "{}",
+            LogEntry {
+                time: Local::now(),
+                level: LogLevel::Info,
+                message: format!("Response: {:?}", response),
             }
         );
     }
