@@ -14,8 +14,16 @@ use eyre::Result;
 use std::fmt;
 // use url::Url;
 
+use std::error::Error;
+use std::path::Path;
+
+use serde::Serialize;
+use serde_json::Value;
+
+use reqwest::Client;
+
+mod liquidations;
 mod sandwhich;
-mod wagmi;
 
 #[derive(Debug)]
 struct LogEntry {
@@ -35,8 +43,8 @@ enum LogLevel {
 
 impl fmt::Display for LogEntry {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let time_str = format!("{}", self.time.format("%m-%d|%H:%M:%S%.3f"));
-        let msg_str = self.message.as_str();
+        let time_str: String = format!("{}", self.time.format("%m-%d|%H:%M:%S%.3f"));
+        let msg_str: &str = self.message.as_str();
 
         let level_str = match self.level {
             LogLevel::Info => "INFO".green(),
@@ -53,7 +61,23 @@ impl fmt::Display for LogEntry {
 async fn main() -> Result<()> {
     dotenv().ok();
 
-    wagmi::wagmi();
+    liquidations::liquidations().await?;
+
+    let geth_rpc_endpoint: &str = "ws://localhost:8551";
+
+    // Replace with your desired static nodes' enode URLs
+    let static_nodes: Vec<&str> = vec![
+        "enode://node1@example.com:30303",
+        "enode://node2@example.com:30303",
+    ];
+
+    let client: Client = Client::new();
+
+    for enode_url in static_nodes {
+        add_peer(Path::new(geth_rpc_endpoint), enode_url);
+    }
+
+    println!("Static nodes added successfully.");
 
     // let test_wallet_private_key: String =
     //     std::env::var("TESTWALLET_PRIVATE_KEY").expect("TESTWALLET_PRIVATE_KEY must be set");
@@ -74,110 +98,56 @@ async fn main() -> Result<()> {
         }
     );
 
-    // let bundle_signer: LocalWallet = LocalWallet::new(&mut thread_rng());
-    // // This signs transactions
-    // let wallet: LocalWallet = test_wallet_private_key.parse()?;
-    // let wallet_clone = wallet.clone();
+    Ok(())
+}
 
-    // // Add signer and Flashbots middleware
-    // let client = SignerMiddleware::new(
-    //     FlashbotsMiddleware::new(
-    //         provider,
-    //         Url::parse("https://relay-goerli.flashbots.net")?,
-    //         bundle_signer,
-    //     ),
-    //     wallet,
-    // );
+// use tokio::io::BufReader;
+use tokio_uds::UnixStream;
 
-    // let tx = {
-    //     let mut inner: TypedTransaction = TransactionRequest::new()
-    //         .from(wallet_clone.address())
-    //         .to("0x8C66BA8157808cba80A57a0A29600221973FA29F")
-    //         .value(1)
-    //         .chain_id(5)
-    //         .into();
-    //     client.fill_transaction(&mut inner, None).await?;
-    //     inner
-    // };
+async fn add_peer(ipc_path: &Path, enode_url: &str) -> Result<(), Box<dyn Error>> {
+    #[derive(Serialize)]
+    struct JsonRpcRequest<'a> {
+        jsonrpc: &'a str,
+        id: i32,
+        method: &'a str,
+        params: Vec<&'a str>,
+    }
 
-    // println!(
-    //     "{}",
-    //     LogEntry {
-    //         time: Local::now(),
-    //         level: LogLevel::Info,
-    //         message: format!("Transaction: {:?}", tx),
-    //     }
-    // );
+    let request = JsonRpcRequest {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "admin_addPeer",
+        params: vec![enode_url],
+    };
 
-    // let signature = client.signer().sign_transaction(&tx).await?;
+    let request_data = serde_json::to_string(&request)?;
 
-    // let bundle = BundleRequest::new()
-    //     .push_transaction(tx.rlp_signed(&signature))
-    //     .set_block(block_number + 1)
-    //     .set_simulation_block(block_number)
-    //     .set_simulation_timestamp(0);
+    let mut stream = UnixStream::connect(ipc_path);
 
-    // let simulated_bundle = client.inner().simulate_bundle(&bundle).await?;
+    // Send the request
+    stream.write_all(request_data.as_bytes()).await?;
 
-    // println!(
-    //     "{}",
-    //     LogEntry {
-    //         time: Local::now(),
-    //         level: LogLevel::Info,
-    //         message: format!("Simulated bundle: {:?}", simulated_bundle),
-    //     }
-    // );
+    let response: Value = serde_json::from_str(&response_data)?;
 
-    // println!(
-    //     "{}",
-    //     LogEntry {
-    //         time: Local::now(),
-    //         level: LogLevel::Info,
-    //         message: format!("BN {:?}", block_number),
-    //     }
-    // );
-
-    // let pending_bundle = client.inner().send_bundle(&bundle).await?;
-
-    // println!(
-    //     "{}",
-    //     LogEntry {
-    //         time: Local::now(),
-    //         level: LogLevel::Info,
-    //         message: format!("Pending bundle: {:?} BN {:?}", pending_bundle.bundle_hash, pending_bundle.block),
-    //     }
-    // );
-
-    // match pending_bundle.await {
-    //     Ok(bundle_hash) => println!(
-    //         "{}",
-    //         LogEntry {
-    //             time: Local::now(),
-    //             level: LogLevel::Info,
-    //             message: format!("Bundle was included in block: {}", bundle_hash),
-    //         }
-    //     ),
-    //     Err(PendingBundleError::BundleNotIncluded) => {
-    //         println!(
-    //             "{}",
-    //             LogEntry {
-    //                 time: Local::now(),
-    //                 level: LogLevel::Error,
-    //                 message: "Bundle was not included in any block".to_string(),
-    //             }
-    //         )
-    //     }
-    //     Err(e) => {
-    //         println!(
-    //             "{}",
-    //             LogEntry {
-    //                 time: Local::now(),
-    //                 level: LogLevel::Error,
-    //                 message: format!("{:?}", e),
-    //             }
-    //         )
-    //     }
-    // }
+    if response.get("error").is_some() {
+        println!(
+            "{}",
+            LogEntry {
+                time: Local::now(),
+                level: LogLevel::Error,
+                message: format!("Failed to add static node: {}", enode_url),
+            }
+        );
+    } else {
+        println!(
+            "{}",
+            LogEntry {
+                time: Local::now(),
+                level: LogLevel::Info,
+                message: format!("Added static node: {}", enode_url),
+            }
+        );
+    }
 
     Ok(())
 }
