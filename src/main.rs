@@ -61,7 +61,7 @@ async fn main() -> Result<()> {
 
     let geth_rpc_endpoint: &str = "/home/sander/.ethereum/goerli/geth.ipc";
 
-    // Replace with your desired static nodes' enode URLs
+    // Later we will push to this vec when we get the enode urls from the geth nodes
     let static_nodes: Vec<&str> = vec![];
 
     for enode_url in static_nodes {
@@ -107,50 +107,17 @@ async fn add_peer(ipc_path: &Path, enode_url: &str) -> Result<()> {
     };
 
     let request_data: String = serde_json::to_string(&request)?;
-    println!(
-        "{}",
-        LogEntry {
-            time: Local::now(),
-            level: LogLevel::Info,
-            message: format!("Sent request: {}", request_data),
-        }
-    );
-
     let mut stream: UnixStream = UnixStream::connect(ipc_path).await?;
-    println!(
-        "{}",
-        LogEntry {
-            time: Local::now(),
-            level: LogLevel::Info,
-            message: format!("{}, {:?}", "Connected to geth", stream),
-        }
-    );
 
     // Send the request
     stream.write_all(request_data.as_bytes()).await?;
     stream.shutdown().await?;
 
     let mut response_data: String = String::new();
-    print!(
-        "{}",
-        LogEntry {
-            time: Local::now(),
-            level: LogLevel::Info,
-            message: format!("Reading response, {:?}", stream),
-        }
-    );
     let mut buf_reader: BufReader<UnixStream> = BufReader::new(stream);
     buf_reader.read_to_string(&mut response_data).await?;
 
     let response: Value = serde_json::from_str(&response_data)?;
-    println!(
-        "{}",
-        LogEntry {
-            time: Local::now(),
-            level: LogLevel::Info,
-            message: format!("Response: {:?}", response),
-        }
-    );
 
     if response.get("error").is_some() {
         println!(
@@ -190,3 +157,73 @@ async fn add_peer(ipc_path: &Path, enode_url: &str) -> Result<()> {
 
     Ok(())
 }
+
+async fn delete_peer(ipc_path: &Path, enode_url: &str) -> Result<()> {
+    #[derive(Serialize)]
+    struct JsonRpcRequest<'a> {
+        jsonrpc: &'a str,
+        id: i32,
+        method: &'a str,
+        params: Vec<&'a str>,
+    }
+
+    let request: JsonRpcRequest = JsonRpcRequest {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "admin_removePeer",
+        params: vec![enode_url],
+    };
+
+    let request_data: String = serde_json::to_string(&request)?;
+    let mut stream: UnixStream = UnixStream::connect(ipc_path).await?;
+
+    // Send the request
+    stream.write_all(request_data.as_bytes()).await?;
+    stream.shutdown().await?;
+
+    let mut response_data: String = String::new();
+    let mut buf_reader: BufReader<UnixStream> = BufReader::new(stream);
+    buf_reader.read_to_string(&mut response_data).await?;
+
+    let response: Value = serde_json::from_str(&response_data)?;
+
+    if response.get("error").is_some() {
+        println!(
+            "{}",
+            LogEntry {
+                time: Local::now(),
+                level: LogLevel::Error,
+                message: format!("Failed to remove static node: {}", enode_url),
+            }
+        );
+        println!(
+            "{}",
+            LogEntry {
+                time: Local::now(),
+                level: LogLevel::Error,
+                message: format!("Error: {:?}", response.get("error")),
+            }
+        );
+    } else {
+        println!(
+            "{}",
+            LogEntry {
+                time: Local::now(),
+                level: LogLevel::Info,
+                message: format!("Removed static node: {}", enode_url),
+            }
+        );
+        println!(
+            "{}",
+            LogEntry {
+                time: Local::now(),
+                level: LogLevel::Info,
+                message: format!("Response: {:?}", response),
+            }
+        );
+    }
+
+    Ok(())
+}
+
+async fn find_node() {}
