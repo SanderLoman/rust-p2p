@@ -21,6 +21,16 @@ use tokio::net::UnixStream;
 
 mod liquidations;
 mod sandwhich;
+use libp2p::*;
+use std::collections::HashMap;
+use std::time::Instant;
+
+#[derive(Debug, Clone)]
+struct NodeInfo {
+    peer_id: PeerId,
+    response_time: u128,
+    location: String,
+}
 
 #[derive(Debug)]
 struct LogEntry {
@@ -67,6 +77,12 @@ async fn main() -> Result<()> {
 
     let static_nodes_add: Vec<&str> = vec![];
 
+    let nodes = crawl_network().await?;
+
+    let fastest_nodes = select_fastest_nodes(&nodes, 50);
+
+    println!("Fastest nodes: {:?}", fastest_nodes);
+
     for enode_url in static_nodes_remove {
         delete_peer(Path::new(geth_rpc_endpoint), enode_url).await?;
     }
@@ -99,6 +115,48 @@ async fn main() -> Result<()> {
     );
 
     Ok(())
+}
+
+async fn crawl_network() -> Result<HashMap<String, Vec<NodeInfo>>> {
+    // Generate a random keypair for the local node
+    let local_key = identity::Keypair::generate_ed25519();
+    let local_peer_id = PeerId::from(local_key.public());
+
+    // Create a TCP transport with Yamux and Noise
+    let transport = libp2p::
+
+    // Create a Swarm to manage the network
+    let mut swarm = Swarm::new(transport, local_peer_id, ());
+
+    // Add Ethereum bootstrap nodes or any other known Ethereum nodes to the Swarm
+
+    // Create a HashMap to store the results
+    let mut results: HashMap<String, Vec<NodeInfo>> = HashMap::new();
+
+    // Crawl the network
+    loop {
+        match swarm.next().await {
+            // Handle events and store node information
+        }
+    }
+
+    Ok(results)
+}
+
+fn select_fastest_nodes(
+    nodes: &HashMap<String, Vec<NodeInfo>>,
+    n: usize,
+) -> HashMap<String, Vec<NodeInfo>> {
+    let mut fastest_nodes: HashMap<String, Vec<NodeInfo>> = HashMap::new();
+
+    for (location, node_list) in nodes.iter() {
+        let mut sorted_nodes = node_list.clone();
+        sorted_nodes.sort_by_key(|node| node.response_time);
+        let selected_nodes = sorted_nodes.into_iter().take(n).collect::<Vec<NodeInfo>>();
+        fastest_nodes.insert(location.to_string(), selected_nodes);
+    }
+
+    fastest_nodes
 }
 
 async fn add_peer(ipc_path: &Path, enode_url: &str) -> Result<()> {
@@ -237,7 +295,7 @@ async fn delete_peer(ipc_path: &Path, enode_url: &str) -> Result<()> {
     Ok(())
 }
 
-async fn find_node() {}
+async fn find_node(provider: Arc<Provider<Ws>>) {}
 
 async fn time_to_reach_node(provider: Arc<Provider<Ws>>) -> Result<()> {
     let mut stream: SubscriptionStream<Ws, Block<TxHash>> = provider.subscribe_blocks().await?;
@@ -249,6 +307,7 @@ async fn time_to_reach_node(provider: Arc<Provider<Ws>>) -> Result<()> {
 
         let now: DateTime<Utc> = Utc::now();
         let time_difference: chrono::Duration = now.signed_duration_since(block_time.unwrap());
+        let block_number: U64 = provider.get_block_number().await?;
 
         println!(
             "{}",
@@ -256,8 +315,8 @@ async fn time_to_reach_node(provider: Arc<Provider<Ws>>) -> Result<()> {
                 time: Local::now(),
                 level: LogLevel::Info,
                 message: format!(
-                    "block timestamp: {}, time difference: {:.2?}",
-                    block_timestamp, time_difference
+                    "block number: {}, block timestamp: {}, time difference: {:.2?}",
+                    block_number, block_timestamp, time_difference
                 ),
             }
         );
@@ -265,13 +324,5 @@ async fn time_to_reach_node(provider: Arc<Provider<Ws>>) -> Result<()> {
 
     Ok(())
 }
-
-// Amsterdam enode
-// enode://35df251d21ec503b24ace1f5b18bb85d06fa0dc113f069ab399c5b4064d3e6d89a947b2ebe373f0fcceba6a3db1441117a74b535f484ade24113c5e0c5cd4795@5.39.169.121:30303
-
-// USA enode
-// enode://78253a80431ac5514f3efc0aafe7d5793a0e838a97cbc54acbf2fc5219307bc72b96be2747615847e04aabd5495af96ec6f1e661da9e7f71e86717a51a0fd291@54.146.231.114:30303
-
-// maybe lighthouse receives the block before geth does
 
 // try get the beacon node blocks and check how long it takes to receive them from another peer and maybe check how long it takes for geth to receive it from the beacon node
