@@ -9,8 +9,20 @@ use dotenv::dotenv;
 use ethers::prelude::*;
 use eyre::Result;
 
+use std::collections::HashMap;
+use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
+
+use libp2p::{
+    core::upgrade,
+    dns::DnsConfig,
+    identity,
+    kad::{record::store::MemoryStore, Kademlia, KademliaConfig, KademliaEvent, QueryResult},
+    noise::{AuthenticKeypair, Keypair, NoiseConfig, X25519Spec},
+    swarm::{NetworkBehaviour, SwarmBuilder, SwarmEvent},
+    yamux, Multiaddr, PeerId, Swarm, Transport,
+};
 
 mod liquidations;
 mod peers;
@@ -49,10 +61,8 @@ impl fmt::Display for LogEntry {
 }
 
 #[tokio::main()]
-async fn main() -> Result<()> {
+async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
-
-    liquidations::liquidations().await?;
 
     let geth_rpc_endpoint: &str = "/home/sander/.ethereum/goerli/geth.ipc";
 
@@ -70,6 +80,8 @@ async fn main() -> Result<()> {
     let provider: Provider<Ws> = Provider::<Ws>::connect(localhost_rpc_url).await?;
     let provider_arc: Arc<Provider<Ws>> = Arc::new(provider.clone());
 
+    liquidations::liquidations().await?;
+
     let block_number: U64 = provider.get_block_number().await?;
     let gas_price: U256 = provider.get_gas_price().await?;
 
@@ -82,18 +94,72 @@ async fn main() -> Result<()> {
         }
     );
 
-    match peers::discover_peers().await {
-        Ok(_) => {
-            println!("Peer discovery successful!");
-        }
-        Err(e) => {
-            eprintln!("Error during peer discovery: {:?}", e);
-        }
-    }
+    peers::discover_peers().await?;
+    peers::time_to_reach_geth(provider_arc).await?;
+
+    // let enodes = peers::get_enode_addresses().await?;
+
+    // let best_peers =  peers::process_enodes(enodes).await?;
+
+    // let mut peer_addresses = Vec::new();
+    // for peers in best_peers.values() {
+    //     peer_addresses.extend(peers.keys().cloned());
+    // }
+
+    // Connect to the top nodes and obtain data as quickly as possible
+    // let mut connected_nodes = HashMap::new();
+    // for enode in peer_addresses {
+    //     if let Some(peer_id) = PeerId::from_str(&enode) {
+    //         let multiaddr = format!("/p2p/{}", peer_id.to_base58());
+    //         if let Ok(stream) = libp2p::tcp::Config::new()
+    //             .dial(multiaddr.parse::<Multiaddr>().unwrap())
+    //             .await
+    //         {
+    //             let client = provider;
+    //             if let Ok(_) = client.get_block_number().await {
+    //                 connected_nodes.insert(enode, client);
+    //             }
+    //         }
+    //     }
+    // }
+
+    // // Disconnect from slow nodes and connect to fast nodes
+    // for (enode, client) in &connected_nodes {
+    //     if client.eth_syncing().await.unwrap().is_none() {
+    //         connected_nodes.remove(enode);
+    //     }
+    // }
+
+    // let mut slow_nodes = best_peers;
+    // slow_nodes.retain(|region, _| {
+    //     let mut region_slow = true;
+    //     if let Some(connected_region) = connected_nodes.get(region) {
+    //         for (enode, score) in slow_nodes.get(region).unwrap().iter() {
+    //             if connected_region.eth_syncing().await.unwrap().is_some()
+    //                 && score > &score_peer(Duration::from_secs(0))
+    //             {
+    //                 slow_nodes.get_mut(region).unwrap().remove(enode);
+    //             } else {
+    //                 region_slow = false;
+    //             }
+    //         }
+    //         false
+    //     } else {
+    //         region_slow
+    //     }
+    // });
+
+    // for (enode, client) in connected_nodes {
+    //     println!(
+    //         "Connected to {} with score {}",
+    //         enode,
+    //         score_peer(Duration::from_secs(0))
+    //     );
+    //     // Do something with the connected client...
+    // }
 
     Ok(())
 }
-
 // try get the beacon node blocks and check how long it takes to receive them from another peer and maybe check how long it takes for geth to receive it from the beacon node
 
 // eth_callBundle is for simulating a transaction bundle and seeing if it will be included in the next block mev-geth supports this

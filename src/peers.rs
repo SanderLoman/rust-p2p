@@ -2,37 +2,60 @@ use chrono::{DateTime, Local, TimeZone, Utc};
 use colored::*;
 use ethers::prelude::*;
 use eyre::Result;
-
-use serde::Serialize;
-use serde_json::Value;
-
-use std::collections::HashMap;
-use std::error::Error;
-use std::fmt;
-use std::path::Path;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
-
+use futures::future::ok;
 use futures::stream::{self, StreamExt};
-use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader};
-use tokio::net::UnixStream;
-use tokio::runtime::Handle;
-
 use libp2p::{
     core::upgrade,
     dns::DnsConfig,
     identity,
     kad::{record::store::MemoryStore, Kademlia, KademliaConfig, KademliaEvent, QueryResult},
+    mdns::{Behaviour, Event},
     noise::{AuthenticKeypair, Keypair, NoiseConfig, X25519Spec},
-    swarm::{SwarmBuilder, SwarmEvent},
+    swarm::{NetworkBehaviour, SwarmBuilder, SwarmEvent},
     yamux, Multiaddr, PeerId, Swarm, Transport,
 };
+use reqwest::header::{HeaderMap, ACCEPT};
+use reqwest::Client;
+use serde::Serialize;
+use serde_json::Value;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::error::Error;
+use std::fmt;
+use std::path::Path;
+use std::str::FromStr;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader};
+use tokio::net::UnixStream;
+use tokio::runtime::Handle;
+use tokio::sync::mpsc::{channel, Receiver, Sender};
+use tokio::time::timeout;
 
 #[derive(Debug)]
 struct LogEntry {
     time: DateTime<Local>,
     level: LogLevel,
     message: String,
+}
+
+/// A structure representing an Ethereum node
+#[derive(Debug)]
+struct Node {
+    url: String,
+    enodes: Vec<String>,
+    response_time: Option<Duration>,
+}
+
+impl Node {
+    /// Creates a new Node with the given URL
+    fn new(url: String) -> Self {
+        Node {
+            url,
+            enodes: Vec::new(),
+            response_time: None,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -60,59 +83,268 @@ impl fmt::Display for LogEntry {
     }
 }
 
-pub async fn discover_peers() -> Result<(), Box<dyn Error>> {
-    let local_key: identity::Keypair = libp2p::identity::Keypair::generate_ed25519();
-    let local_peer_id: PeerId = PeerId::from(local_key.public());
+const SCORE_THRESHOLD: f64 = 0.0;
+const MAX_TOP_NODES: usize = 50;
+const RESPONSE_TIME_THRESHOLD: Duration = Duration::from_secs(5);
 
-    // Create a tokio-based TCP transport
-    let tcp_transport: libp2p::tcp::Config = libp2p::tcp::Config::new();
-    let dns_transport = DnsConfig::system(tcp_transport).await?;
+pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
+    let local_key = libp2p::identity::Keypair::generate_ed25519();
+    let local_peer_id = PeerId::from(local_key.public());
+
+    // Create a Tokio-based TCP transport
+    let transport = libp2p::development_transport(local_key).await?;
+
+    // Create a Kademlia behaviour
+    let store = MemoryStore::new(local_peer_id.clone());
+    let kademlia_config = KademliaConfig::default();
+    let kademlia = Kademlia::with_config(local_peer_id.clone(), store, kademlia_config);
+
+    // Create a Swarm that manages peers and events
+    let mut swarm = {
+        let exec = Box::new(move |fut| {
+            tokio::spawn(fut);
+        });
+        SwarmBuilder::with_executor(transport, kademlia, local_peer_id, exec).build()
+    };
+
+    // Bootstrap Kademlia with peers from get_connected_peers()
+    let connected_peers = get_connected_peers().await?;
+    let mut discovered_peers = HashSet::new();
+    let mut pending_peers = HashSet::new();
 
     println!(
         "{}",
         LogEntry {
             time: Local::now(),
             level: LogLevel::Info,
-            message: format!("dns_transport: {:?}", dns_transport),
+            message: format!("Initial connected peers: {:?}", connected_peers),
         }
     );
 
-    let transport = dns_transport
-        .upgrade(upgrade::Version::V1)
-        .authenticate(NoiseConfig::xx(
-            Keypair::<X25519Spec>::new()
-                .into_authentic(&local_key)
-                .unwrap(),
-        )) // XX Handshake pattern, used for encrypted communication.
-        .multiplex(libp2p::yamux::YamuxConfig::default())
-        .boxed();
+    // Add initial connected peers to the swarm
+    for peer_id in &pending_peers {
+        if let Some(addr) = connected_peers.iter().find_map(|addr| {
+            let parsed = addr.parse::<Multiaddr>().ok()?;
+            if parsed.iter().any(|proto| match proto {
+                libp2p::core::multiaddr::Protocol::P2p(hash) => {
+                    match PeerId::from_multihash(hash) {
+                        Ok(id) => id == *peer_id,
+                        Err(_) => false,
+                    }
+                }
+                _ => false,
+            }) {
+                Some(parsed)
+            } else {
+                None
+            }
+        }) {
+            swarm.dial(addr).unwrap_or_else(|_| {
+                println!(
+                    "{}",
+                    LogEntry {
+                        time: Local::now(),
+                        level: LogLevel::Error,
+                        message: format!("Failed to dial peer: {:?}", peer_id),
+                    }
+                )
+            });
 
-    // Create a Kademlia behaviour
-    let store: MemoryStore = MemoryStore::new(local_peer_id);
-    let mut kademlia_config: KademliaConfig = KademliaConfig::default();
-    let kademlia: Kademlia<MemoryStore> =
-        Kademlia::with_config(local_peer_id, store, kademlia_config);
+            println!(
+                "{}",
+                LogEntry {
+                    time: Local::now(),
+                    level: LogLevel::Info,
+                    message: format!("Dialed peer: {:?}", peer_id),
+                }
+            );
+        }
+    }
 
-    // Create a Swarm that manages peers and events
-    let mut swarm = {
-        let exec = Box::new(move |fut| {
-            Handle::current().spawn(fut);
-        });
+    while !pending_peers.is_empty() {
+        // Take a peer from the pending_peers set
+        let peer_id = pending_peers.iter().next().unwrap().clone();
+        pending_peers.remove(&peer_id);
 
-        SwarmBuilder::with_executor(transport, kademlia, local_peer_id, exec)
-    };
-    
-    // // Start the mDNS service
-    // let mut mdns = libp2p::mdns::Config::default();
+        // Add the peer to the discovered_peers set
+        discovered_peers.insert(peer_id.clone());
 
-    // // Start the swarm and listen for events
-    // let mut listening = false;
-    // let mut listening_addr: Multiaddr = Multiaddr::empty();
+        println!(
+            "{}",
+            LogEntry {
+                time: Local::now(),
+                level: LogLevel::Info,
+                message: format!("Processing peer: {:?}", peer_id),
+            }
+        );
 
-    Ok(())
+        // Perform an iterative search for the closest peers
+        swarm.behaviour_mut().get_closest_peers(peer_id);
+
+        // Process the swarm events
+        loop {
+            let event = swarm.next().await;
+            match event {
+                Some(SwarmEvent::Behaviour(KademliaEvent::OutboundQueryProgressed {
+                    id: _,
+                    result,
+                    ..
+                })) => {
+                    println!(
+                        "{}",
+                        LogEntry {
+                            time: Local::now(),
+                            level: LogLevel::Info,
+                            message: format!("Outbound query progressed: {:?}", result),
+                        }
+                    );
+                    match result {
+                        QueryResult::GetClosestPeers(Ok(ok)) => {
+                            let mut new_peers = false;
+                            for peer_id in ok.peers.into_iter() {
+                                // If the peer is not already discovered, add it to pending_peers
+                                if !discovered_peers.contains(&peer_id) {
+                                    pending_peers.insert(peer_id);
+                                    new_peers = true;
+                                }
+                            }
+
+                            // If new peers were added to pending_peers, break the loop to process them
+                            if new_peers {
+                                println!(
+                                    "{}",
+                                    LogEntry {
+                                        time: Local::now(),
+                                        level: LogLevel::Info,
+                                        message: format!("New peers found: {:?}", pending_peers),
+                                    }
+                                );
+                                break;
+                            }
+                        }
+                        _ => (),
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+
+    println!(
+        "{}",
+        LogEntry {
+            time: Local::now(),
+            level: LogLevel::Info,
+            message: format!("Final discovered peers: {:?}", discovered_peers),
+        }
+    );
+
+    // Convert the discovered_peers set to a vector of strings
+    let discovered_peers: Vec<String> = discovered_peers
+        .into_iter()
+        .map(|peer_id| peer_id.to_base58())
+        .collect();
+
+    // Print discovered peers
+    for peer in &discovered_peers {
+        println!(
+            "{}",
+            LogEntry {
+                time: Local::now(),
+                level: LogLevel::Info,
+                message: format!("Discovered peer: {:?}", peer),
+            }
+        );
+    }
+
+    Ok(discovered_peers)
 }
 
-pub async fn time_to_reach_node(provider: Arc<Provider<Ws>>) -> Result<()> {
+// curl -X 'GET' 'http://127.0.0.1:5052/eth/v1/node/peers' -H 'accept: application/json'
+pub async fn get_connected_peers() -> Result<Vec<String>, Box<dyn Error>> {
+    let url: &str = "http://127.0.0.1:5052/eth/v1/node/peers";
+    let client: Client = Client::new();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(ACCEPT, "application/json".parse().unwrap());
+
+    let response: Value = client
+        .get(url)
+        .headers(headers)
+        .send()
+        .await?
+        .json()
+        .await?;
+
+    let data: &Vec<Value> = response.get("data").unwrap().as_array().unwrap();
+
+    let mut connected_peers = Vec::new();
+
+    for peer in data {
+        if let Some(Value::String(address)) = peer.get("last_seen_p2p_address") {
+            if let Some(Value::String(state)) = peer.get("state") {
+                if state == "connected" {
+                    connected_peers.push(address.clone());
+                    // println!(
+                    //     "{}",
+                    //     LogEntry {
+                    //         time: Local::now(),
+                    //         level: LogLevel::Info,
+                    //         message: format!("{:?}", address),
+                    //     }
+                    // );
+                }
+            }
+        }
+    }
+
+    Ok(connected_peers)
+}
+
+// curl -X 'GET' 'http://127.0.0.1:5052/eth/v2/beacon/blocks/head' -H 'accept: application/json'
+pub async fn get_consensus_block() -> Result<Vec<String>, Box<dyn Error>> {
+    let url: &str = "http://127.0.0.1:5052/eth/v2/beacon/blocks/head";
+    let client: reqwest::Client = reqwest::Client::new();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(ACCEPT, "application/json".parse().unwrap());
+
+    let response: Value = client
+        .get(url)
+        .headers(headers)
+        .send()
+        .await?
+        .json()
+        .await?;
+
+    let data: &Value = response.get("data").unwrap();
+    let message: &Value = data.get("message").unwrap();
+    let body: &Value = message.get("body").unwrap();
+    let execution_payload: &Value = body.get("execution_payload").unwrap();
+    let transactions: &Value = execution_payload.get("transactions").unwrap();
+
+    let mut transaction_strings: Vec<String> = Vec::new();
+
+    for transaction in transactions.as_array().unwrap() {
+        let transaction_string: String = transaction.to_string();
+        let transaction_string = transaction_string.trim_matches('"').to_string();
+        transaction_strings.push(transaction_string);
+    }
+
+    // enable if you want to flood the terminal
+    // println!("{:?}", transaction_strings);
+
+    Ok(transaction_strings)
+}
+
+// sending a block request to consensus client to see if they have a new block
+pub async fn try_send_block_request() {}
+
+// maybe not needed, incase the block request method is already working.
+pub async fn get_response_time() {}
+
+// needed for developement purposes
+pub async fn time_to_reach_geth(provider: Arc<Provider<Ws>>) -> Result<()> {
     let mut stream: SubscriptionStream<Ws, Block<TxHash>> = provider.subscribe_blocks().await?;
 
     while let Some(block_header) = stream.next().await {
@@ -130,7 +362,7 @@ pub async fn time_to_reach_node(provider: Arc<Provider<Ws>>) -> Result<()> {
                 time: Local::now(),
                 level: LogLevel::Info,
                 message: format!(
-                    "BLOCK: {:?} | SECS: {:?} | NANOS: {:?} ",
+                    "BLOCK: {:?} | SECS: {:.10?}.{:?}",
                     block_number,
                     time_difference.num_seconds(),
                     time_difference.num_nanoseconds().unwrap(),
@@ -142,6 +374,7 @@ pub async fn time_to_reach_node(provider: Arc<Provider<Ws>>) -> Result<()> {
     Ok(())
 }
 
+// for geth to add a static peer
 pub async fn add_peer(ipc_path: &Path, enode_url: &str) -> Result<()> {
     #[derive(Serialize)]
     struct JsonRpcRequest<'a> {
@@ -174,6 +407,7 @@ pub async fn add_peer(ipc_path: &Path, enode_url: &str) -> Result<()> {
     Ok(())
 }
 
+// for geth to remove a static peer
 pub async fn delete_peer(ipc_path: &Path, enode_url: &str) -> Result<()> {
     #[derive(Serialize)]
     struct JsonRpcRequest<'a> {
@@ -206,66 +440,11 @@ pub async fn delete_peer(ipc_path: &Path, enode_url: &str) -> Result<()> {
     Ok(())
 }
 
-pub async fn is_node_functioning(provider: &Provider<Ws>, node: &str, timeout: Duration) -> bool {
-    let start_time = Instant::now();
-
-    // Send a simple query (e.g., get_block_number) to the node
-    let block_number_result = provider.get_block_number().await;
-
-    // Measure the response time
-    let elapsed_time = start_time.elapsed();
-
-    // If the response time is less than the specified timeout and the query was successful, return true
-    // Otherwise, return false
-    elapsed_time < timeout && block_number_result.is_ok()
-}
-
-pub async fn update_node_reliability(
-    node_reliability_scores: &mut HashMap<String, f64>,
-    node: &str,
-    reliability: f64,
-) {
-    // Update the reliability score of the node in the hashmap
-    // If the node is not in the hashmap, add it with the given reliability
-    node_reliability_scores
-        .entry(node.to_string())
-        .or_insert(reliability);
-}
-
-pub async fn filter_nodes_by_reliability(
-    node_reliability_scores: &HashMap<String, f64>,
-    reliability_threshold: f64,
-) -> Vec<String> {
-    // Filter the nodes in the hashmap based on the given reliability threshold
-    // Return a Vec<String> of nodes that pass the threshold
-    node_reliability_scores
-        .iter()
-        .filter(|&(_, score)| *score >= reliability_threshold)
-        .map(|(node, _)| node.to_string())
-        .collect()
-}
-
-pub async fn score_node(node: &str) -> f64 {
-    // Calculate a score for the node based on its attributes (e.g., uptime, latency, throughput)
-    // Return the calculated score
-    // For now, I will return a placeholder value. You can implement your own scoring logic.
-    1.0
-}
-
-async fn prioritize_nodes_by_score(nodes: &Vec<String>) -> Vec<String> {
-    let scored_nodes: Vec<(String, f64)> = stream::iter(nodes.iter().map(|node: &String| {
-        let node: String = node.clone();
-        async move { (node.clone(), score_node(&node).await) }
-    }))
-    .then(|future| async { future.await })
-    .collect::<Vec<_>>()
-    .await;
-
-    // Sort the nodes based on their scores
-    let mut sorted_nodes: Vec<(String, f64)> = scored_nodes.clone();
-    sorted_nodes
-        .sort_unstable_by(|a: &(String, f64), b: &(String, f64)| b.1.partial_cmp(&a.1).unwrap());
-
-    // Return the sorted list of nodes
-    sorted_nodes.into_iter().map(|(node, _)| node).collect()
-}
+// maybe we dont even need these, but we will see later.
+pub async fn update_node_reliability() {}
+pub async fn filter_nodes_by_reliability() {}
+pub async fn score_node() {}
+pub async fn prioritize_nodes_by_score() {}
+pub async fn get_best_peers() {}
+pub async fn process_peers() {}
+pub async fn get_region() {}
