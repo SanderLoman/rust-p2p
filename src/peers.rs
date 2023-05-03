@@ -29,7 +29,7 @@ use std::time::{Duration, Instant};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::UnixStream;
 use tokio::runtime::Handle;
-use tokio::sync::mpsc::{channel, Receiver, Sender};
+use tokio::sync::mpsc;
 use tokio::time::timeout;
 
 #[derive(Debug)]
@@ -121,25 +121,20 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
         }
     );
 
+    for peer_id_str in &connected_peers {
+        if let Ok(peer_id) = PeerId::from_str(peer_id_str) {
+            pending_peers.insert(peer_id);
+        }
+    }
+
     // Add initial connected peers to the swarm
-    for peer_id in &pending_peers {
-        if let Some(addr) = connected_peers.iter().find_map(|addr| {
-            let parsed = addr.parse::<Multiaddr>().ok()?;
-            if parsed.iter().any(|proto| match proto {
-                libp2p::core::multiaddr::Protocol::P2p(hash) => {
-                    match PeerId::from_multihash(hash) {
-                        Ok(id) => id == *peer_id,
-                        Err(_) => false,
-                    }
-                }
-                _ => false,
-            }) {
-                Some(parsed)
-            } else {
-                None
-            }
+    for addr_str in &connected_peers {
+        let addr = addr_str.parse::<Multiaddr>()?;
+        if let Some(peer_id) = addr.iter().find_map(|proto| match proto {
+            libp2p::core::multiaddr::Protocol::P2p(hash) => PeerId::from_multihash(hash).ok(),
+            _ => None,
         }) {
-            swarm.dial(addr).unwrap_or_else(|_| {
+            swarm.dial(addr.clone()).unwrap_or_else(|_| {
                 println!(
                     "{}",
                     LogEntry {
@@ -222,22 +217,27 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
                                 break;
                             }
                         }
-                        _ => (),
+                        _ => println!(
+                            "{}",
+                            LogEntry {
+                                time: Local::now(),
+                                level: LogLevel::Warning,
+                                message: format!("Unhandled query result: {:?}", result),
+                            }
+                        ),
                     }
                 }
-                _ => (),
+                _ => println!(
+                    "{}",
+                    LogEntry {
+                        time: Local::now(),
+                        level: LogLevel::Warning,
+                        message: format!("Unhandled event: {:?}", event),
+                    }
+                ),
             }
         }
     }
-
-    println!(
-        "{}",
-        LogEntry {
-            time: Local::now(),
-            level: LogLevel::Info,
-            message: format!("Final discovered peers: {:?}", discovered_peers),
-        }
-    );
 
     // Convert the discovered_peers set to a vector of strings
     let discovered_peers: Vec<String> = discovered_peers
