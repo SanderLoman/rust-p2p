@@ -1,8 +1,12 @@
 use chrono::{DateTime, Local, TimeZone, Utc};
 use colored::*;
+use discv5::{
+    enr,
+    enr::{CombinedKey, NodeId},
+    Discv5, Discv5ConfigBuilder, TokioExecutor,
+};
 use ethers::prelude::*;
 use eyre::Result;
-use futures::future::ok;
 use futures::stream::{self, StreamExt};
 use libp2p::{
     core::upgrade,
@@ -22,10 +26,12 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::error::Error;
 use std::fmt;
+use std::net::SocketAddr;
+use std::net::{Ipv4Addr, SocketAddrV4};
 use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::UnixStream;
 use tokio::runtime::Handle;
@@ -37,25 +43,6 @@ struct LogEntry {
     time: DateTime<Local>,
     level: LogLevel,
     message: String,
-}
-
-/// A structure representing an Ethereum node
-#[derive(Debug)]
-struct Node {
-    url: String,
-    enodes: Vec<String>,
-    response_time: Option<Duration>,
-}
-
-impl Node {
-    /// Creates a new Node with the given URL
-    fn new(url: String) -> Self {
-        Node {
-            url,
-            enodes: Vec::new(),
-            response_time: None,
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -83,11 +70,11 @@ impl fmt::Display for LogEntry {
     }
 }
 
-const SCORE_THRESHOLD: f64 = 0.0;
-const MAX_TOP_NODES: usize = 50;
-const RESPONSE_TIME_THRESHOLD: Duration = Duration::from_secs(5);
+pub async fn discover_peers() -> Result<Vec<Multiaddr>, Box<dyn Error>> {
+    Ok(vec![])
+}
 
-pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
+pub async fn process_discovered_peers() -> Result<Vec<String>, Box<dyn Error>> {
     let local_key = libp2p::identity::Keypair::generate_ed25519();
     let local_peer_id = PeerId::from(local_key.public());
 
@@ -108,7 +95,7 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
     };
 
     // Bootstrap Kademlia with peers from get_connected_peers()
-    let connected_peers = get_connected_peers().await?;
+    let connected_peers = bootstrapped_peers().await?;
     let mut discovered_peers = HashSet::new();
     let mut pending_peers = HashSet::new();
 
@@ -150,7 +137,7 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
                 LogEntry {
                     time: Local::now(),
                     level: LogLevel::Info,
-                    message: format!("Dialed peer: {:?}", peer_id),
+                    message: format!("Dialed peer: {:?}", addr),
                 }
             );
         }
@@ -261,7 +248,7 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
 }
 
 // curl -X 'GET' 'http://127.0.0.1:5052/eth/v1/node/peers' -H 'accept: application/json'
-pub async fn get_connected_peers() -> Result<Vec<String>, Box<dyn Error>> {
+pub async fn bootstrapped_peers() -> Result<Vec<String>, Box<dyn Error>> {
     let url: &str = "http://127.0.0.1:5052/eth/v1/node/peers";
     let client: Client = Client::new();
 
@@ -282,23 +269,45 @@ pub async fn get_connected_peers() -> Result<Vec<String>, Box<dyn Error>> {
 
     for peer in data {
         if let Some(Value::String(address)) = peer.get("last_seen_p2p_address") {
-            if let Some(Value::String(state)) = peer.get("state") {
-                if state == "connected" {
-                    connected_peers.push(address.clone());
-                    // println!(
-                    //     "{}",
-                    //     LogEntry {
-                    //         time: Local::now(),
-                    //         level: LogLevel::Info,
-                    //         message: format!("{:?}", address),
-                    //     }
-                    // );
+            if let Some(Value::String(peer_id)) = peer.get("peer_id") {
+                if let Some(Value::String(state)) = peer.get("state") {
+                    if state == "connected" {
+                        connected_peers.push(format!("{}/p2p/{}", address, peer_id));
+                    }
                 }
             }
         }
     }
 
     Ok(connected_peers)
+}
+
+pub async fn bootstrapped_peers_enr() -> Result<Vec<String>, Box<dyn Error>> {
+    let url: &str = "http://127.0.0.1:5052/eth/v1/node/peers";
+    let client: Client = Client::new();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(ACCEPT, "application/json".parse().unwrap());
+
+    let response: Value = client
+        .get(url)
+        .headers(headers)
+        .send()
+        .await?
+        .json()
+        .await?;
+
+    let data: &Vec<Value> = response.get("data").unwrap().as_array().unwrap();
+
+    let mut connected_peers_enr = Vec::new();
+
+    for peer in data {
+        if let Some(Value::String(enr)) = peer.get("enr") {
+            connected_peers_enr.push(enr.clone());
+        }
+    }
+
+    Ok(connected_peers_enr)
 }
 
 // curl -X 'GET' 'http://127.0.0.1:5052/eth/v2/beacon/blocks/head' -H 'accept: application/json'
