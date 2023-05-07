@@ -26,6 +26,7 @@ use libp2p::{
 
 mod liquidations;
 mod peers;
+mod peers_retry;
 mod sandwhich;
 
 #[derive(Debug)]
@@ -94,7 +95,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     );
 
-    peers::process_discovered_peers().await?;
+    peers_retry::discover_peers().await;
     // peers::time_to_reach_geth(provider_arc).await?;
 
     // let enodes = peers::get_enode_addresses().await?;
