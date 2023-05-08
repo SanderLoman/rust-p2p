@@ -3403,6 +3403,7 @@ dependencies = [
 name = "mev"
 version = "0.1.0"
 dependencies = [
+ "base64 0.21.0",
  "chrono",
  "colored",
  "discv5",
