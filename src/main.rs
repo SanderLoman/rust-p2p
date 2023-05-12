@@ -15,13 +15,8 @@ use std::fmt;
 use std::sync::Arc;
 
 use libp2p::{
-    core::upgrade,
-    dns::DnsConfig,
-    identity,
-    kad::{record::store::MemoryStore, Kademlia, KademliaConfig, KademliaEvent, QueryResult},
-    noise::{AuthenticKeypair, Keypair, NoiseConfig, X25519Spec},
-    swarm::{NetworkBehaviour, SwarmBuilder, SwarmEvent},
-    yamux, Multiaddr, PeerId, Swarm, Transport,
+    core::upgrade, dns::DnsConfig, identity, kad::*, noise::*, swarm::*, yamux, Multiaddr, PeerId,
+    Swarm, Transport,
 };
 
 mod liquidations;

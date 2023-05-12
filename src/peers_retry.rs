@@ -11,14 +11,8 @@ use eyre::Result;
 use futures::stream::{self, StreamExt};
 use libp2p::kad::kbucket::{Entry, EntryRefView};
 use libp2p::{
-    core::upgrade,
-    dns::DnsConfig,
-    identity,
-    kad::{record::store::MemoryStore, Kademlia, KademliaConfig, KademliaEvent, QueryResult},
-    mdns::*,
-    noise::{AuthenticKeypair, Keypair, NoiseConfig, X25519Spec},
-    swarm::{NetworkBehaviour, PollParameters, SwarmBuilder, SwarmEvent},
-    yamux, Multiaddr, PeerId, Swarm, Transport,
+    core::upgrade, dns::DnsConfig, identity, kad::*, noise::*, swarm::*, yamux, Multiaddr, PeerId,
+    Swarm, Transport,
 };
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
@@ -74,8 +68,9 @@ impl fmt::Display for LogEntry {
     }
 }
 
-
 pub async fn discover_peers() -> Result<(), Box<dyn Error>> {
     // get the local peer_id from the beacon node
+
+    // setup 
     Ok(())
 }
