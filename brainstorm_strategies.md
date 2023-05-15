@@ -19,5 +19,5 @@
   - 
 - #### **Visual representation of the idea:**
   - ###### ***the best image you will ever see***
-  - <img src="/home/sander/Rust/mev/markdown_images/chain-sandwhich.png"  width="350" height="400">
+  - <img src="./markdown_images/chain-sandwhich.png"  width="350" height="400">
   - ###### *Jeremy Clarkson's Voice:* Yes, very good. That's the best image you will ever see in your life.
