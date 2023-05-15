@@ -1,23 +1,34 @@
-# My collection of thoughts and ideas on different kinds of new strategies in the DeFi space.
+# **My collection of thoughts and ideas on different kinds of new strategies in the DeFi space.**
 
-## Table of Contents
+## _Legenda_:
+
+- **_buy_** = buy order by the bot
+- **_sell_** = sell order by the bot
+- **_Vbuy_** = buy order by a victim
+- **_Vsell_** = sell order by a victim
+- **_Lsell_** = large sell order by the bot
+- **_Lbuy_** = large buy order by the bot
+
+## **Table of Contents**
 
 1. [New type of sandwhich ops](#new-type-of-sandwhich-ops)
-  - 1.1 [Deeper explaination of "New type of sandwhich ops"?](#deeper-explaination-of-new-type-of-sandwhich-ops)
-    - 1.1.1 [Front / Back / Front / back](#front--back--front--back)
-    - 1.1.2 [Visual representation of the idea:](#visual-representation-of-the-idea)
+
+- 1.1 [Deeper explaination of "New type of sandwhich ops"?](#deeper-explaination-of-new-type-of-sandwhich-ops)
+  - 1.1.1 [Visual representation of the idea](#visual-representation-of-the-idea)
+  - 1.1.2 [Chained Sandwhich](#explaintion-of-the-chained-sandwhich-sandwhich)
+
 2. [title](#title)
 3. [title](#title)
 
-## New type of sandwhich ops
+## **New type of sandwhich ops**
 
-- **New type of sandwhich ops**: Basically what this "New type" will be or do is that it takes advantage of normal usual sandwhiches chains them together e.g. It would do normal sandwhiching ***buy/buy/sell*** and then after when it detects a sell order from someone it would sell again so it would do this: ***sell/sell/buy***. So in the end it will look something like this: ***buy/buy/sell/sell/sell/buy***. 
+- **New type of sandwhich ops:** Basically what this "New type" will be or do is that it will take advantage of normal usual sandwiching, chains them together e.g. It would do normal sandwiching <span style="color: green;">**buy**</span>/<span style="color: purple;">**Vbuy**</span>/<span style="color: red;">**sell**</span> and then after when it detects a **sell** order from someone it would **sell** again so it would do this: <span style="color: red;">**sell**</span>/<span style="color: orange;">**Vsell**</span>/<span style="color: green;">**buy**</span>. So in the end it will look something like this: <span style="color: green;">**buy**</span>/<span style="color: purple;">**Vbuy**</span>/<span style="color: red;">**sell**</span>/<span style="color: red;">**sell**</span>/<span style="color: orange;">**Vsell**</span>/<span style="color: green;">**buy**</span>.
 
-### Deeper explaination of "New type of sandwhich ops"
+### **Deeper explaination of "New type of sandwhich ops"**
 
-- #### **Front / Back / Front / back**
-  - 
 - #### **Visual representation of the idea:**
-  - ##### ***the best image you will ever see***
-  - <img src="./markdown_images/chain-sandwhich.png"  width="350" height="400">
-  - ##### *Jeremy Clarkson's Voice:* Yes, very good. That's the best image you will ever see in your life.
+  ##### _This is a very basic example_
+  <img src="./markdown_images/chain-sandwhich.png"  width="320" height="400">
+- #### **Explaintion of the chained-sandwhich sandwhich**
+  - So again, the basic example shows that we can <span style="color: green;">**buy**</span>/<span style="color: purple;">**Vbuy**</span>/<span style="color: red;">**sell**</span>/<span style="color: red;">**sell**</span>/<span style="color: orange;">**Vsell**</span>/<span style="color: green;">**buy**</span>. But we can expand this depending on the transactions waiting in the mempool. Let's say we see a lot of buying transactions and a lot of selling transactions for a specific token. In this case, we can then do this:
+    <span style="color: green;">**buy**</span>/<span style="color: purple;">**Vbuy**</span>/<span style="color: purple;">**Vbuy**</span>/<span style="color: purple;">**Vbuy**</span>/<span style="color: purple;">**Vbuy**</span>/<span style="color: purple;">**Vbuy**</span>/<span style="color: red;">**Lsell**</span>/<span style="color: orange;">**Vsell**</span>/<span style="color: orange;">**Vsell**</span>/<span style="color: orange;">**Vsell**</span>/<span style="color: green;">**Lbuy**</span>.
