@@ -11,12 +11,12 @@
 
 ### What do we need for Discv5 and discovering peer?
 
-- ENR of the consensus client
-  - 
-- Listenings address
-  - 
-- Discv5 config
-  - 
+- **ENR of the consensus client**
+  - blah blah blah
+- **Listenings address**
+  - blah blah blah
+- **Discv5 config**
+  - blah blah blah
 - ****
 
 ## libp2p
