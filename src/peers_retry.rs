@@ -1,5 +1,5 @@
 /// !!!
-///52062
+/// 52062
 /// LISTENING ADDRESS: /ip4/0.0.0.0/tcp/9000/p2p/16Uiu2HAm3CHQXGJokLWodbDocko58tCdgotxYcR6BuXyLKcuobUR
 ///
 /// ENR ADDRESS: enr:-K24QGDcHgq97t7pNQ0E4Q-FwiQN3ZT5JDmuMC7hz6A1bIRyO32Sti8NSpclcCTNfPgQvU6L5dgvXRfxLu7L7NeKGUY0h2F0dG5ldHOIAAAAAAAAAACEZXRoMpBiiUHvAwAQIP__________gmlkgnY0iXNlY3AyNTZrMaECc29ruZqHENx-CIWjjqcFRZpVXRmo2h20dbjRHy1fgE6Ic3luY25ldHMAg3RjcIIjKA
@@ -17,8 +17,8 @@ use eyre::Result;
 use futures::stream::{self, StreamExt};
 use libp2p::kad::kbucket::{Entry, EntryRefView};
 use libp2p::{
-    core::upgrade, dns::DnsConfig, identity, kad::*, noise::*, swarm::*, yamux, Multiaddr, PeerId,
-    Swarm, Transport,
+    core::upgrade, dns::DnsConfig, identity, kad::*, noise::*, ping, swarm::*, yamux, Multiaddr,
+    PeerId, Swarm, Transport,
 };
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
@@ -47,6 +47,12 @@ struct LogEntry {
     time: DateTime<Local>,
     level: LogLevel,
     message: String,
+}
+
+#[derive(NetworkBehaviour, Default)]
+struct Behavior {
+    keep_alive: keep_alive::Behaviour,
+    ping: ping::Behaviour,
 }
 
 #[derive(Debug)]
@@ -82,7 +88,7 @@ pub async fn bootstrapped_peers() -> Result<Vec<String>, Box<dyn Error>> {
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, "application/json".parse().unwrap());
 
-    let response: Value = client
+    let res: Value = client
         .get(url)
         .headers(headers)
         .send()
@@ -90,7 +96,7 @@ pub async fn bootstrapped_peers() -> Result<Vec<String>, Box<dyn Error>> {
         .json()
         .await?;
 
-    let data: &Vec<Value> = response.get("data").unwrap().as_array().unwrap();
+    let data: &Vec<Value> = res.get("data").unwrap().as_array().unwrap();
 
     let mut connected_peers = Vec::new();
 
@@ -140,18 +146,30 @@ pub async fn get_enr_key() -> Result<String, Box<dyn Error>> {
 }
 
 // probably need to use the discv5 crate for this since its for discovery
-pub async fn discover_peers() -> Result<(), Box<dyn Error>> {
-    // maybe we dont need the local peer id because we are just discovering peers
+pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
+    // found_peers is a vector of peer addresses that we have found, we will push more to this vector as we discover more peers
+    let mut found_peers: Vec<String> = Vec::new();
+    let bootstrapped_peers = bootstrapped_peers().await?;
+    bootstrapped_peers.iter().for_each(|peer| {
+        let peer = peer.clone();
+        found_peers.push(peer);
+    });
+    println!("Found {found_peers:?}");
+
     let local_peer_id = get_local_peer_id().await?;
     let enr_key = get_enr_key().await?;
 
     let enr: discv5::enr::Enr<discv5::enr::CombinedKey> = enr::Enr::from_str(&enr_key)?;
+    println!("ENR: {:?}", enr);
 
-    Ok(())
+    
+
+    Ok(found_peers)
 }
 
 // probably need to use the libp2p crate for this since its for managing peers
 pub async fn handle_discovered_peers() -> Result<(), Box<dyn Error>> {
+    let discovered_peers = discover_peers().await?;
     let local_peer_id = get_local_peer_id().await?;
     let enr_key = get_enr_key().await?;
     Ok(())
@@ -173,7 +191,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Specify the configuration for the Discv5 service
     let config = Discv5Config {
-        bind_address: SocketAddr::from(([0, 0, 0, 0], 0)), // Replace with desired bind address
+        bind_address: SocketAddr::from(([0, 0, 0, 0], 0)),
         enr: Some(local_enr.clone()),
         ..Default::default()
     };
