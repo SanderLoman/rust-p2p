@@ -2,7 +2,7 @@
 /// 52062
 /// LISTENING ADDRESS: /ip4/0.0.0.0/tcp/9000/p2p/16Uiu2HAm3CHQXGJokLWodbDocko58tCdgotxYcR6BuXyLKcuobUR
 ///
-/// ENR ADDRESS: enr:-K24QGDcHgq97t7pNQ0E4Q-FwiQN3ZT5JDmuMC7hz6A1bIRyO32Sti8NSpclcCTNfPgQvU6L5dgvXRfxLu7L7NeKGUY0h2F0dG5ldHOIAAAAAAAAAACEZXRoMpBiiUHvAwAQIP__________gmlkgnY0iXNlY3AyNTZrMaECc29ruZqHENx-CIWjjqcFRZpVXRmo2h20dbjRHy1fgE6Ic3luY25ldHMAg3RjcIIjKA
+/// ENR ADDRESS LAPTOP: enr:-K24QGDcHgq97t7pNQ0E4Q-FwiQN3ZT5JDmuMC7hz6A1bIRyO32Sti8NSpclcCTNfPgQvU6L5dgvXRfxLu7L7NeKGUY0h2F0dG5ldHOIAAAAAAAAAACEZXRoMpBiiUHvAwAQIP__________gmlkgnY0iXNlY3AyNTZrMaECc29ruZqHENx-CIWjjqcFRZpVXRmo2h20dbjRHy1fgE6Ic3luY25ldHMAg3RjcIIjKA
 ///
 /// !!!
 use chrono::{DateTime, Local, TimeZone, Utc};
@@ -145,6 +145,23 @@ pub async fn get_enr_key() -> Result<String, Box<dyn Error>> {
     Ok(enr_key)
 }
 
+use enr::{EnrBuilder, k256};
+use rand::thread_rng;
+
+pub async fn gen_enr() -> Result<String, Box<dyn Error>> {
+    
+    // generate a random secp256k1 key
+    let mut rng = thread_rng();
+    let key = k256::ecdsa::SigningKey::random(&mut rng);
+    
+    let ip = Ipv4Addr::new(0,0,0,0);
+    let enr = EnrBuilder::new("v4").ip4(ip).tcp4(0).build(&key).unwrap();
+    let enr_key = enr.to_base64();
+    println!("ENR: {:?}", enr_key);
+    
+    Ok(enr_key)
+}
+
 // probably need to use the discv5 crate for this since its for discovery
 pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
     // found_peers is a vector of peer addresses that we have found, we will push more to this vector as we discover more peers
@@ -154,15 +171,15 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
         let peer = peer.clone();
         found_peers.push(peer);
     });
-    println!("Found {found_peers:?}");
+    // println!("Found {found_peers:?}");
 
     let local_peer_id = get_local_peer_id().await?;
     let enr_key = get_enr_key().await?;
 
     let enr: discv5::enr::Enr<discv5::enr::CombinedKey> = enr::Enr::from_str(&enr_key)?;
-    println!("ENR: {:?}", enr);
+    // println!("ENR: {:?}", enr);
 
-    
+    gen_enr().await?;
 
     Ok(found_peers)
 }
@@ -233,6 +250,82 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 
+The discovery domain: discv5
+Discovery Version 5 (discv5) (Protocol version v5.1) is used for peer discovery.
 
+discv5 is a standalone protocol, running on UDP on a dedicated port, meant for peer discovery only. discv5 supports self-certified, flexible peer records (ENRs) and topic-based advertisement, both of which are (or will be) requirements in this context.
+
+Integration into libp2p stacks
+discv5 SHOULD be integrated into the client’s libp2p stack by implementing an adaptor to make it conform to the service discovery and peer routing abstractions and interfaces (go-libp2p links provided).
+
+Inputs to operations include peer IDs (when locating a specific peer) or capabilities (when searching for peers with a specific capability), and the outputs will be multiaddrs converted from the ENR records returned by the discv5 backend.
+
+This integration enables the libp2p stack to subsequently form connections and streams with discovered peers.
+
+ENR structure
+The Ethereum Node Record (ENR) for an Ethereum consensus client MUST contain the following entries (exclusive of the sequence number and signature, which MUST be present in an ENR):
+
+The compressed secp256k1 publickey, 33 bytes (secp256k1 field).
+The ENR MAY contain the following entries:
+
+An IPv4 address (ip field) and/or IPv6 address (ip6 field).
+A TCP port (tcp field) representing the local libp2p listening port.
+A UDP port (udp field) representing the local discv5 listening port.
+Specifications of these parameters can be found in the ENR Specification.
+
+Attestation subnet bitfield
+The ENR attnets entry signifies the attestation subnet bitfield with the following form to more easily discover peers participating in particular attestation gossip subnets.
+
+Key	Value
+attnets	SSZ Bitvector[ATTESTATION_SUBNET_COUNT]
+If a node's MetaData.attnets has any non-zero bit, the ENR MUST include the attnets entry with the same value as MetaData.attnets.
+
+If a node's MetaData.attnets is composed of all zeros, the ENR MAY optionally include the attnets entry or leave it out entirely.
+
+eth2 field
+ENRs MUST carry a generic eth2 key with an 16-byte value of the node's current fork digest, next fork version, and next fork epoch to ensure connections are made with peers on the intended Ethereum network.
+
+Key	Value
+eth2	SSZ ENRForkID
+Specifically, the value of the eth2 key MUST be the following SSZ encoded object (ENRForkID)
+
+(
+    fork_digest: ForkDigest
+    next_fork_version: Version
+    next_fork_epoch: Epoch
+)
+where the fields of ENRForkID are defined as
+
+fork_digest is compute_fork_digest(current_fork_version, genesis_validators_root) where
+current_fork_version is the fork version at the node's current epoch defined by the wall-clock time (not necessarily the epoch to which the node is sync)
+genesis_validators_root is the static Root found in state.genesis_validators_root
+next_fork_version is the fork version corresponding to the next planned hard fork at a future epoch. If no future fork is planned, set next_fork_version = current_fork_version to signal this fact
+next_fork_epoch is the epoch at which the next fork is planned and the current_fork_version will be updated. If no future fork is planned, set next_fork_epoch = FAR_FUTURE_EPOCH to signal this fact
+Note: fork_digest is composed of values that are not known until the genesis block/state are available. Due to this, clients SHOULD NOT form ENRs and begin peer discovery until genesis values are known. One notable exception to this rule is the distribution of bootnode ENRs prior to genesis. In this case, bootnode ENRs SHOULD be initially distributed with eth2 field set as ENRForkID(fork_digest=compute_fork_digest(GENESIS_FORK_VERSION, b'\x00'*32), next_fork_version=GENESIS_FORK_VERSION, next_fork_epoch=FAR_FUTURE_EPOCH). After genesis values are known, the bootnodes SHOULD update ENRs to participate in normal discovery operations.
+
+Clients SHOULD connect to peers with fork_digest, next_fork_version, and next_fork_epoch that match local values.
+
+Clients MAY connect to peers with the same fork_digest but a different next_fork_version/next_fork_epoch. Unless ENRForkID is manually updated to matching prior to the earlier next_fork_epoch of the two clients, these connecting clients will be unable to successfully interact starting at the earlier next_fork_epoch.
+
+pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
+    // found_peers is a vector of peer addresses that we have found, we will push more to this vector as we discover more peers
+    let mut found_peers: Vec<String> = Vec::new();
+    let bootstrapped_peers = bootstrapped_peers().await?;
+    bootstrapped_peers.iter().for_each(|peer| {
+        let peer = peer.clone();
+        found_peers.push(peer);
+    });
+    println!("Found {found_peers:?}");
+
+    let local_peer_id = get_local_peer_id().await?;
+    let enr_key = get_enr_key().await?;
+
+    // let enr: discv5::enr::Enr<discv5::enr::CombinedKey> = enr::Enr::from_str(&enr_key)?;
+    // println!("ENR: {:?}", enr);
+
+    Ok(found_peers)
+}
+
+implement the discovery mechanism BUT i need you to do it a little different. So the idea is to have this Rust script find all peers on the ethereum beacon chain by first of all bootstrapping some peers (which it gets the peers from another function that i made, returning the bootstrapped peers)
 
  */
