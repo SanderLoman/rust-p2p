@@ -9,7 +9,7 @@ use chrono::{DateTime, Local, TimeZone, Utc};
 use colored::*;
 use discv5::{
     enr,
-    enr::{CombinedKey, NodeId},
+    enr::{CombinedKey, NodeId, k256, EnrBuilder},
     Discv5, Discv5ConfigBuilder, Enr, TokioExecutor,
 };
 use ethers::prelude::*;
@@ -18,7 +18,7 @@ use futures::stream::{self, StreamExt};
 use libp2p::kad::kbucket::{Entry, EntryRefView};
 use libp2p::{
     core::upgrade, dns::DnsConfig, identity, kad::*, noise::*, ping, swarm::*, yamux, Multiaddr,
-    PeerId, Swarm, Transport,
+    PeerId, Swarm, Transport, multiaddr
 };
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
@@ -41,6 +41,7 @@ use tokio::net::UnixStream;
 use tokio::runtime::Handle;
 use tokio::sync::mpsc;
 use tokio::time::timeout;
+use rand::thread_rng;
 
 #[derive(Debug)]
 struct LogEntry {
@@ -115,7 +116,7 @@ pub async fn bootstrapped_peers() -> Result<Vec<String>, Box<dyn Error>> {
     Ok(connected_peers)
 }
 
-pub async fn get_local_peer_id() -> Result<String, Box<dyn Error>> {
+pub async fn get_local_peer_info() -> Result<(String, String, String, String), Box<dyn Error>> {
     let url = "http://127.0.0.1:5052/eth/v1/node/identity";
     let client = reqwest::Client::new();
     let mut headers = HeaderMap::new();
@@ -127,7 +128,19 @@ pub async fn get_local_peer_id() -> Result<String, Box<dyn Error>> {
         .as_str()
         .ok_or("Peer ID not found")?
         .to_owned();
-    Ok(peer_id)
+    let enr = json["data"]["enr"]
+        .as_str()
+        .ok_or("ENR not found")?
+        .to_owned();
+    let p2p_address = json["data"]["p2p_addresses"][0]
+        .as_str()
+        .ok_or("P2P address not found")?
+        .to_owned();
+    let discovery_address = json["data"]["discovery_addresses"][0]
+        .as_str()
+        .ok_or("Discovery address not found")?
+        .to_owned();
+    Ok((peer_id, enr, p2p_address, discovery_address))
 }
 
 pub async fn get_enr_key() -> Result<String, Box<dyn Error>> {
@@ -145,20 +158,34 @@ pub async fn get_enr_key() -> Result<String, Box<dyn Error>> {
     Ok(enr_key)
 }
 
-use enr::{EnrBuilder, k256};
-use rand::thread_rng;
+pub fn decode_enr(enr_key: &str) -> Result<Enr, Box<dyn Error>> {
+    let enr = Enr::from_str(enr_key)?;
+    println!("ENR: {:?}", enr);
+    println!("Node ID: {:?}", enr.node_id());
+    println!("IP: {:?}", enr.ip4());
+    println!("TCP Port: {:?}", enr.tcp4());
+    println!("UDP Port: {:?}", enr.udp4());
+    // and so on for other fields...
+    Ok(enr)
+}
 
 pub async fn gen_enr() -> Result<String, Box<dyn Error>> {
-    
+    let (peer_id, _, p2p_address, _) = get_local_peer_info().await?;
+
     // generate a random secp256k1 key
     let mut rng = thread_rng();
     let key = k256::ecdsa::SigningKey::random(&mut rng);
-    
-    let ip = Ipv4Addr::new(0,0,0,0);
-    let enr = EnrBuilder::new("v4").ip4(ip).tcp4(0).build(&key).unwrap();
+
+    let ip = p2p_address.split("/").nth(2).unwrap();
+    let port = p2p_address.split("/").nth(4).unwrap();
+
+    let ip = ip.parse::<std::net::Ipv4Addr>().unwrap();
+    let port = port.parse::<u16>().unwrap();
+
+    let enr = EnrBuilder::new("v4").ip4(ip).tcp4(port).udp4(port).build(&key)?;  // Added udp(port)
     let enr_key = enr.to_base64();
-    println!("ENR: {:?}", enr_key);
-    
+    println!("Generated ENR: {:?}", enr_key);
+
     Ok(enr_key)
 }
 
@@ -173,13 +200,17 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
     });
     // println!("Found {found_peers:?}");
 
-    let local_peer_id = get_local_peer_id().await?;
+    let local_peer_id = get_local_peer_info().await?;
     let enr_key = get_enr_key().await?;
 
     let enr: discv5::enr::Enr<discv5::enr::CombinedKey> = enr::Enr::from_str(&enr_key)?;
-    // println!("ENR: {:?}", enr);
+    let test = decode_enr(enr.clone().to_base64().as_str())?;
+    println!("ENR: {:?}\n\n\n", test);
+
 
     gen_enr().await?;
+
+    decode_enr(gen_enr().await?.as_str())?;
 
     Ok(found_peers)
 }
@@ -187,7 +218,7 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
 // probably need to use the libp2p crate for this since its for managing peers
 pub async fn handle_discovered_peers() -> Result<(), Box<dyn Error>> {
     let discovered_peers = discover_peers().await?;
-    let local_peer_id = get_local_peer_id().await?;
+    let local_peer_id = get_local_peer_info().await?;
     let enr_key = get_enr_key().await?;
     Ok(())
 }
