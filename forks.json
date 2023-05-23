@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "previous_version": "0x00001020",
+      "current_version": "0x00001020",
+      "epoch": "0"
+    },
+    {
+      "previous_version": "0x00001020",
+      "current_version": "0x01001020",
+      "epoch": "36660"
+    },
+    {
+      "previous_version": "0x01001020",
+      "current_version": "0x02001020",
+      "epoch": "112260"
+    },
+    {
+      "previous_version": "0x02001020",
+      "current_version": "0x03001020",
+      "epoch": "162304"
+    }
+  ]
+}

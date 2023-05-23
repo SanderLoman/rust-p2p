@@ -158,6 +158,22 @@ pub async fn get_enr_key() -> Result<String, Box<dyn Error>> {
     Ok(enr_key)
 }
 
+pub async fn get_forks() -> Result<String, Box<dyn Error>> {
+    let url = "http://127.0.0.1:5052/eth/v1/config/fork_schedule";
+    let client = reqwest::Client::new();
+    let mut headers = HeaderMap::new();
+    headers.insert(ACCEPT, "application/json".parse().unwrap());
+    let res = client.get(url).headers(headers).send().await?;
+    let body = res.text().await?;
+    let json: Value = serde_json::from_str(&body)?;
+    let forks = json["data"]
+        .as_str()
+        .ok_or("Forks not found")?
+        .to_owned();
+
+    Ok(forks)
+}
+
 pub fn decode_enr(enr_key: &str) -> Result<Enr, Box<dyn Error>> {
     let enr = Enr::from_str(enr_key)?;
     println!("ENR: {:?}", enr);
@@ -165,52 +181,88 @@ pub fn decode_enr(enr_key: &str) -> Result<Enr, Box<dyn Error>> {
     println!("IP: {:?}", enr.ip4());
     println!("TCP Port: {:?}", enr.tcp4());
     println!("UDP Port: {:?}", enr.udp4());
+    println!("{:?}", enr.seq());
+    println!("{:?}", enr.signature());
+    println!("{:?}", enr.public_key());
+    println!("{:?}", enr.verify());
+    println!("{:?}", enr.get_raw_rlp(enr_key));
+    println!("{:?}\n\n\n", enr.size());
     // and so on for other fields...
     Ok(enr)
 }
 
-pub async fn gen_enr() -> Result<String, Box<dyn Error>> {
-    let (peer_id, _, p2p_address, _) = get_local_peer_info().await?;
+// pub async fn gen_enr() -> Result<String, Box<dyn Error>> {
+//     let (peer_id, _, p2p_address, _) = get_local_peer_info().await?;
 
-    // generate a random secp256k1 key
-    let mut rng = thread_rng();
-    let key = k256::ecdsa::SigningKey::random(&mut rng);
+//     // generate a random secp256k1 key
+//     let mut rng = thread_rng();
+//     let key = k256::ecdsa::SigningKey::random(&mut rng);
 
-    let ip = p2p_address.split("/").nth(2).unwrap();
-    let port = p2p_address.split("/").nth(4).unwrap();
+//     let ip = p2p_address.split("/").nth(2).unwrap();
+//     let port = p2p_address.split("/").nth(4).unwrap();
 
-    let ip = ip.parse::<std::net::Ipv4Addr>().unwrap();
-    let port = port.parse::<u16>().unwrap();
+//     let ip4 = ip.parse::<std::net::Ipv4Addr>().unwrap();
+//     let tpc_udp = port.parse::<u16>().unwrap();
 
-    let enr = EnrBuilder::new("v4").ip4(ip).tcp4(port).udp4(port).build(&key)?;  // Added udp(port)
-    let enr_key = enr.to_base64();
-    println!("Generated ENR: {:?}", enr_key);
+//     let enr = EnrBuilder::new("v4").ip4(ip4).tcp4(tpc_udp).udp4(tpc_udp).tcp6(tpc_udp).udp6(tpc_udp).build(&key)?;
+//     let enr_key = enr.to_base64();
+//     println!("Generated ENR: {:?}\n\n\n", enr_key);
 
-    Ok(enr_key)
-}
+//     Ok(enr_key)
+// }
 
 // probably need to use the discv5 crate for this since its for discovery
 pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
     // found_peers is a vector of peer addresses that we have found, we will push more to this vector as we discover more peers
     let mut found_peers: Vec<String> = Vec::new();
-    let bootstrapped_peers = bootstrapped_peers().await?;
-    bootstrapped_peers.iter().for_each(|peer| {
-        let peer = peer.clone();
-        found_peers.push(peer);
-    });
-    // println!("Found {found_peers:?}");
+    // let bootstrapped_peers = bootstrapped_peers().await?;
+    // bootstrapped_peers.iter().for_each(|peer| {
+    //     let peer = peer.clone();
+    //     found_peers.push(peer);
+    // });
+    // // println!("Found {found_peers:?}");
 
-    let local_peer_id = get_local_peer_info().await?;
-    let enr_key = get_enr_key().await?;
+    // let local_peer_id = get_local_peer_info().await?;
+    // let enr_key = get_enr_key().await?;
 
-    let enr: discv5::enr::Enr<discv5::enr::CombinedKey> = enr::Enr::from_str(&enr_key)?;
-    let test = decode_enr(enr.clone().to_base64().as_str())?;
-    println!("ENR: {:?}\n\n\n", test);
+    // let enr: discv5::enr::Enr<discv5::enr::CombinedKey> = enr::Enr::from_str(&enr_key)?;
+    // let test = decode_enr(enr.clone().to_base64().as_str())?;
+    // println!("ENR: {:?}\n\n\n", test);
+    let (peer_id, _, p2p_address, _) = get_local_peer_info().await?;
+    
+    let ip = p2p_address.split("/").nth(2).unwrap();
+    let port = p2p_address.split("/").nth(4).unwrap();
+
+    let ip4 = ip.parse::<std::net::Ipv4Addr>().unwrap();
+    let tpc_udp = port.parse::<u16>().unwrap();
+    println!("{:?}", ip4);
+    println!("{:?}", tpc_udp);
+
+    // Create an ENR CombinedKey from the secp256k1 key pair
+    let combined_key = CombinedKey::generate_secp256k1();
+
+    // Build the ENR
+    let enr = EnrBuilder::new("v4")
+        .ip4("192.0.2.1".parse().unwrap())
+        .tcp4(tpc_udp)
+        .udp4(tpc_udp)
+        .add_value("eth2", )
+        .add_value("attnets",)
+        .build(&combined_key)
+        .unwrap();
+
+    // Print the ENR
+    println!("ENR: {}", enr);
+
+    // generate a random secp256k1 key
+    let mut rng = thread_rng();
+    let key = k256::ecdsa::SigningKey::random(&mut rng);
+    println!("{:?}", key);
 
 
-    gen_enr().await?;
-
-    decode_enr(gen_enr().await?.as_str())?;
+    let enr = EnrBuilder::new("v4").ip4(ip4).tcp4(tpc_udp).udp4(tpc_udp).tcp6(tpc_udp).udp6(tpc_udp).build(&key)?;
+    let enr_key = enr.to_base64();
+    println!("Generated ENR: {:?}\n", enr_key);
 
     Ok(found_peers)
 }
