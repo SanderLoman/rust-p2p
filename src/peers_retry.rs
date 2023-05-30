@@ -59,16 +59,7 @@ struct Behavior {
     ping: ping::Behaviour,
 }
 
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Default,
-    Serialize,
-    Deserialize,
-    Encode,
-    Decode,
-)]
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, Encode, Decode)]
 struct EnrForkId {
     fork_digest: [u8; 4],
     next_fork_version: [u8; 4],
