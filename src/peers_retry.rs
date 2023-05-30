@@ -9,7 +9,7 @@ use chrono::{DateTime, Local, TimeZone, Utc};
 use colored::*;
 use discv5::{
     enr,
-    enr::{CombinedKey, NodeId, k256, EnrBuilder},
+    enr::{k256, CombinedKey, EnrBuilder, NodeId},
     Discv5, Discv5ConfigBuilder, Enr, TokioExecutor,
 };
 use ethers::prelude::*;
@@ -17,13 +17,17 @@ use eyre::Result;
 use futures::stream::{self, StreamExt};
 use libp2p::kad::kbucket::{Entry, EntryRefView};
 use libp2p::{
-    core::upgrade, dns::DnsConfig, identity, kad::*, noise::*, ping, swarm::*, yamux, Multiaddr,
-    PeerId, Swarm, Transport, multiaddr
+    core::upgrade, dns::DnsConfig, identity, kad::*, multiaddr, noise::*, ping, swarm::*, yamux,
+    Multiaddr, PeerId, Swarm, Transport,
 };
+use rand::thread_rng;
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use ssz::*;
+use ssz_derive::{Decode, Encode};
+use ssz_types::*;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::error::Error;
@@ -41,7 +45,6 @@ use tokio::net::UnixStream;
 use tokio::runtime::Handle;
 use tokio::sync::mpsc;
 use tokio::time::timeout;
-use rand::thread_rng;
 
 #[derive(Debug)]
 struct LogEntry {
@@ -54,6 +57,22 @@ struct LogEntry {
 struct Behavior {
     keep_alive: keep_alive::Behaviour,
     ping: ping::Behaviour,
+}
+
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Default,
+    Serialize,
+    Deserialize,
+    Encode,
+    Decode,
+)]
+struct EnrForkId {
+    fork_digest: [u8; 4],
+    next_fork_version: [u8; 4],
+    next_fork_epoch: [u8; 4],
 }
 
 #[derive(Debug)]
@@ -166,10 +185,7 @@ pub async fn get_forks() -> Result<String, Box<dyn Error>> {
     let res = client.get(url).headers(headers).send().await?;
     let body = res.text().await?;
     let json: Value = serde_json::from_str(&body)?;
-    let forks = json["data"]
-        .as_str()
-        .ok_or("Forks not found")?
-        .to_owned();
+    let forks = json["data"].as_str().ok_or("Forks not found")?.to_owned();
 
     Ok(forks)
 }
@@ -229,7 +245,7 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
     // let test = decode_enr(enr.clone().to_base64().as_str())?;
     // println!("ENR: {:?}\n\n\n", test);
     let (peer_id, _, p2p_address, _) = get_local_peer_info().await?;
-    
+
     let ip = p2p_address.split("/").nth(2).unwrap();
     let port = p2p_address.split("/").nth(4).unwrap();
 
@@ -246,23 +262,17 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
         .ip4("192.0.2.1".parse().unwrap())
         .tcp4(tpc_udp)
         .udp4(tpc_udp)
-        .add_value("eth2", )
-        .add_value("attnets",)
+        // .add_value("eth2", )
+        // .add_value("attnets", )
         .build(&combined_key)
         .unwrap();
 
     // Print the ENR
+    println!("ENR: {:?}", enr);
     println!("ENR: {}", enr);
 
-    // generate a random secp256k1 key
-    let mut rng = thread_rng();
-    let key = k256::ecdsa::SigningKey::random(&mut rng);
-    println!("{:?}", key);
-
-
-    let enr = EnrBuilder::new("v4").ip4(ip4).tcp4(tpc_udp).udp4(tpc_udp).tcp6(tpc_udp).udp6(tpc_udp).build(&key)?;
-    let enr_key = enr.to_base64();
-    println!("Generated ENR: {:?}\n", enr_key);
+    let test = get_forks().await?;
+    println!("{test}");
 
     Ok(found_peers)
 }
