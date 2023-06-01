@@ -3729,6 +3729,7 @@ dependencies = [
  "revm",
  "serde",
  "serde_json",
+ "sha2 0.10.6",
  "tokio",
  "tokio-uds",
  "url",

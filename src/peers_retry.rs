@@ -5,6 +5,7 @@
 /// ENR ADDRESS LAPTOP: enr:-K24QGDcHgq97t7pNQ0E4Q-FwiQN3ZT5JDmuMC7hz6A1bIRyO32Sti8NSpclcCTNfPgQvU6L5dgvXRfxLu7L7NeKGUY0h2F0dG5ldHOIAAAAAAAAAACEZXRoMpBiiUHvAwAQIP__________gmlkgnY0iXNlY3AyNTZrMaECc29ruZqHENx-CIWjjqcFRZpVXRmo2h20dbjRHy1fgE6Ic3luY25ldHMAg3RjcIIjKA
 ///
 /// !!!
+use base64::prelude::*;
 use chrono::{DateTime, Local, TimeZone, Utc};
 use colored::*;
 use discv5::{
@@ -15,6 +16,7 @@ use discv5::{
 use ethers::prelude::*;
 use eyre::Result;
 use futures::stream::{self, StreamExt};
+use hex::*;
 use libp2p::kad::kbucket::{Entry, EntryRefView};
 use libp2p::{
     core::upgrade, dns::DnsConfig, identity, kad::*, multiaddr, noise::*, ping, swarm::*, yamux,
@@ -25,6 +27,7 @@ use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use ssz::*;
 use ssz_derive::{Decode, Encode};
 use ssz_types::*;
@@ -59,20 +62,11 @@ struct Behavior {
     ping: ping::Behaviour,
 }
 
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Default,
-    Serialize,
-    Deserialize,
-    Encode,
-    Decode,
-)]
-struct EnrForkId {
-    fork_digest: [u8; 4],
-    next_fork_version: [u8; 4],
-    next_fork_epoch: [u8; 4],
+#[derive(Encode, Decode, Debug)]
+pub struct ENRForkID {
+    pub fork_digest: [u8; 4], // Should be a 4 byte slice
+    pub next_fork_version: u64,
+    pub next_fork_epoch: u64,
 }
 
 #[derive(Debug)]
@@ -162,22 +156,7 @@ pub async fn get_local_peer_info() -> Result<(String, String, String, String), B
     Ok((peer_id, enr, p2p_address, discovery_address))
 }
 
-pub async fn get_enr_key() -> Result<String, Box<dyn Error>> {
-    let url = "http://127.0.0.1:5052/eth/v1/node/identity";
-    let client = reqwest::Client::new();
-    let mut headers = HeaderMap::new();
-    headers.insert(ACCEPT, "application/json".parse().unwrap());
-    let res = client.get(url).headers(headers).send().await?;
-    let body = res.text().await?;
-    let json: Value = serde_json::from_str(&body)?;
-    let enr_key = json["data"]["enr"]
-        .as_str()
-        .ok_or("ENR not found")?
-        .to_owned();
-    Ok(enr_key)
-}
-
-pub async fn get_forks() -> Result<String, Box<dyn Error>> {
+pub async fn get_forks() -> Result<(u64, u64, u64), Box<dyn Error>> {
     let url = "http://127.0.0.1:5052/eth/v1/config/fork_schedule";
     let client = reqwest::Client::new();
     let mut headers = HeaderMap::new();
@@ -185,47 +164,42 @@ pub async fn get_forks() -> Result<String, Box<dyn Error>> {
     let res = client.get(url).headers(headers).send().await?;
     let body = res.text().await?;
     let json: Value = serde_json::from_str(&body)?;
-    let forks = json["data"].as_str().ok_or("Forks not found")?.to_owned();
+    let forks = json["data"].as_array().ok_or("Forks not found")?;
 
-    Ok(forks)
+    // Get the last item
+    let last_fork = forks.last().ok_or("No fork data")?;
+
+    // Extract the values
+    let previous_version_hex = last_fork["previous_version"]
+        .as_str()
+        .ok_or("Previous version not found")?;
+    let current_version_hex = last_fork["current_version"]
+        .as_str()
+        .ok_or("Current version not found")?;
+    let epoch_str = last_fork["epoch"].as_str().ok_or("Epoch not found")?;
+
+    // Parse the hex strings as integers
+    let previous_version = u64::from_str_radix(&previous_version_hex[2..], 16)?;
+    let current_version = u64::from_str_radix(&current_version_hex[2..], 16)?;
+    let epoch = u64::from_str_radix(epoch_str, 10)?;
+
+    Ok((previous_version, current_version, epoch))
 }
 
-pub fn decode_enr(enr_key: &str) -> Result<Enr, Box<dyn Error>> {
-    let enr = Enr::from_str(enr_key)?;
-    println!("ENR: {:?}", enr);
-    println!("Node ID: {:?}", enr.node_id());
-    println!("IP: {:?}", enr.ip4());
-    println!("TCP Port: {:?}", enr.tcp4());
-    println!("UDP Port: {:?}", enr.udp4());
-    println!("{:?}", enr.seq());
-    println!("{:?}", enr.signature());
-    println!("{:?}", enr.public_key());
-    println!("{:?}", enr.verify());
-    println!("{:?}", enr.get_raw_rlp(enr_key));
-    println!("{:?}\n\n\n", enr.size());
-    // and so on for other fields...
-    Ok(enr)
+pub async fn get_genesis_validator_root() -> Result<String, Box<dyn Error>> {
+    let url = "http://127.0.0.1:5052/eth/v1/beacon/genesis";
+    let client = reqwest::Client::new();
+    let mut headers = HeaderMap::new();
+    headers.insert(ACCEPT, "application/json".parse().unwrap());
+    let res = client.get(url).headers(headers).send().await?;
+    let body = res.text().await?;
+    let json: Value = serde_json::from_str(&body)?;
+    let genesis_validators_root = json["data"]["genesis_validators_root"]
+        .as_str()
+        .ok_or("Genesis validators root not found")?
+        .to_owned();
+    Ok(genesis_validators_root)
 }
-
-// pub async fn gen_enr() -> Result<String, Box<dyn Error>> {
-//     let (peer_id, _, p2p_address, _) = get_local_peer_info().await?;
-
-//     // generate a random secp256k1 key
-//     let mut rng = thread_rng();
-//     let key = k256::ecdsa::SigningKey::random(&mut rng);
-
-//     let ip = p2p_address.split("/").nth(2).unwrap();
-//     let port = p2p_address.split("/").nth(4).unwrap();
-
-//     let ip4 = ip.parse::<std::net::Ipv4Addr>().unwrap();
-//     let tpc_udp = port.parse::<u16>().unwrap();
-
-//     let enr = EnrBuilder::new("v4").ip4(ip4).tcp4(tpc_udp).udp4(tpc_udp).tcp6(tpc_udp).udp6(tpc_udp).build(&key)?;
-//     let enr_key = enr.to_base64();
-//     println!("Generated ENR: {:?}\n\n\n", enr_key);
-
-//     Ok(enr_key)
-// }
 
 // probably need to use the discv5 crate for this since its for discovery
 pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
@@ -236,7 +210,7 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
     //     let peer = peer.clone();
     //     found_peers.push(peer);
     // });
-    // // println!("Found {found_peers:?}");
+    // println!("Found {found_peers:?}");
 
     // let local_peer_id = get_local_peer_info().await?;
     // let enr_key = get_enr_key().await?;
@@ -244,26 +218,65 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
     // let enr: discv5::enr::Enr<discv5::enr::CombinedKey> = enr::Enr::from_str(&enr_key)?;
     // let test = decode_enr(enr.clone().to_base64().as_str())?;
     // println!("ENR: {:?}\n\n\n", test);
-    let (peer_id, _, p2p_address, _) = get_local_peer_info().await?;
+
+    let (peer_id, enr, p2p_address, discovery_address) = get_local_peer_info().await?;
+    let (cv, pv, epoch) = get_forks().await?;
+    println!("{} {} {}", cv, pv, epoch);
+
+    let combined_key = CombinedKey::generate_secp256k1();
 
     let ip = p2p_address.split("/").nth(2).unwrap();
     let port = p2p_address.split("/").nth(4).unwrap();
 
     let ip4 = ip.parse::<std::net::Ipv4Addr>().unwrap();
     let tpc_udp = port.parse::<u16>().unwrap();
+
     println!("{:?}", ip4);
     println!("{:?}", tpc_udp);
 
-    // Create an ENR CombinedKey from the secp256k1 key pair
-    let combined_key = CombinedKey::generate_secp256k1();
+    let gvr = get_genesis_validator_root().await?;
+
+    fn compute_fork_digest(current_version: u64, gvr: String) -> [u8; 4] {
+        let gvr = if gvr.starts_with("0x") {
+            &gvr[2..]
+        } else {
+            &gvr
+        };
+        let gvr_bytes = hex::decode(gvr).unwrap();
+        let cv_bytes = current_version.to_be_bytes();
+
+        let mut hasher = Sha256::new();
+        hasher.update(cv_bytes);
+        hasher.update(&gvr_bytes[0..28]);
+        let hash = hasher.finalize();
+
+        let mut fork_digest = [0; 4];
+        fork_digest.copy_from_slice(&hash[0..4]);
+        fork_digest
+    }
+
+    // Construct the ENRForkID object
+    let fork_id = ENRForkID {
+        fork_digest: compute_fork_digest(cv, gvr),
+        next_fork_version: pv,
+        next_fork_epoch: epoch,
+    };
+    println!("Fork: {:?}", fork_id);
+    println!("Fork digest: {:?}", fork_id.fork_digest);
+    println!("Next fork version: {:?}", fork_id.next_fork_version);
+    println!("Next fork epoch: {:?}", fork_id.next_fork_epoch);
+
+    // SSZ encode the ENRForkID object to a byte array
+    let fork_version = ssz_encode(&fork_id);
+    println!("Fork Version: {:?}", fork_version);
 
     // Build the ENR
     let enr = EnrBuilder::new("v4")
-        .ip4("192.0.2.1".parse().unwrap())
+        .ip4("192.168.2.1".parse().unwrap())
         .tcp4(tpc_udp)
         .udp4(tpc_udp)
-        // .add_value("eth2", )
         // .add_value("attnets", )
+        .add_value("eth2", &fork_version)
         .build(&combined_key)
         .unwrap();
 
@@ -271,17 +284,13 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
     println!("ENR: {:?}", enr);
     println!("ENR: {}", enr);
 
-    let test = get_forks().await?;
-    println!("{test}");
-
     Ok(found_peers)
 }
 
 // probably need to use the libp2p crate for this since its for managing peers
 pub async fn handle_discovered_peers() -> Result<(), Box<dyn Error>> {
     let discovered_peers = discover_peers().await?;
-    let local_peer_id = get_local_peer_info().await?;
-    let enr_key = get_enr_key().await?;
+    let (peer_id, enr, p2p_address, discovery_addresss) = get_local_peer_info().await?;
     Ok(())
 }
 
