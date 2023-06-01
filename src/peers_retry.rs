@@ -166,10 +166,8 @@ pub async fn get_forks() -> Result<(u64, u64, u64), Box<dyn Error>> {
     let json: Value = serde_json::from_str(&body)?;
     let forks = json["data"].as_array().ok_or("Forks not found")?;
 
-    // Get the last item
     let last_fork = forks.last().ok_or("No fork data")?;
 
-    // Extract the values
     let previous_version_hex = last_fork["previous_version"]
         .as_str()
         .ok_or("Previous version not found")?;
@@ -178,7 +176,6 @@ pub async fn get_forks() -> Result<(u64, u64, u64), Box<dyn Error>> {
         .ok_or("Current version not found")?;
     let epoch_str = last_fork["epoch"].as_str().ok_or("Epoch not found")?;
 
-    // Parse the hex strings as integers
     let previous_version = u64::from_str_radix(&previous_version_hex[2..], 16)?;
     let current_version = u64::from_str_radix(&current_version_hex[2..], 16)?;
     let epoch = u64::from_str_radix(epoch_str, 10)?;
@@ -205,21 +202,15 @@ pub async fn get_genesis_validator_root() -> Result<String, Box<dyn Error>> {
 pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
     // found_peers is a vector of peer addresses that we have found, we will push more to this vector as we discover more peers
     let mut found_peers: Vec<String> = Vec::new();
-    // let bootstrapped_peers = bootstrapped_peers().await?;
-    // bootstrapped_peers.iter().for_each(|peer| {
-    //     let peer = peer.clone();
-    //     found_peers.push(peer);
-    // });
+    let bootstrapped_peers = bootstrapped_peers().await?;
+    bootstrapped_peers.iter().for_each(|peer| {
+        let peer = peer.clone();
+        found_peers.push(peer);
+    });
     // println!("Found {found_peers:?}");
 
-    // let local_peer_id = get_local_peer_info().await?;
-    // let enr_key = get_enr_key().await?;
-
-    // let enr: discv5::enr::Enr<discv5::enr::CombinedKey> = enr::Enr::from_str(&enr_key)?;
-    // let test = decode_enr(enr.clone().to_base64().as_str())?;
-    // println!("ENR: {:?}\n\n\n", test);
-
     let (peer_id, enr, p2p_address, discovery_address) = get_local_peer_info().await?;
+    println!("{}\n{}\n{}\n{}\n", peer_id, enr, p2p_address, discovery_address);
     let (cv, pv, epoch) = get_forks().await?;
     println!("{} {} {}", cv, pv, epoch);
 
@@ -255,34 +246,28 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
         fork_digest
     }
 
-    // Construct the ENRForkID object
     let fork_id = ENRForkID {
         fork_digest: compute_fork_digest(cv, gvr),
         next_fork_version: pv,
         next_fork_epoch: epoch,
     };
-    println!("Fork: {:?}", fork_id);
-    println!("Fork digest: {:?}", fork_id.fork_digest);
-    println!("Next fork version: {:?}", fork_id.next_fork_version);
-    println!("Next fork epoch: {:?}", fork_id.next_fork_epoch);
 
-    // SSZ encode the ENRForkID object to a byte array
     let fork_version = ssz_encode(&fork_id);
-    println!("Fork Version: {:?}", fork_version);
+    println!("fork_id:{:?}", fork_version);
 
     // Build the ENR
     let enr = EnrBuilder::new("v4")
-        .ip4("192.168.2.1".parse().unwrap())
+        .ip4(ip4)
         .tcp4(tpc_udp)
         .udp4(tpc_udp)
-        // .add_value("attnets", )
+        // .add_value("attnets", &[0000000000000000000000000000000000000000000000000000000000000000])
         .add_value("eth2", &fork_version)
         .build(&combined_key)
         .unwrap();
 
     // Print the ENR
-    println!("ENR: {:?}", enr);
-    println!("ENR: {}", enr);
+    println!("{:?}", enr);
+    println!("{}", enr);
 
     Ok(found_peers)
 }
