@@ -230,6 +230,7 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
         "{}\n{}\n{}\n{}\n",
         peer_id, enr, p2p_address, discovery_address
     );
+
     let (cv, pv, epoch) = get_forks().await?;
     println!("{} {} {}", cv, pv, epoch);
 
@@ -285,8 +286,8 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
         .ip4(ip4)
         .tcp4(tpc_udp)
         .udp4(tpc_udp)
-        .add_value("attnets", &attnets_bytes)
         .add_value("syncnets", &syncnets_bytes)
+        .add_value("attnets", &attnets_bytes)
         .add_value("eth2", &fork_version)
         .build(&combined_key)
         .unwrap();
