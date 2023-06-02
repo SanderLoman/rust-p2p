@@ -129,7 +129,7 @@ pub async fn bootstrapped_peers() -> Result<Vec<String>, Box<dyn Error>> {
     Ok(connected_peers)
 }
 
-pub async fn get_local_peer_info() -> Result<(String, String, String, String), Box<dyn Error>> {
+pub async fn get_local_peer_info() -> Result<(String, String, String, String, String, String), Box<dyn Error>> {
     let url = "http://127.0.0.1:5052/eth/v1/node/identity";
     let client = reqwest::Client::new();
     let mut headers = HeaderMap::new();
@@ -153,7 +153,22 @@ pub async fn get_local_peer_info() -> Result<(String, String, String, String), B
         .as_str()
         .ok_or("Discovery address not found")?
         .to_owned();
-    Ok((peer_id, enr, p2p_address, discovery_address))
+    let attnets = json["data"]["metadata"]["attnets"]
+        .as_str()
+        .ok_or("attnets not found")?
+        .to_owned();
+    let syncnets = json["data"]["metadata"]["syncnets"]
+        .as_str()
+        .ok_or("syncnets not found")?
+        .to_owned();
+    Ok((
+        peer_id,
+        enr,
+        p2p_address,
+        discovery_address,
+        attnets,
+        syncnets,
+    ))
 }
 
 pub async fn get_forks() -> Result<(u64, u64, u64), Box<dyn Error>> {
@@ -209,8 +224,12 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
     });
     // println!("Found {found_peers:?}");
 
-    let (peer_id, enr, p2p_address, discovery_address) = get_local_peer_info().await?;
-    println!("{}\n{}\n{}\n{}\n", peer_id, enr, p2p_address, discovery_address);
+    let (peer_id, enr, p2p_address, discovery_address, attnets, syncnets) =
+        get_local_peer_info().await?;
+    println!(
+        "{}\n{}\n{}\n{}\n",
+        peer_id, enr, p2p_address, discovery_address
+    );
     let (cv, pv, epoch) = get_forks().await?;
     println!("{} {} {}", cv, pv, epoch);
 
@@ -253,21 +272,27 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
     };
 
     let fork_version = ssz_encode(&fork_id);
-    println!("fork_id:{:?}", fork_version);
+    let attnets_bytes =
+        hex::decode(&attnets.replace("0x", "")).map_err(|_| "Failed to parse attnets")?;
+    let syncnets_bytes =
+        hex::decode(&syncnets.replace("0x", "")).map_err(|_| "Failed to parse syncnets")?;
+    println!("fork_id: {:?}", fork_version);
+    println!("attnets: {:?}", attnets_bytes);
+    println!("syncnets: {:?}", syncnets_bytes);
 
     // Build the ENR
     let enr = EnrBuilder::new("v4")
         .ip4(ip4)
         .tcp4(tpc_udp)
         .udp4(tpc_udp)
-        // .add_value("attnets", &[0000000000000000000000000000000000000000000000000000000000000000])
+        .add_value("attnets", &attnets_bytes)
+        .add_value("syncnets", &syncnets_bytes)
         .add_value("eth2", &fork_version)
         .build(&combined_key)
         .unwrap();
 
     // Print the ENR
     println!("{:?}", enr);
-    println!("{}", enr);
 
     Ok(found_peers)
 }
@@ -275,7 +300,7 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
 // probably need to use the libp2p crate for this since its for managing peers
 pub async fn handle_discovered_peers() -> Result<(), Box<dyn Error>> {
     let discovered_peers = discover_peers().await?;
-    let (peer_id, enr, p2p_address, discovery_addresss) = get_local_peer_info().await?;
+    let (peer_id, enr, p2p_address, discovery_addresss, attnets, syncnets) = get_local_peer_info().await?;
     Ok(())
 }
 
