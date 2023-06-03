@@ -91,7 +91,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     );
 
     peers_retry::discover_peers().await?;
-    
+
     // peers::time_to_reach_geth(provider_arc).await?;
 
     // let enodes = peers::get_enode_addresses().await?;

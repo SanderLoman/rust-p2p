@@ -129,7 +129,8 @@ pub async fn bootstrapped_peers() -> Result<Vec<String>, Box<dyn Error>> {
     Ok(connected_peers)
 }
 
-pub async fn get_local_peer_info() -> Result<(String, String, String, String, String, String), Box<dyn Error>> {
+pub async fn get_local_peer_info(
+) -> Result<(String, String, String, String, String, String), Box<dyn Error>> {
     let url = "http://127.0.0.1:5052/eth/v1/node/identity";
     let client = reqwest::Client::new();
     let mut headers = HeaderMap::new();
@@ -222,78 +223,87 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
         let peer = peer.clone();
         found_peers.push(peer);
     });
-    // println!("Found {found_peers:?}");
+    println!("Found {found_peers:?}");
 
     let (peer_id, enr, p2p_address, discovery_address, attnets, syncnets) =
         get_local_peer_info().await?;
     println!(
-        "{}\n{}\n{}\n{}\n",
-        peer_id, enr, p2p_address, discovery_address
+        "{}",
+        LogEntry {
+            time: Local::now(),
+            level: LogLevel::Info,
+            message: format!(
+                "{} {} {} {} {} {}",
+                peer_id, enr, p2p_address, discovery_address, attnets, syncnets
+            ),
+        }
     );
 
     let (cv, pv, epoch) = get_forks().await?;
     println!("{} {} {}", cv, pv, epoch);
 
-    let combined_key = CombinedKey::generate_secp256k1();
 
-    let ip = p2p_address.split("/").nth(2).unwrap();
-    let port = p2p_address.split("/").nth(4).unwrap();
 
-    let ip4 = ip.parse::<std::net::Ipv4Addr>().unwrap();
-    let tpc_udp = port.parse::<u16>().unwrap();
+    // let combined_key = CombinedKey::generate_secp256k1();
 
-    println!("{:?}", ip4);
-    println!("{:?}", tpc_udp);
+    // let ip = p2p_address.split("/").nth(2).unwrap();
+    // let port = p2p_address.split("/").nth(4).unwrap();
 
-    let gvr = get_genesis_validator_root().await?;
+    // let ip4 = ip.parse::<std::net::Ipv4Addr>().unwrap();
+    // let tpc_udp = port.parse::<u16>().unwrap();
 
-    fn compute_fork_digest(current_version: u64, gvr: String) -> [u8; 4] {
-        let gvr = if gvr.starts_with("0x") {
-            &gvr[2..]
-        } else {
-            &gvr
-        };
-        let gvr_bytes = hex::decode(gvr).unwrap();
-        let cv_bytes = current_version.to_be_bytes();
+    // println!("{:?}", ip4);
+    // println!("{:?}", tpc_udp);
 
-        let mut hasher = Sha256::new();
-        hasher.update(cv_bytes);
-        hasher.update(&gvr_bytes[0..28]);
-        let hash = hasher.finalize();
+    // let gvr = get_genesis_validator_root().await?;
 
-        let mut fork_digest = [0; 4];
-        fork_digest.copy_from_slice(&hash[0..4]);
-        fork_digest
-    }
+    // fn compute_fork_digest(current_version: u64, gvr: String) -> [u8; 4] {
+    //     let gvr = if gvr.starts_with("0x") {
+    //         &gvr[2..]
+    //     } else {
+    //         &gvr
+    //     };
+    //     let gvr_bytes = hex::decode(gvr).unwrap();
+    //     let cv_bytes = current_version.to_be_bytes();
 
-    let fork_id = ENRForkID {
-        fork_digest: compute_fork_digest(cv, gvr),
-        next_fork_version: pv,
-        next_fork_epoch: epoch,
-    };
+    //     let mut hasher = Sha256::new();
+    //     hasher.update(cv_bytes);
+    //     hasher.update(&gvr_bytes[0..28]);
+    //     let hash = hasher.finalize();
 
-    let fork_version = ssz_encode(&fork_id);
-    let attnets_bytes =
-        hex::decode(&attnets.replace("0x", "")).map_err(|_| "Failed to parse attnets")?;
-    let syncnets_bytes =
-        hex::decode(&syncnets.replace("0x", "")).map_err(|_| "Failed to parse syncnets")?;
-    println!("fork_id: {:?}", fork_version);
-    println!("attnets: {:?}", attnets_bytes);
-    println!("syncnets: {:?}", syncnets_bytes);
+    //     let mut fork_digest = [0; 4];
+    //     fork_digest.copy_from_slice(&hash[0..4]);
+    //     fork_digest
+    // }
 
-    // Build the ENR
-    let enr = EnrBuilder::new("v4")
-        .ip4(ip4)
-        .tcp4(tpc_udp)
-        .udp4(tpc_udp)
-        .add_value("syncnets", &syncnets_bytes)
-        .add_value("attnets", &attnets_bytes)
-        .add_value("eth2", &fork_version)
-        .build(&combined_key)
-        .unwrap();
+    // let fork_id = ENRForkID {
+    //     fork_digest: compute_fork_digest(cv, gvr),
+    //     next_fork_version: pv,
+    //     next_fork_epoch: epoch,
+    // };
 
-    // Print the ENR
-    println!("{:?}", enr);
+    // let fork_version = ssz_encode(&fork_id);
+    // let attnets_bytes =
+    //     hex::decode(&attnets.replace("0x", "")).map_err(|_| "Failed to parse attnets")?;
+    // let syncnets_bytes =
+    //     hex::decode(&syncnets.replace("0x", "")).map_err(|_| "Failed to parse syncnets")?;
+    // println!("fork_id: {:?}", fork_version);
+    // println!("attnets: {:?}", attnets_bytes);
+    // println!("syncnets: {:?}", syncnets_bytes);
+
+    // // Build the ENR
+    // let enr = EnrBuilder::new("v4")
+    //     .ip4(ip4)
+    //     .tcp4(tpc_udp)
+    //     .udp4(tpc_udp)
+    //     .add_value("syncnets", &syncnets_bytes)
+    //     .add_value("attnets", &attnets_bytes)
+    //     .add_value("eth2", &fork_version)
+    //     .build(&combined_key)
+    //     .unwrap();
+
+    // // Print the ENR
+    // println!("{:?}", enr);
 
     Ok(found_peers)
 }
@@ -301,7 +311,8 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
 // probably need to use the libp2p crate for this since its for managing peers
 pub async fn handle_discovered_peers() -> Result<(), Box<dyn Error>> {
     let discovered_peers = discover_peers().await?;
-    let (peer_id, enr, p2p_address, discovery_addresss, attnets, syncnets) = get_local_peer_info().await?;
+    let (peer_id, enr, p2p_address, discovery_addresss, attnets, syncnets) =
+        get_local_peer_info().await?;
     Ok(())
 }
 
