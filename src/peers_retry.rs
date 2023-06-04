@@ -274,21 +274,8 @@ pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
         fork_digest
     }
 
-    let mut runtime = tokio::runtime::Builder::new_multi_thread()
-    .thread_name("Discv5-example")
-    .enable_all()
-    .build()
-    .unwrap();
-
-    let enr = Enr::from_str(&enr).unwrap();
-    println!("{:?}", enr);
-
     let fork_digest = compute_fork_digest(cv, gvr);
-
-    let discv5_config = Discv5ConfigBuilder::new().incoming_bucket_limit(2048).build();
-    let mut discv5: Discv5 = Discv5::new(enr, combined_key, discv5_config).unwrap();
-
-    runtime.block_on(discv5.start());
+    println!("fork_digest: {:?}", fork_digest);
 
     // let fork_id = ENRForkID {
     //     fork_digest: compute_fork_digest(cv, gvr),
