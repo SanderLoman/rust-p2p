@@ -95,39 +95,39 @@ impl fmt::Display for LogEntry {
 }
 
 // curl -X 'GET' 'http://127.0.0.1:5052/eth/v1/node/peers' -H 'accept: application/json'
-pub async fn bootstrapped_peers() -> Result<Vec<String>, Box<dyn Error>> {
+pub async fn bootstrapped_peers() -> Result<Vec<(String, String, String, String)>, Box<dyn Error>> {
     let url: &str = "http://127.0.0.1:5052/eth/v1/node/peers";
     let client: Client = Client::new();
-
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, "application/json".parse().unwrap());
+    let res = client.get(url).headers(headers).send().await?;
+    let body = res.text().await?;
+    let json: Value = serde_json::from_str(&body)?;
 
-    let res: Value = client
-        .get(url)
-        .headers(headers)
-        .send()
-        .await?
-        .json()
-        .await?;
+    let peers: Vec<Value> = json["data"].as_array().ok_or("Data not found")?.clone();
 
-    let data: &Vec<Value> = res.get("data").unwrap().as_array().unwrap();
+    let mut results: Vec<(String, String, String, String)> = Vec::new();
 
-    let mut connected_peers = Vec::new();
+    for peer in peers {
+        let state = peer["state"].as_str().ok_or("State not found")?.to_owned();
+        if state == "connected" {
+            let peer_id = peer["peer_id"]
+                .as_str()
+                .ok_or("Peer ID not found")?
+                .to_owned();
+            let enr = peer["enr"].as_str().ok_or("ENR not found")?.to_owned();
+            let last_seen_p2p_address = peer["last_seen_p2p_address"]
+                .as_str()
+                .ok_or("Last seen P2P address not found")?
+                .to_owned();
 
-    for peer in data {
-        if let Some(Value::String(address)) = peer.get("last_seen_p2p_address") {
-            if let Some(Value::String(peer_id)) = peer.get("peer_id") {
-                if let Some(Value::String(state)) = peer.get("state") {
-                    if state == "connected" {
-                        connected_peers.push(format!("{}/p2p/{}", address, peer_id));
-                    }
-                }
-            }
+            results.push((peer_id, enr, last_seen_p2p_address, state));
         }
     }
 
-    Ok(connected_peers)
+    Ok(results)
 }
+
 
 pub async fn get_local_peer_info(
 ) -> Result<(String, String, String, String, String, String), Box<dyn Error>> {
@@ -215,32 +215,34 @@ pub async fn get_genesis_validator_root() -> Result<String, Box<dyn Error>> {
 }
 
 // probably need to use the discv5 crate for this since its for discovery
-pub async fn discover_peers() -> Result<Vec<String>, Box<dyn Error>> {
+pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)>>, Box<dyn Error>> {
     // found_peers is a vector of peer addresses that we have found, we will push more to this vector as we discover more peers
-    let mut found_peers: Vec<String> = Vec::new();
-    let bootstrapped_peers = bootstrapped_peers().await?;
-    bootstrapped_peers.iter().for_each(|peer| {
-        let peer = peer.clone();
-        found_peers.push(peer);
-    });
-    println!("Found {found_peers:?}");
+    let mut found_peers: Vec<Vec<(String, String, String, String)>> = Vec::new();
+    let bootstapped_peers = bootstrapped_peers().await?;
+    found_peers.push(bootstapped_peers);
 
-    let (peer_id, enr, p2p_address, discovery_address, attnets, syncnets) =
-        get_local_peer_info().await?;
-    println!(
-        "{}",
-        LogEntry {
-            time: Local::now(),
-            level: LogLevel::Info,
-            message: format!(
-                "{} {} {} {} {} {}",
-                peer_id, enr, p2p_address, discovery_address, attnets, syncnets
-            ),
+    for peer in &found_peers {
+        for (peer_id, enr, p2p_address, state) in peer {
+            println!("Peer ID: {:?}", peer_id);
+            println!("ENR: {:?}", enr);
+            println!("P2P Address: {:?}", p2p_address);
+            println!("State: {:?}", state);
         }
-    );
+        println!("Number of peers bootstrapped: {:?}", peer.len());
+    }
 
+    // TODO: need to implement the discovery protocol here
+    // TODO: work on bootstrapping the found_peers and then work on setting up required thing to make a connection to other peers on the network
+
+    let (
+        peer_id_local,
+        enr_local,
+        p2p_address_local,
+        discovery_address_local,
+        attnets_local,
+        syncnets_local,
+    ) = get_local_peer_info().await?;
     let (cv, pv, epoch) = get_forks().await?;
-    println!("{} {} {}", cv, pv, epoch);
 
     let combined_key = CombinedKey::generate_secp256k1();
 
