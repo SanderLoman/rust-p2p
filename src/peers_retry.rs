@@ -11,6 +11,7 @@ use colored::*;
 use discv5::{
     enr,
     enr::{k256, CombinedKey, EnrBuilder, NodeId},
+    socket::ListenConfig,
     Discv5, Discv5ConfigBuilder, Enr, TokioExecutor,
 };
 use ethers::prelude::*;
@@ -128,7 +129,6 @@ pub async fn bootstrapped_peers() -> Result<Vec<(String, String, String, String)
     Ok(results)
 }
 
-
 pub async fn get_local_peer_info() -> Result<(String, String, String, String, String, String), Box<dyn Error>> {
     let url = "http://127.0.0.1:5052/eth/v1/node/identity";
     let client = reqwest::Client::new();
@@ -230,14 +230,6 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         println!("Number of peers bootstrapped: {:?}", peer.len());
     }
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // TODO: need to implement the discovery protocol here
-    // TODO: work on bootstrapping the found_peers and then work on setting up required thing to make a connection to other peers on the network
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     let (
         peer_id_local,
         enr_local,
