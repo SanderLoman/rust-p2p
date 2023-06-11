@@ -217,11 +217,10 @@ pub async fn get_genesis_validator_root() -> Result<String, Box<dyn Error>> {
     Ok(genesis_validators_root)
 }
 
-pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)>>, Box<dyn Error>>
-{
+pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)>>, Box<dyn Error>> {
     let mut found_peers: Vec<Vec<(String, String, String, String)>> = Vec::new();
-    let bootstapped_peers = bootstrapped_peers().await?;
-    found_peers.push(bootstapped_peers);
+    let bootstrapped_peers = bootstrapped_peers().await?;
+    found_peers.push(bootstrapped_peers);
 
     for peer in &found_peers {
         for (peer_id, enr, p2p_address, state) in peer {
@@ -242,8 +241,6 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         syncnets_local,
     ) = get_local_peer_info().await?;
 
-    // let (cv, pv, epoch) = get_forks().await?;
-
     let combined_key = CombinedKey::generate_secp256k1();
 
     let decoded_enr = Enr::from_str(&enr_local)?;
@@ -257,10 +254,8 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     let ip4 = ip.parse::<std::net::Ipv4Addr>().unwrap();
     let tcp_udp = port.parse::<u16>().unwrap();
 
-    let attnets_bytes =
-        hex::decode(&attnets_local.replace("0x", "")).map_err(|_| "Failed to parse attnets")?;
-    let syncnets_bytes =
-        hex::decode(&syncnets_local.replace("0x", "")).map_err(|_| "Failed to parse syncnets")?;
+    let attnets_bytes = hex::decode(&attnets_local.replace("0x", "")).map_err(|_| "Failed to parse attnets")?;
+    let syncnets_bytes = hex::decode(&syncnets_local.replace("0x", "")).map_err(|_| "Failed to parse syncnets")?;
 
     let enr_string = format!("{:?}", decoded_enr);
     let mut eth2_value: Option<String> = None;
