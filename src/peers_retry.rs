@@ -12,7 +12,7 @@ use discv5::{
     enr,
     enr::{k256, CombinedKey, EnrBuilder, NodeId},
     socket::ListenConfig,
-    Discv5, Discv5ConfigBuilder, Enr, TokioExecutor,
+    Discv5, Discv5ConfigBuilder, Enr, TokioExecutor, Discv5Event, Discv5Error
 };
 use ethers::prelude::*;
 use eyre::Result;
@@ -129,8 +129,7 @@ pub async fn bootstrapped_peers() -> Result<Vec<(String, String, String, String)
     Ok(results)
 }
 
-pub async fn get_local_peer_info(
-) -> Result<(String, String, String, String, String, String), Box<dyn Error>> {
+pub async fn get_local_peer_info() -> Result<(String, String, String, String, String, String), Box<dyn Error>> {
     let url = "http://127.0.0.1:5052/eth/v1/node/identity";
     let client = reqwest::Client::new();
     let mut headers = HeaderMap::new();
@@ -202,20 +201,20 @@ pub async fn get_local_peer_info(
 //     Ok((previous_version, current_version, epoch))
 // }
 
-pub async fn get_genesis_validator_root() -> Result<String, Box<dyn Error>> {
-    let url = "http://127.0.0.1:5052/eth/v1/beacon/genesis";
-    let client = reqwest::Client::new();
-    let mut headers = HeaderMap::new();
-    headers.insert(ACCEPT, "application/json".parse().unwrap());
-    let res = client.get(url).headers(headers).send().await?;
-    let body = res.text().await?;
-    let json: Value = serde_json::from_str(&body)?;
-    let genesis_validators_root = json["data"]["genesis_validators_root"]
-        .as_str()
-        .ok_or("Genesis validators root not found")?
-        .to_owned();
-    Ok(genesis_validators_root)
-}
+// pub async fn get_genesis_validator_root() -> Result<String, Box<dyn Error>> {
+//     let url = "http://127.0.0.1:5052/eth/v1/beacon/genesis";
+//     let client = reqwest::Client::new();
+//     let mut headers = HeaderMap::new();
+//     headers.insert(ACCEPT, "application/json".parse().unwrap());
+//     let res = client.get(url).headers(headers).send().await?;
+//     let body = res.text().await?;
+//     let json: Value = serde_json::from_str(&body)?;
+//     let genesis_validators_root = json["data"]["genesis_validators_root"]
+//         .as_str()
+//         .ok_or("Genesis validators root not found")?
+//         .to_owned();
+//     Ok(genesis_validators_root)
+// }
 
 pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)>>, Box<dyn Error>> {
     let mut found_peers: Vec<Vec<(String, String, String, String)>> = Vec::new();
@@ -240,6 +239,12 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         attnets_local,
         syncnets_local,
     ) = get_local_peer_info().await?;
+
+    println!("{}", LogEntry {
+        time: Local::now(),
+        level: LogLevel::Critical,
+        message: format!("{:?}", discovery_address_local),
+    });
 
     let combined_key = CombinedKey::generate_secp256k1();
 
