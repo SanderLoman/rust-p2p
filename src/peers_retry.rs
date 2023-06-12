@@ -248,11 +248,9 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     println!("LIGHTHOUSE ENR: {:?}\n", decoded_enr);
     println!("LIGHTHOUSE ENR: {}\n", decoded_enr);
 
-    let ip = p2p_address_local.split("/").nth(2).unwrap();
-    let port = p2p_address_local.split("/").nth(4).unwrap();
-
-    let ip4 = ip.parse::<std::net::Ipv4Addr>().unwrap();
-    let tcp_udp = port.parse::<u16>().unwrap();
+    let mut parts = p2p_address_local.split("/");
+    let ip4 = parts.nth(2).unwrap().parse::<std::net::Ipv4Addr>().unwrap();
+    let tcp_udp = parts.nth(1).unwrap().parse::<u16>().unwrap();
 
     let attnets_bytes = hex::decode(&attnets_local.replace("0x", "")).map_err(|_| "Failed to parse attnets")?;
     let syncnets_bytes = hex::decode(&syncnets_local.replace("0x", "")).map_err(|_| "Failed to parse syncnets")?;
@@ -306,6 +304,9 @@ pub async fn handle_discovered_peers() -> Result<(), Box<dyn Error>> {
 /*
 enr:-Ly4QGelLf1MlcolM815OL-u-0tu9WEnGkrw8yMcCszPwXj4AaM3-HANoKky39Mp9bweNQNqWUE7ae__OndFgKXaLrIUh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFOAIZKJc2VjcDI1NmsxoQKdh3pTIY35bjJPDx-fTgzMmRKKh_ou0e5jYrv2320pGYhzeW5jbmV0cwCDdGNwgtc0g3VkcILXNA
 enr:-Ly4QC52KSdsb7PkSG9EA4q3ZHRKyFFeqK5UxOXo4vosJcj-F6-Fke0t0KIi50JazUjFlZKTwuEBKMyuLqJbahLJN9UBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFOAIZKJc2VjcDI1NmsxoQOyDkfXvNvI2Db6Ghw8FGrwR4Nujc4wNol79yFZhtVs84hzeW5jbmV0cwCDdGNwgtc0g3VkcILXNA
+enr:-Ly4QHlFSFVzQY6Z3fzyHtKN26PxKelxWCzBCdxIO8At43VeNj-nb-fnfRpIODKQH-VbDFCDY_qzMDqmeCy1oxNtkOQSh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFxBU4OJc2VjcDI1NmsxoQIvoAjp06o7CAfV2crzEoE1pG7MAYKKAYGPJ4svdLubMohzeW5jbmV0cwCDdGNwgssYg3VkcILLGA
+enr:-Ly4QD0jCoxd4fuiVrhqElhoCCyiQjCRjQ22wH4zdjrJrh2eAEmQUdqepLqRBpu00v-m0W15Lp-15pAAFEyzD1WzI3cBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFxBU4OJc2VjcDI1NmsxoQLMkkxGvTb8Nl4Y7JMVmkx0St8xW-MyIXAwe6WWSya7YIhzeW5jbmV0cwCDdGNwgssYg3VkcILLGA
+
 use async_std::task;
 use discv5::{enr::{CombinedKey, Enr, EnrBuilder}, enr_ext::create_enr, enr_key::secp256k1, Discv5Config, Discv5Service};
 use std::error::Error;
