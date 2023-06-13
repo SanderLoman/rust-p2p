@@ -12,7 +12,7 @@ use discv5::{
     enr,
     enr::{k256, CombinedKey, EnrBuilder, NodeId},
     socket::ListenConfig, 
-    Discv5, Discv5ConfigBuilder, Discv5Error, Discv5Event, Enr, TokioExecutor,
+    Discv5, Discv5ConfigBuilder, Discv5Error, Discv5Event, Enr, TokioExecutor, Discv5Config,
 };
 use ethers::prelude::*;
 use eyre::Result;
@@ -242,6 +242,16 @@ pub async fn get_eth2_value(enr_string: &str) -> Option<String> {
     None
 }
 
+pub async fn get_secp256k1_public_key(enr_string: &str) -> Option<String> {
+    if let Some(start) = enr_string.find("\"secp256k1\", \"") {
+        let rest = &enr_string[start + 14..];
+        if let Some(end) = rest.find("\")") {
+            return Some(rest[..end].to_string());
+        }
+    }
+    None
+}
+
 pub async fn generate_enr(
     ip4: std::net::Ipv4Addr,
     tcp_udp: u16,
@@ -263,8 +273,7 @@ pub async fn generate_enr(
 }
 
 
-pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)>>, Box<dyn Error>>
-{
+pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)>>, Box<dyn Error>> {
     let mut found_peers: Vec<Vec<(String, String, String, String)>> = Vec::new();
     let bootstrapped_peers = bootstrapped_peers().await?;
     found_peers.push(bootstrapped_peers);
@@ -296,6 +305,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
 
     let enr_string = format!("{:?}", decoded_enr);
     let eth2_value = get_eth2_value(&enr_string).await;
+    let secp256k1_public_key = get_secp256k1_public_key(&enr_string).await;
 
     // If eth2_value is None, return early
     let eth2_value = match eth2_value {
@@ -303,14 +313,26 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         None => return Ok(found_peers),
     };
 
+    // If secp256k1_public_key is None, return early
+    let secp256k1_public_key = match secp256k1_public_key {
+        Some(value) => value,
+        None => return Ok(found_peers),
+    };
+
     let eth2_bytes = decode_hex_value(&eth2_value).await?;
+    let secp256k1_hex = decode_hex_value(&secp256k1_public_key).await?;
+
+    
+
     let enr = generate_enr(ip4, tcp_udp, syncnets_bytes, attnets_bytes, eth2_bytes).await?;
 
-    let listen_address = p2p_address_local.clone();
-    println!("LISTENING ADDRESS: {:?}", listen_address);
+    let port: u16 = 9000;
+    let listen_config = ListenConfig::from_ip(std::net::IpAddr::V4(ip4), port);
+    let discv5_config = Discv5ConfigBuilder::new(listen_config).build();
+    let discv5: Discv5 = Discv5::new(enr.clone(), secp256k1, discv5_config)?;
 
-    // println!("SELF GENERATED ENR {:?}\n", enr);
-    // println!("SELF GENERATED ENR {}", enr);
+    println!("SELF GENERATED ENR {:?}\n", enr);
+    println!("SELF GENERATED ENR {}", enr);
 
     Ok(found_peers)
 }
