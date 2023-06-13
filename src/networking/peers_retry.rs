@@ -230,7 +230,6 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         }
         println!("Number of peers bootstrapped: {:?}\n\n\n", peer.len());
     }
-
     let (
         peer_id_local,
         enr_local,
@@ -239,6 +238,10 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         attnets_local,
         syncnets_local,
     ) = get_local_peer_info().await?;
+
+    let listen_address = p2p_address_local.clone();
+
+    
 
     println!("{}", LogEntry {
         time: Local::now(),

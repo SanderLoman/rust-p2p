@@ -19,10 +19,24 @@ use libp2p::{
     Swarm, Transport,
 };
 
-mod liquidations;
-mod peers;
-mod peers_retry;
-mod sandwhich;
+mod networking {
+    pub mod peers_retry;
+    pub mod peers;
+}
+
+mod strategies {
+    pub mod arbitrage;
+    pub mod liquidations;
+    pub mod sandwhich;
+}
+
+use strategies::arbitrage;
+use strategies::liquidations;
+use strategies::sandwhich;
+use networking::peers;
+use networking::peers_retry;
+
+
 
 #[derive(Debug)]
 struct LogEntry {

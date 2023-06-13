@@ -212,7 +212,6 @@ pub async fn process_discovered_peers() -> Result<Vec<String>, Box<dyn Error>> {
             }
         }
     }
-    
 
     while !pending_peers.is_empty() {
         // Take a peer from the pending_peers set
