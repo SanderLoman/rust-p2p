@@ -321,15 +321,15 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
 
     let eth2_bytes = decode_hex_value(&eth2_value).await?;
     let secp256k1_hex = decode_hex_value(&secp256k1_public_key).await?;
-
-    
+    println!("secp256k1_hex {:?}", secp256k1_hex);
+    // let secp256k1 = 
 
     let enr = generate_enr(ip4, tcp_udp, syncnets_bytes, attnets_bytes, eth2_bytes).await?;
 
     let port: u16 = 9000;
     let listen_config = ListenConfig::from_ip(std::net::IpAddr::V4(ip4), port);
     let discv5_config = Discv5ConfigBuilder::new(listen_config).build();
-    let discv5: Discv5 = Discv5::new(enr.clone(), secp256k1, discv5_config)?;
+    // let discv5: Discv5 = Discv5::new(enr.clone(), secp256k1, discv5_config)?;
 
     println!("SELF GENERATED ENR {:?}\n", enr);
     println!("SELF GENERATED ENR {}", enr);
