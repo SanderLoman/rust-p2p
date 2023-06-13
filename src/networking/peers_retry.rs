@@ -307,6 +307,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     let enr = generate_enr(ip4, tcp_udp, syncnets_bytes, attnets_bytes, eth2_bytes).await?;
 
     let listen_address = p2p_address_local.clone();
+    println!("LISTENING ADDRESS: {:?}", listen_address);
 
     // println!("SELF GENERATED ENR {:?}\n", enr);
     // println!("SELF GENERATED ENR {}", enr);
