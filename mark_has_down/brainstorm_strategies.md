@@ -1,6 +1,5 @@
 # **My collection of thoughts and ideas on different kinds of new strategies in the DeFi space.**
 
-
 ## **Table of Contents**
 
 1. [New type of sandwhich ops](#new-type-of-sandwhich-ops)
@@ -29,7 +28,7 @@
 
 - #### **Visual representation of the idea:**
   ##### _This is a basic example_
-  <img src="./markdown_images/chain-sandwhich.png" height="500">
+  <img src="../mark_has_down_images/chain-sandwhich.png" height="500">
 - #### **Explaintion of the chained-sandwhich method**
   - So in the image above we see that we have 2 examples both do pretty much the same but the right example uses 1 step less. So the right image should be more gas effiecent, but it does rely on a user placing a sell order that will be front-runable
   - So again, the basic example shows that we can <span style="color: green;">**buy**</span>/<span style="color: green;">**Vbuy**</span>/<span style="color: red;">**sell**</span>/<span style="color: red;">**sell**</span>/<span style="color: red;">**Vsell**</span>/<span style="color: green;">**buy**</span>. But we can expand this and change this up depending on the transactions waiting in the mempool. Let's say we see a lot of buy orders and a lot of sell orders for a certain token. In this case, we can then do this:

@@ -11,8 +11,8 @@ use colored::*;
 use discv5::{
     enr,
     enr::{k256, CombinedKey, EnrBuilder, NodeId},
-    socket::ListenConfig,
-    Discv5, Discv5ConfigBuilder, Enr, TokioExecutor, Discv5Event, Discv5Error
+    socket::ListenConfig, 
+    Discv5, Discv5ConfigBuilder, Discv5Error, Discv5Event, Enr, TokioExecutor,
 };
 use ethers::prelude::*;
 use eyre::Result;
@@ -129,7 +129,8 @@ pub async fn bootstrapped_peers() -> Result<Vec<(String, String, String, String)
     Ok(results)
 }
 
-pub async fn get_local_peer_info() -> Result<(String, String, String, String, String, String), Box<dyn Error>> {
+pub async fn get_local_peer_info(
+) -> Result<(String, String, String, String, String, String), Box<dyn Error>> {
     let url = "http://127.0.0.1:5052/eth/v1/node/identity";
     let client = reqwest::Client::new();
     let mut headers = HeaderMap::new();
@@ -216,75 +217,39 @@ pub async fn get_local_peer_info() -> Result<(String, String, String, String, St
 //     Ok(genesis_validators_root)
 // }
 
-pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)>>, Box<dyn Error>> {
-    let mut found_peers: Vec<Vec<(String, String, String, String)>> = Vec::new();
-    let bootstrapped_peers = bootstrapped_peers().await?;
-    found_peers.push(bootstrapped_peers);
+pub async fn parse_ip_and_port(
+    p2p_address: &str,
+) -> Result<(std::net::Ipv4Addr, u16), Box<dyn Error>> {
+    let mut parts = p2p_address.split("/");
+    let ip4 = parts.nth(2).unwrap().parse::<std::net::Ipv4Addr>()?;
+    let tcp_udp = parts.nth(1).unwrap().parse::<u16>()?;
+    Ok((ip4, tcp_udp))
+}
 
-    for peer in &found_peers {
-        for (peer_id, enr, p2p_address, state) in peer {
-            println!("Peer ID: {:?}", peer_id);
-            println!("ENR: {:?}", enr);
-            println!("P2P Address: {:?}", p2p_address);
-            println!("State: {:?}", state);
-        }
-        println!("Number of peers bootstrapped: {:?}\n\n\n", peer.len());
-    }
-    let (
-        peer_id_local,
-        enr_local,
-        p2p_address_local,
-        discovery_address_local,
-        attnets_local,
-        syncnets_local,
-    ) = get_local_peer_info().await?;
+pub async fn decode_hex_value(hex_string: &str) -> Result<Vec<u8>, Box<dyn Error>> {
+    let bytes =
+        hex::decode(&hex_string.replace("0x", "")).map_err(|_| "Failed to parse hex string")?;
+    Ok(bytes)
+}
 
-    let listen_address = p2p_address_local.clone();
-
-    
-
-    println!("{}", LogEntry {
-        time: Local::now(),
-        level: LogLevel::Critical,
-        message: format!("{:?}", discovery_address_local),
-    });
-
-    let combined_key = CombinedKey::generate_secp256k1();
-
-    let decoded_enr = Enr::from_str(&enr_local)?;
-
-    println!("LIGHTHOUSE ENR: {:?}\n", decoded_enr);
-    println!("LIGHTHOUSE ENR: {}\n", decoded_enr);
-
-    let mut parts = p2p_address_local.split("/");
-    let ip4 = parts.nth(2).unwrap().parse::<std::net::Ipv4Addr>().unwrap();
-    let tcp_udp = parts.nth(1).unwrap().parse::<u16>().unwrap();
-
-    let attnets_bytes = hex::decode(&attnets_local.replace("0x", "")).map_err(|_| "Failed to parse attnets")?;
-    let syncnets_bytes = hex::decode(&syncnets_local.replace("0x", "")).map_err(|_| "Failed to parse syncnets")?;
-
-    let enr_string = format!("{:?}", decoded_enr);
-    let mut eth2_value: Option<String> = None;
-
+pub async fn get_eth2_value(enr_string: &str) -> Option<String> {
     if let Some(start) = enr_string.find("\"eth2\", \"") {
         let rest = &enr_string[start + 9..];
         if let Some(end) = rest.find("\")") {
-            eth2_value = Some(rest[..end].to_string());
-        } else {
-            println!("'eth2' not found");
+            return Some(rest[..end].to_string());
         }
-    } else {
-        println!("'eth2' not found");
     }
+    None
+}
 
-    // If eth2_value is None, return early
-    let eth2_value = match eth2_value {
-        Some(value) => value,
-        None => return Ok(found_peers),
-    };
-
-    let eth2_bytes = hex::decode(&eth2_value).expect("Invalid hex string");
-
+pub async fn generate_enr(
+    ip4: std::net::Ipv4Addr,
+    tcp_udp: u16,
+    syncnets_bytes: Vec<u8>,
+    attnets_bytes: Vec<u8>,
+    eth2_bytes: Vec<u8>,
+) -> Result<Enr, Box<dyn Error>> {
+    let combined_key = CombinedKey::generate_secp256k1();
     let enr = EnrBuilder::new("v4")
         .ip4(ip4)
         .tcp4(tcp_udp)
@@ -293,10 +258,58 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         .add_value("attnets", &attnets_bytes)
         .add_value_rlp("eth2", eth2_bytes.into())
         .build(&combined_key)
-        .unwrap();
+        .map_err(|_| "Failed to generate ENR")?;
+    Ok(enr)
+}
 
-    println!("SELF GENERATED ENR {:?}\n", enr);
-    println!("SELF GENERATED ENR {}", enr);
+
+pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)>>, Box<dyn Error>>
+{
+    let mut found_peers: Vec<Vec<(String, String, String, String)>> = Vec::new();
+    let bootstrapped_peers = bootstrapped_peers().await?;
+    found_peers.push(bootstrapped_peers);
+
+    // for peer in &found_peers {
+    //     for (peer_id, enr, p2p_address, state) in peer {
+    //         println!("Peer ID: {:?}", peer_id);
+    //         println!("ENR: {:?}", enr);
+    //         println!("P2P Address: {:?}", p2p_address);
+    //         println!("State: {:?}", state);
+    //     }
+    //     println!("Number of peers bootstrapped: {:?}\n\n\n", peer.len());
+    // }
+    
+    let (
+        peer_id_local,
+        enr_local,
+        p2p_address_local,
+        discovery_address_local,
+        attnets_local,
+        syncnets_local,
+    ) = get_local_peer_info().await?;
+    
+    let decoded_enr = Enr::from_str(&enr_local)?;
+
+    let (ip4, tcp_udp) = parse_ip_and_port(&p2p_address_local).await?;
+    let attnets_bytes = decode_hex_value(&attnets_local).await?;
+    let syncnets_bytes = decode_hex_value(&syncnets_local).await?;
+
+    let enr_string = format!("{:?}", decoded_enr);
+    let eth2_value = get_eth2_value(&enr_string).await;
+
+    // If eth2_value is None, return early
+    let eth2_value = match eth2_value {
+        Some(value) => value,
+        None => return Ok(found_peers),
+    };
+
+    let eth2_bytes = decode_hex_value(&eth2_value).await?;
+    let enr = generate_enr(ip4, tcp_udp, syncnets_bytes, attnets_bytes, eth2_bytes).await?;
+
+    let listen_address = p2p_address_local.clone();
+
+    // println!("SELF GENERATED ENR {:?}\n", enr);
+    // println!("SELF GENERATED ENR {}", enr);
 
     Ok(found_peers)
 }
