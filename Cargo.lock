@@ -3692,6 +3692,7 @@ dependencies = [
  "ethers-solc 1.0.2",
  "eyre",
  "futures 0.3.28",
+ "generic-array",
  "hex",
  "libp2p",
  "pnet",
