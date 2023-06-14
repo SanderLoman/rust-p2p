@@ -10,18 +10,20 @@ use chrono::{DateTime, Local, TimeZone, Utc};
 use colored::*;
 use discv5::{
     enr,
-    enr::{k256, ed25519_dalek, CombinedKey, EnrBuilder, NodeId, CombinedPublicKey},
-    socket::ListenConfig, 
-    Discv5, Discv5ConfigBuilder, Discv5Error, Discv5Event, Enr, TokioExecutor, Discv5Config,
+    enr::{ed25519_dalek, k256, CombinedKey, CombinedPublicKey, EnrBuilder, NodeId},
+    socket::ListenConfig,
+    Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Error, Discv5Event, Enr, TokioExecutor,
 };
 use ethers::prelude::*;
 use eyre::Result;
 use futures::stream::{self, StreamExt};
+use generic_array::GenericArray;
 use hex::*;
+use libp2p::core::{identity::PublicKey, multiaddr::Protocol};
 use libp2p::kad::kbucket::{Entry, EntryRefView};
 use libp2p::{
-    core::upgrade, dns::DnsConfig, identity, kad::*, multiaddr, noise::*, ping, swarm::*, yamux,
-    Multiaddr, PeerId, Swarm, Transport, identity::Keypair,
+    core::upgrade, dns::DnsConfig, identity, identity::Keypair, kad::*, multiaddr, noise::*, ping,
+    swarm::*, yamux, Multiaddr, PeerId, Swarm, Transport,
 };
 use rand::thread_rng;
 use reqwest::header::{HeaderMap, ACCEPT};
@@ -49,28 +51,33 @@ use tokio::net::UnixStream;
 use tokio::runtime::Handle;
 use tokio::sync::mpsc;
 use tokio::time::timeout;
-use libp2p::core::{identity::PublicKey, multiaddr::Protocol};
 
 pub trait CombinedKeyExt {
     /// Converts a libp2p key into an ENR combined key.
     fn from_libp2p(key: &libp2p::core::identity::Keypair) -> Result<CombinedKey, &'static str>;
 }
 
+#[allow(deprecated)]
 impl CombinedKeyExt for CombinedKey {
     fn from_libp2p(key: &libp2p::core::identity::Keypair) -> Result<CombinedKey, &'static str> {
         match key {
-            Keypair::into_secp256k1(key) => {
-                let secret =
-                    discv5::enr::k256::ecdsa::SigningKey::from_bytes(&key.secret().to_bytes())
-                        .expect("libp2p key must be valid");
+            Keypair::Secp256k1(key) => {
+                let secret_bytes = key.secret().to_bytes();
+                let secret_bytes_arr: GenericArray<_, _> = secret_bytes.into();
+                let secret = discv5::enr::k256::ecdsa::SigningKey::from_bytes(&secret_bytes_arr)
+                    .expect("libp2p key must be valid");
                 Ok(CombinedKey::Secp256k1(secret))
             }
-            Keypair::into_ed25519(key) => {
-                let ed_keypair =
-                    discv5::enr::ed25519_dalek::SecretKey::from_bytes(&key.encode()[..32])
-                        .expect("libp2p key must be valid");
+            Keypair::Ed25519(key) => {
+                let secret_slice = &key.encode()[..32];
+                let secret_array: [u8; 32] = match secret_slice.try_into() {
+                    Ok(arr) => arr,
+                    Err(_) => return Err("Failed to convert slice to array"),
+                };
+                let ed_keypair = discv5::enr::ed25519_dalek::SigningKey::from_bytes(&secret_array);
                 Ok(CombinedKey::from(ed_keypair))
             }
+            _ => Err("Unsupported key type"),
         }
     }
 }
@@ -267,15 +274,15 @@ pub async fn get_eth2_value(enr_string: &str) -> Option<String> {
     None
 }
 
-pub async fn get_secp256k1_public_key(enr_string: &str) -> Option<String> {
-    if let Some(start) = enr_string.find("\"secp256k1\", \"") {
-        let rest = &enr_string[start + 14..];
-        if let Some(end) = rest.find("\")") {
-            return Some(rest[..end].to_string());
-        }
-    }
-    None
-}
+// pub async fn get_secp256k1_public_key(enr_string: &str) -> Option<String> {
+//     if let Some(start) = enr_string.find("\"secp256k1\", \"") {
+//         let rest = &enr_string[start + 14..];
+//         if let Some(end) = rest.find("\")") {
+//             return Some(rest[..end].to_string());
+//         }
+//     }
+//     None
+// }
 
 pub async fn generate_enr(
     ip4: std::net::Ipv4Addr,
@@ -283,7 +290,7 @@ pub async fn generate_enr(
     syncnets_bytes: Vec<u8>,
     attnets_bytes: Vec<u8>,
     eth2_bytes: Vec<u8>,
-) -> Result<Enr, Box<dyn Error>> {
+) -> Result<(Enr, CombinedKey), Box<dyn Error>> {
     let combined_key = CombinedKey::generate_secp256k1();
     let enr = EnrBuilder::new("v4")
         .ip4(ip4)
@@ -294,11 +301,11 @@ pub async fn generate_enr(
         .add_value_rlp("eth2", eth2_bytes.into())
         .build(&combined_key)
         .map_err(|_| "Failed to generate ENR")?;
-    Ok(enr)
+    Ok((enr, combined_key))
 }
 
-
-pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)>>, Box<dyn Error>> {
+pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)>>, Box<dyn Error>>
+{
     let mut found_peers: Vec<Vec<(String, String, String, String)>> = Vec::new();
     let bootstrapped_peers = bootstrapped_peers().await?;
     found_peers.push(bootstrapped_peers);
@@ -312,7 +319,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     //     }
     //     println!("Number of peers bootstrapped: {:?}\n\n\n", peer.len());
     // }
-    
+
     let (
         peer_id_local,
         enr_local,
@@ -322,19 +329,18 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         syncnets_local,
     ) = get_local_peer_info().await?;
 
-    
     let decoded_enr = Enr::from_str(&enr_local)?;
 
     println!("LIGHTHOUSE ENR: {:?}\n", decoded_enr);
     println!("LIGHTHOUSE ENR: {}\n", decoded_enr);
-    
+
     let (ip4, tcp_udp) = parse_ip_and_port(&p2p_address_local).await?;
     let attnets_bytes = decode_hex_value(&attnets_local).await?;
     let syncnets_bytes = decode_hex_value(&syncnets_local).await?;
 
     let enr_string = format!("{:?}", decoded_enr);
     let eth2_value = get_eth2_value(&enr_string).await;
-    let secp256k1_public_key = get_secp256k1_public_key(&enr_string).await;
+    // let secp256k1_public_key = get_secp256k1_public_key(&enr_string).await;
 
     // If eth2_value is None, return early
     let eth2_value = match eth2_value {
@@ -343,25 +349,26 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     };
 
     // If secp256k1_public_key is None, return early
-    let secp256k1_public_key = match secp256k1_public_key {
-        Some(value) => value,
-        None => return Ok(found_peers),
-    };
+    // let secp256k1_public_key = match secp256k1_public_key {
+    //     Some(value) => value,
+    //     None => return Ok(found_peers),
+    // };
 
-    println!("sec256k1_public_key: {:?}", secp256k1_public_key);
+    // println!("sec256k1_public_key: {:?}", secp256k1_public_key);
     let eth2_bytes = decode_hex_value(&eth2_value).await?;
-    let mut secp256k1_bytes = decode_hex_value(&secp256k1_public_key).await?;
-    println!("secp256k1_hex {:?}", secp256k1_bytes);
+    // let mut secp256k1_bytes = decode_hex_value(&secp256k1_public_key).await?;
+    // println!("secp256k1_hex {:?}", secp256k1_bytes);
     // let secp256k1: CombinedKey = CombinedKey::secp256k1_from_bytes(&mut secp256k1_bytes)?;
-    let enr_key = CombinedKey::generate_secp256k1();
-    let enr = generate_enr(ip4, tcp_udp, syncnets_bytes, attnets_bytes, eth2_bytes).await?;
+    // let keypair = identity::Keypair::generate_secp256k1();
+    // let enr_key: CombinedKey = CombinedKey::from_libp2p(&keypair)?;
+    let (enr, enr_key) =
+        generate_enr(ip4, tcp_udp, syncnets_bytes, attnets_bytes, eth2_bytes).await?;
 
     let port: u16 = 9000;
     let listen_config = ListenConfig::from_ip(std::net::IpAddr::V4(ip4), port);
     let discv5_config = Discv5ConfigBuilder::new(listen_config).build();
 
-    // let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
-
+    let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
     // let test123 = discv5.add_enr(enr.clone())?;
     // println!("{:?}", test123);
 
@@ -380,6 +387,15 @@ pub async fn handle_discovered_peers() -> Result<(), Box<dyn Error>> {
 }
 
 /*
+!!! CHECK THIS AT HOME !!!
+FROM LAPTOP:
+LIGHTHOUSE secp256k1: a1028f4c4bc51e95737507348ec0087e9ba78391c8e3cc911e8041fb7e0fcf3119f4
+SELF GENERATED secp256k1: a102af663e59d17bcdfdf6643df8d5c153333b84140d1b244a47584058d56a853ba2 (this is is random)
+
+FROM DESKTOP:
+LIGHTHOUSE secp256k1:
+SELF GENERATED secp256k1: (this is is random)
+
 enr:-Ly4QGelLf1MlcolM815OL-u-0tu9WEnGkrw8yMcCszPwXj4AaM3-HANoKky39Mp9bweNQNqWUE7ae__OndFgKXaLrIUh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFOAIZKJc2VjcDI1NmsxoQKdh3pTIY35bjJPDx-fTgzMmRKKh_ou0e5jYrv2320pGYhzeW5jbmV0cwCDdGNwgtc0g3VkcILXNA
 enr:-Ly4QC52KSdsb7PkSG9EA4q3ZHRKyFFeqK5UxOXo4vosJcj-F6-Fke0t0KIi50JazUjFlZKTwuEBKMyuLqJbahLJN9UBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFOAIZKJc2VjcDI1NmsxoQOyDkfXvNvI2Db6Ghw8FGrwR4Nujc4wNol79yFZhtVs84hzeW5jbmV0cwCDdGNwgtc0g3VkcILXNA
 enr:-Ly4QHlFSFVzQY6Z3fzyHtKN26PxKelxWCzBCdxIO8At43VeNj-nb-fnfRpIODKQH-VbDFCDY_qzMDqmeCy1oxNtkOQSh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFxBU4OJc2VjcDI1NmsxoQIvoAjp06o7CAfV2crzEoE1pG7MAYKKAYGPJ4svdLubMohzeW5jbmV0cwCDdGNwgssYg3VkcILLGA
