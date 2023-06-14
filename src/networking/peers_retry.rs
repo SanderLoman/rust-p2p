@@ -10,7 +10,7 @@ use chrono::{DateTime, Local, TimeZone, Utc};
 use colored::*;
 use discv5::{
     enr,
-    enr::{k256, CombinedKey, EnrBuilder, NodeId},
+    enr::{k256, ed25519_dalek, CombinedKey, EnrBuilder, NodeId, CombinedPublicKey},
     socket::ListenConfig, 
     Discv5, Discv5ConfigBuilder, Discv5Error, Discv5Event, Enr, TokioExecutor, Discv5Config,
 };
@@ -21,7 +21,7 @@ use hex::*;
 use libp2p::kad::kbucket::{Entry, EntryRefView};
 use libp2p::{
     core::upgrade, dns::DnsConfig, identity, kad::*, multiaddr, noise::*, ping, swarm::*, yamux,
-    Multiaddr, PeerId, Swarm, Transport,
+    Multiaddr, PeerId, Swarm, Transport, identity::Keypair,
 };
 use rand::thread_rng;
 use reqwest::header::{HeaderMap, ACCEPT};
@@ -49,6 +49,31 @@ use tokio::net::UnixStream;
 use tokio::runtime::Handle;
 use tokio::sync::mpsc;
 use tokio::time::timeout;
+use libp2p::core::{identity::PublicKey, multiaddr::Protocol};
+
+pub trait CombinedKeyExt {
+    /// Converts a libp2p key into an ENR combined key.
+    fn from_libp2p(key: &libp2p::core::identity::Keypair) -> Result<CombinedKey, &'static str>;
+}
+
+impl CombinedKeyExt for CombinedKey {
+    fn from_libp2p(key: &libp2p::core::identity::Keypair) -> Result<CombinedKey, &'static str> {
+        match key {
+            Keypair::into_secp256k1(key) => {
+                let secret =
+                    discv5::enr::k256::ecdsa::SigningKey::from_bytes(&key.secret().to_bytes())
+                        .expect("libp2p key must be valid");
+                Ok(CombinedKey::Secp256k1(secret))
+            }
+            Keypair::into_ed25519(key) => {
+                let ed_keypair =
+                    discv5::enr::ed25519_dalek::SecretKey::from_bytes(&key.encode()[..32])
+                        .expect("libp2p key must be valid");
+                Ok(CombinedKey::from(ed_keypair))
+            }
+        }
+    }
+}
 
 #[derive(Debug)]
 struct LogEntry {
@@ -296,9 +321,13 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         attnets_local,
         syncnets_local,
     ) = get_local_peer_info().await?;
+
     
     let decoded_enr = Enr::from_str(&enr_local)?;
 
+    println!("LIGHTHOUSE ENR: {:?}\n", decoded_enr);
+    println!("LIGHTHOUSE ENR: {}\n", decoded_enr);
+    
     let (ip4, tcp_udp) = parse_ip_and_port(&p2p_address_local).await?;
     let attnets_bytes = decode_hex_value(&attnets_local).await?;
     let syncnets_bytes = decode_hex_value(&syncnets_local).await?;
@@ -319,17 +348,22 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         None => return Ok(found_peers),
     };
 
+    println!("sec256k1_public_key: {:?}", secp256k1_public_key);
     let eth2_bytes = decode_hex_value(&eth2_value).await?;
-    let secp256k1_hex = decode_hex_value(&secp256k1_public_key).await?;
-    println!("secp256k1_hex {:?}", secp256k1_hex);
-    // let secp256k1 = 
-
+    let mut secp256k1_bytes = decode_hex_value(&secp256k1_public_key).await?;
+    println!("secp256k1_hex {:?}", secp256k1_bytes);
+    // let secp256k1: CombinedKey = CombinedKey::secp256k1_from_bytes(&mut secp256k1_bytes)?;
+    let enr_key = CombinedKey::generate_secp256k1();
     let enr = generate_enr(ip4, tcp_udp, syncnets_bytes, attnets_bytes, eth2_bytes).await?;
 
     let port: u16 = 9000;
     let listen_config = ListenConfig::from_ip(std::net::IpAddr::V4(ip4), port);
     let discv5_config = Discv5ConfigBuilder::new(listen_config).build();
-    // let discv5: Discv5 = Discv5::new(enr.clone(), secp256k1, discv5_config)?;
+
+    // let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
+
+    // let test123 = discv5.add_enr(enr.clone())?;
+    // println!("{:?}", test123);
 
     println!("SELF GENERATED ENR {:?}\n", enr);
     println!("SELF GENERATED ENR {}", enr);
