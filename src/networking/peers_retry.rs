@@ -52,36 +52,6 @@ use tokio::runtime::Handle;
 use tokio::sync::mpsc;
 use tokio::time::timeout;
 
-pub trait CombinedKeyExt {
-    /// Converts a libp2p key into an ENR combined key.
-    fn from_libp2p(key: &libp2p::core::identity::Keypair) -> Result<CombinedKey, &'static str>;
-}
-
-#[allow(deprecated)]
-impl CombinedKeyExt for CombinedKey {
-    fn from_libp2p(key: &libp2p::core::identity::Keypair) -> Result<CombinedKey, &'static str> {
-        match key {
-            Keypair::Secp256k1(key) => {
-                let secret_bytes = key.secret().to_bytes();
-                let secret_bytes_arr: GenericArray<_, _> = secret_bytes.into();
-                let secret = discv5::enr::k256::ecdsa::SigningKey::from_bytes(&secret_bytes_arr)
-                    .expect("libp2p key must be valid");
-                Ok(CombinedKey::Secp256k1(secret))
-            }
-            Keypair::Ed25519(key) => {
-                let secret_slice = &key.encode()[..32];
-                let secret_array: [u8; 32] = match secret_slice.try_into() {
-                    Ok(arr) => arr,
-                    Err(_) => return Err("Failed to convert slice to array"),
-                };
-                let ed_keypair = discv5::enr::ed25519_dalek::SigningKey::from_bytes(&secret_array);
-                Ok(CombinedKey::from(ed_keypair))
-            }
-            _ => Err("Unsupported key type"),
-        }
-    }
-}
-
 #[derive(Debug)]
 struct LogEntry {
     time: DateTime<Local>,
@@ -204,51 +174,6 @@ pub async fn get_local_peer_info(
     ))
 }
 
-// pub async fn get_forks() -> Result<(u64, u64, u64), Box<dyn Error>> {
-//     let url = "http://127.0.0.1:5052/eth/v1/config/fork_schedule";
-//     let client = reqwest::Client::new();
-//     let mut headers = HeaderMap::new();
-//     headers.insert(ACCEPT, "application/json".parse().unwrap());
-//     let res = client.get(url).headers(headers).send().await?;
-//     let body = res.text().await?;
-//     let json: Value = serde_json::from_str(&body)?;
-//     let forks = json["data"].as_array().ok_or("Forks not found")?;
-
-//     let last_fork = forks.last().ok_or("No fork data")?;
-
-//     let previous_version_hex = last_fork["previous_version"]
-//         .as_str()
-//         .ok_or("Previous version not found")?;
-//     let current_version_hex = last_fork["current_version"]
-//         .as_str()
-//         .ok_or("Current version not found")?;
-//     let epoch_str = last_fork["epoch"].as_str().ok_or("Epoch not found")?;
-
-//     let previous_version = u64::from_str_radix(&previous_version_hex[2..], 16)?;
-//     println!("previous_version: {}\n\n\n", previous_version);
-//     let current_version = u64::from_str_radix(&current_version_hex[2..], 16)?;
-//     println!("current_version: {}\n\n\n", current_version);
-//     let epoch = u64::from_str_radix(epoch_str, 10)?;
-//     println!("epoch: {}\n\n\n", epoch);
-
-//     Ok((previous_version, current_version, epoch))
-// }
-
-// pub async fn get_genesis_validator_root() -> Result<String, Box<dyn Error>> {
-//     let url = "http://127.0.0.1:5052/eth/v1/beacon/genesis";
-//     let client = reqwest::Client::new();
-//     let mut headers = HeaderMap::new();
-//     headers.insert(ACCEPT, "application/json".parse().unwrap());
-//     let res = client.get(url).headers(headers).send().await?;
-//     let body = res.text().await?;
-//     let json: Value = serde_json::from_str(&body)?;
-//     let genesis_validators_root = json["data"]["genesis_validators_root"]
-//         .as_str()
-//         .ok_or("Genesis validators root not found")?
-//         .to_owned();
-//     Ok(genesis_validators_root)
-// }
-
 pub async fn parse_ip_and_port(
     p2p_address: &str,
 ) -> Result<(std::net::Ipv4Addr, u16), Box<dyn Error>> {
@@ -273,16 +198,6 @@ pub async fn get_eth2_value(enr_string: &str) -> Option<String> {
     }
     None
 }
-
-// pub async fn get_secp256k1_public_key(enr_string: &str) -> Option<String> {
-//     if let Some(start) = enr_string.find("\"secp256k1\", \"") {
-//         let rest = &enr_string[start + 14..];
-//         if let Some(end) = rest.find("\")") {
-//             return Some(rest[..end].to_string());
-//         }
-//     }
-//     None
-// }
 
 pub async fn generate_enr(
     ip4: std::net::Ipv4Addr,
@@ -340,7 +255,6 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
 
     let enr_string = format!("{:?}", decoded_enr);
     let eth2_value = get_eth2_value(&enr_string).await;
-    // let secp256k1_public_key = get_secp256k1_public_key(&enr_string).await;
 
     // If eth2_value is None, return early
     let eth2_value = match eth2_value {
@@ -348,29 +262,17 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         None => return Ok(found_peers),
     };
 
-    // If secp256k1_public_key is None, return early
-    // let secp256k1_public_key = match secp256k1_public_key {
-    //     Some(value) => value,
-    //     None => return Ok(found_peers),
-    // };
-
-    // println!("sec256k1_public_key: {:?}", secp256k1_public_key);
     let eth2_bytes = decode_hex_value(&eth2_value).await?;
-    // let mut secp256k1_bytes = decode_hex_value(&secp256k1_public_key).await?;
-    // println!("secp256k1_hex {:?}", secp256k1_bytes);
-    // let secp256k1: CombinedKey = CombinedKey::secp256k1_from_bytes(&mut secp256k1_bytes)?;
-    // let keypair = identity::Keypair::generate_secp256k1();
-    // let enr_key: CombinedKey = CombinedKey::from_libp2p(&keypair)?;
     let (enr, enr_key) =
         generate_enr(ip4, tcp_udp, syncnets_bytes, attnets_bytes, eth2_bytes).await?;
 
     let port: u16 = 9000;
-    let listen_config = ListenConfig::from_ip(std::net::IpAddr::V4(ip4), port);
-    let discv5_config = Discv5ConfigBuilder::new(listen_config).build();
+    let listen_addr = ListenConfig::from_ip(std::net::IpAddr::V4(ip4), port);
+    let discv5_config = Discv5ConfigBuilder::new(listen_addr).build();
 
     let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
-    // let test123 = discv5.add_enr(enr.clone())?;
-    // println!("{:?}", test123);
+
+    // discv5.
 
     println!("SELF GENERATED ENR {:?}\n", enr);
     println!("SELF GENERATED ENR {}", enr);
@@ -393,8 +295,8 @@ LIGHTHOUSE secp256k1: a1028f4c4bc51e95737507348ec0087e9ba78391c8e3cc911e8041fb7e
 SELF GENERATED secp256k1: a102af663e59d17bcdfdf6643df8d5c153333b84140d1b244a47584058d56a853ba2 (this is is random)
 
 FROM DESKTOP:
-LIGHTHOUSE secp256k1:
-SELF GENERATED secp256k1: (this is is random)
+LIGHTHOUSE secp256k1: a1029d877a53218df96e324f0f1f9f4e0ccc99128a87fa2ed1ee6362bbf6df6d2919
+SELF GENERATED secp256k1: a1037927a8a95fa72be435dd2acf021a5430e3a83ae8fd3c9a08b03e966f050c97dc (this is is random)
 
 enr:-Ly4QGelLf1MlcolM815OL-u-0tu9WEnGkrw8yMcCszPwXj4AaM3-HANoKky39Mp9bweNQNqWUE7ae__OndFgKXaLrIUh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFOAIZKJc2VjcDI1NmsxoQKdh3pTIY35bjJPDx-fTgzMmRKKh_ou0e5jYrv2320pGYhzeW5jbmV0cwCDdGNwgtc0g3VkcILXNA
 enr:-Ly4QC52KSdsb7PkSG9EA4q3ZHRKyFFeqK5UxOXo4vosJcj-F6-Fke0t0KIi50JazUjFlZKTwuEBKMyuLqJbahLJN9UBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFOAIZKJc2VjcDI1NmsxoQOyDkfXvNvI2Db6Ghw8FGrwR4Nujc4wNol79yFZhtVs84hzeW5jbmV0cwCDdGNwgtc0g3VkcILXNA
