@@ -272,8 +272,6 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
 
     let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
 
-    // discv5.
-
     println!("SELF GENERATED ENR {:?}\n", enr);
     println!("SELF GENERATED ENR {}", enr);
 
