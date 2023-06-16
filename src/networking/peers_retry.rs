@@ -270,10 +270,60 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     let listen_addr = ListenConfig::from_ip(std::net::IpAddr::V4(ip4), port);
     let discv5_config = Discv5ConfigBuilder::new(listen_addr).build();
 
-    let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
+    // let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
 
     println!("SELF GENERATED ENR {:?}\n", enr);
     println!("SELF GENERATED ENR {}", enr);
+
+    let libp2p_local_key = Keypair::generate_secp256k1();
+    let libp2p_local_peer_id = PeerId::from(libp2p_local_key.public());
+
+    let tcp = libp2p::tcp::tokio::Transport::new(libp2p::tcp::Config::default().nodelay(true));
+    let transport = libp2p::dns::TokioDnsConfig::system(tcp)?;
+    let transport = {
+        let trans_clone = transport.clone();
+        transport.or_transport(libp2p::websocket::WsConfig::new(trans_clone))
+    };
+
+    // mplex config
+    let mut mplex_config = libp2p::mplex::MplexConfig::new();
+    mplex_config.set_max_buffer_size(256);
+    mplex_config.set_max_buffer_behaviour(libp2p::mplex::MaxBufferBehaviour::Block);
+
+    // yamux config
+    let mut yamux_config = libp2p::yamux::YamuxConfig::default();
+    yamux_config.set_window_update_mode(libp2p::yamux::WindowUpdateMode::on_read());
+
+    fn generate_noise_config(
+        identity_keypair: &Keypair,
+    ) -> libp2p::noise::NoiseAuthenticated<XX, X25519Spec, ()> {
+        let static_dh_keys = libp2p::noise::Keypair::<X25519Spec>::new()
+            .into_authentic(identity_keypair)
+            .expect("signing can fail only once during starting a node");
+        libp2p::noise::NoiseConfig::xx(static_dh_keys).into_authenticated()
+    }
+
+    transport
+        .upgrade(libp2p::core::upgrade::Version::V1)
+        .authenticate(generate_noise_config(&libp2p_local_key))
+        .multiplex(libp2p::core::upgrade::SelectUpgrade::new(
+            yamux_config,
+            mplex_config,
+        ))
+        .timeout(Duration::from_secs(10))
+        .boxed();
+
+    // let transport = libp2p::development_transport(libp2p_local_key.clone()).await?;
+
+    // let mut swarm = {
+    //     let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
+
+    //     let executor = tokio::task::
+
+    //     SwarmBuilder::with_executor(transport, , libp2p_local_peer_id, executor)
+    // };
+
+    // println!("KEY LOCAL: {:?}", key_local);
 
     Ok(found_peers)
 }
@@ -287,19 +337,6 @@ pub async fn handle_discovered_peers() -> Result<(), Box<dyn Error>> {
 }
 
 /*
-!!! CHECK THIS AT HOME !!!
-FROM LAPTOP:
-LIGHTHOUSE secp256k1: a1028f4c4bc51e95737507348ec0087e9ba78391c8e3cc911e8041fb7e0fcf3119f4
-SELF GENERATED secp256k1: a102af663e59d17bcdfdf6643df8d5c153333b84140d1b244a47584058d56a853ba2 (this is is random)
-
-FROM DESKTOP:
-LIGHTHOUSE secp256k1: a1029d877a53218df96e324f0f1f9f4e0ccc99128a87fa2ed1ee6362bbf6df6d2919
-SELF GENERATED secp256k1: a1037927a8a95fa72be435dd2acf021a5430e3a83ae8fd3c9a08b03e966f050c97dc (this is is random)
-
-enr:-Ly4QGelLf1MlcolM815OL-u-0tu9WEnGkrw8yMcCszPwXj4AaM3-HANoKky39Mp9bweNQNqWUE7ae__OndFgKXaLrIUh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFOAIZKJc2VjcDI1NmsxoQKdh3pTIY35bjJPDx-fTgzMmRKKh_ou0e5jYrv2320pGYhzeW5jbmV0cwCDdGNwgtc0g3VkcILXNA
-enr:-Ly4QC52KSdsb7PkSG9EA4q3ZHRKyFFeqK5UxOXo4vosJcj-F6-Fke0t0KIi50JazUjFlZKTwuEBKMyuLqJbahLJN9UBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFOAIZKJc2VjcDI1NmsxoQOyDkfXvNvI2Db6Ghw8FGrwR4Nujc4wNol79yFZhtVs84hzeW5jbmV0cwCDdGNwgtc0g3VkcILXNA
-enr:-Ly4QHlFSFVzQY6Z3fzyHtKN26PxKelxWCzBCdxIO8At43VeNj-nb-fnfRpIODKQH-VbDFCDY_qzMDqmeCy1oxNtkOQSh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFxBU4OJc2VjcDI1NmsxoQIvoAjp06o7CAfV2crzEoE1pG7MAYKKAYGPJ4svdLubMohzeW5jbmV0cwCDdGNwgssYg3VkcILLGA
-enr:-Ly4QD0jCoxd4fuiVrhqElhoCCyiQjCRjQ22wH4zdjrJrh2eAEmQUdqepLqRBpu00v-m0W15Lp-15pAAFEyzD1WzI3cBh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFxBU4OJc2VjcDI1NmsxoQLMkkxGvTb8Nl4Y7JMVmkx0St8xW-MyIXAwe6WWSya7YIhzeW5jbmV0cwCDdGNwgssYg3VkcILLGA
 
 use async_std::task;
 use discv5::{enr::{CombinedKey, Enr, EnrBuilder}, enr_ext::create_enr, enr_key::secp256k1, Discv5Config, Discv5Service};
