@@ -270,8 +270,6 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     let listen_addr = ListenConfig::from_ip(std::net::IpAddr::V4(ip4), port);
     let discv5_config = Discv5ConfigBuilder::new(listen_addr).build();
 
-    // let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
-
     println!("SELF GENERATED ENR {:?}\n", enr);
     println!("SELF GENERATED ENR {}", enr);
 
@@ -279,11 +277,12 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     let libp2p_local_peer_id = PeerId::from(libp2p_local_key.public());
 
     let tcp = libp2p::tcp::tokio::Transport::new(libp2p::tcp::Config::default().nodelay(true));
-    let transport = libp2p::dns::TokioDnsConfig::system(tcp)?;
-    let transport = {
-        let trans_clone = transport.clone();
-        transport.or_transport(libp2p::websocket::WsConfig::new(trans_clone))
-    };
+    let transport1 = libp2p::dns::TokioDnsConfig::system(tcp)?;
+    let transport2 = libp2p::dns::TokioDnsConfig::system(libp2p::tcp::tokio::Transport::new(
+        libp2p::tcp::Config::default().nodelay(true),
+    ))?;
+
+    let transport = transport1.or_transport(libp2p::websocket::WsConfig::new(transport2));
 
     // mplex config
     let mut mplex_config = libp2p::mplex::MplexConfig::new();
@@ -303,7 +302,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         libp2p::noise::NoiseConfig::xx(static_dh_keys).into_authenticated()
     }
 
-    transport
+    let upgraded_transport = transport
         .upgrade(libp2p::core::upgrade::Version::V1)
         .authenticate(generate_noise_config(&libp2p_local_key))
         .multiplex(libp2p::core::upgrade::SelectUpgrade::new(
@@ -313,17 +312,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         .timeout(Duration::from_secs(10))
         .boxed();
 
-    // let transport = libp2p::development_transport(libp2p_local_key.clone()).await?;
-
-    // let mut swarm = {
-    //     let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
-
-    //     let executor = tokio::task::
-
-    //     SwarmBuilder::with_executor(transport, , libp2p_local_peer_id, executor)
-    // };
-
-    // println!("KEY LOCAL: {:?}", key_local);
+    // Use `upgraded_transport` in your code as required
 
     Ok(found_peers)
 }
