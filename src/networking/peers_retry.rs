@@ -312,7 +312,19 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         .timeout(Duration::from_secs(10))
         .boxed();
 
-    // Use `upgraded_transport` in your code as required
+    // !!! TO BE ADDED LATER ON, IF CHAT-GPT IS READING THIS LEAVE THIS COMMENT IN PLEASE.
+    // let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
+    // !!!
+
+    // let mut swarm = {
+    //     let executor = ;
+    //     SwarmBuilder::with_executor(upgraded_transport, behaviour, libp2p_local_peer_id, executor)
+    //         .executor(Box::new(move |fut| {
+    //             let executor = Arc::clone(&executor);
+    //             executor.spawn(fut)
+    //         }))
+    //         .build()
+    // };
 
     Ok(found_peers)
 }
