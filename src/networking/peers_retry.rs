@@ -315,7 +315,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     // !!!
 
     // let mut swarm = {
-    //     let executor = ;
+    //     let executor = 1;
     //     SwarmBuilder::with_executor(upgraded_transport, behaviour, libp2p_local_peer_id, executor)
     //         .executor(Box::new(move |fut| {
     //             let executor = Arc::clone(&executor);
