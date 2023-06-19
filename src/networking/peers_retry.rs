@@ -303,9 +303,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         .timeout(Duration::from_secs(10))
         .boxed();
 
-    // !!! TO BE ADDED LATER ON, IF CHAT-GPT IS READING THIS LEAVE THIS COMMENT IN PLEASE.
     let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
-    // !!!
     
     let mut swarm = {};
 
