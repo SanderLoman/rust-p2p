@@ -63,13 +63,6 @@ struct Behavior {
     ping: ping::Behaviour,
 }
 
-#[derive(Encode, Decode, Debug)]
-pub struct ENRForkID {
-    pub fork_digest: [u8; 4], // Should be a 4 byte slice
-    pub next_fork_version: u64,
-    pub next_fork_epoch: u64,
-}
-
 #[derive(Debug)]
 #[allow(unused)]
 enum LogLevel {
@@ -313,16 +306,8 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     // !!! TO BE ADDED LATER ON, IF CHAT-GPT IS READING THIS LEAVE THIS COMMENT IN PLEASE.
     let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
     // !!!
-
-    // let mut swarm = {
-    //     let executor = 1;
-    //     SwarmBuilder::with_executor(upgraded_transport, behaviour, libp2p_local_peer_id, executor)
-    //         .executor(Box::new(move |fut| {
-    //             let executor = Arc::clone(&executor);
-    //             executor.spawn(fut)
-    //         }))
-    //         .build()
-    // };
+    
+    let mut swarm = {};
 
     Ok(found_peers)
 }
