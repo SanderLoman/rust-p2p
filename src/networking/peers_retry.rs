@@ -1,10 +1,3 @@
-/// !!!
-/// 52062
-/// LISTENING ADDRESS: /ip4/0.0.0.0/tcp/9000/p2p/16Uiu2HAm3CHQXGJokLWodbDocko58tCdgotxYcR6BuXyLKcuobUR
-///
-/// ENR ADDRESS LAPTOP: enr:-K24QGDcHgq97t7pNQ0E4Q-FwiQN3ZT5JDmuMC7hz6A1bIRyO32Sti8NSpclcCTNfPgQvU6L5dgvXRfxLu7L7NeKGUY0h2F0dG5ldHOIAAAAAAAAAACEZXRoMpBiiUHvAwAQIP__________gmlkgnY0iXNlY3AyNTZrMaECc29ruZqHENx-CIWjjqcFRZpVXRmo2h20dbjRHy1fgE6Ic3luY25ldHMAg3RjcIIjKA
-///
-/// !!!
 use base64::prelude::*;
 use chrono::{DateTime, Local, TimeZone, Utc};
 use colored::*;
@@ -17,13 +10,14 @@ use discv5::{
 use ethers::prelude::*;
 use eyre::Result;
 use futures::stream::{self, StreamExt};
+use futures::Future;
 use generic_array::GenericArray;
 use hex::*;
 use libp2p::core::{identity::PublicKey, multiaddr::Protocol};
 use libp2p::kad::kbucket::{Entry, EntryRefView};
 use libp2p::{
     core::upgrade, dns::DnsConfig, identity, identity::Keypair, kad::*, multiaddr, noise::*, ping,
-    swarm::*, yamux, Multiaddr, PeerId, Swarm, Transport, swarm::behaviour::*,
+    swarm::behaviour::*, swarm::*, yamux, Multiaddr, PeerId, Swarm, Transport,
 };
 use rand::thread_rng;
 use reqwest::header::{HeaderMap, ACCEPT};
@@ -38,13 +32,21 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::error::Error;
 use std::fmt;
-use std::net::{IpAddr, Ipv4Addr, SocketAddrV4, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::path::Path;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::task::{Context, Poll};
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader};
+/// !!!
+/// 52062
+/// LISTENING ADDRESS: /ip4/0.0.0.0/tcp/9000/p2p/16Uiu2HAm3CHQXGJokLWodbDocko58tCdgotxYcR6BuXyLKcuobUR
+///
+/// ENR ADDRESS LAPTOP: enr:-K24QGDcHgq97t7pNQ0E4Q-FwiQN3ZT5JDmuMC7hz6A1bIRyO32Sti8NSpclcCTNfPgQvU6L5dgvXRfxLu7L7NeKGUY0h2F0dG5ldHOIAAAAAAAAAACEZXRoMpBiiUHvAwAQIP__________gmlkgnY0iXNlY3AyNTZrMaECc29ruZqHENx-CIWjjqcFRZpVXRmo2h20dbjRHy1fgE6Ic3luY25ldHMAg3RjcIIjKA
+///
+/// !!!
+use tokio::macros::support::Pin;
 use tokio::net::UnixStream;
 use tokio::runtime::Handle;
 use tokio::sync::mpsc;
@@ -304,8 +306,25 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         .boxed();
 
     let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
-    
-    let mut swarm = {};
+
+    let behaviour = dummy::Behaviour;
+
+    let port: u16 = 7364;
+    let listen_addr: Multiaddr = format!{"/ip4/{}/tcp/{}", ip4, port}.parse().expect("Failed to parse multiaddr");
+
+    let executor = move |fut: Pin<Box<dyn Future<Output = ()> + Send + 'static>>| {
+        tokio::spawn(fut);
+    };
+
+    let mut swarm = SwarmBuilder::with_executor(
+        upgraded_transport,
+        behaviour,
+        libp2p_local_peer_id,
+        executor,
+    )
+    .build();
+
+    swarm.listen_on(listen_addr)?;
 
     Ok(found_peers)
 }
