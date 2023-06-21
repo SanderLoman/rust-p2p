@@ -309,8 +309,9 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
 
     let behaviour = dummy::Behaviour;
 
-    let port: u16 = 7364;
-    let listen_addr: Multiaddr = format!{"/ip4/{}/tcp/{}", ip4, port}.parse().expect("Failed to parse multiaddr");
+    let port: u16 = 8999;
+    let listen_addr: Multiaddr = format!{"/ip4/{}/tcp/{}/p2p/{}", ip4, port, peer_id_local}.parse().expect("Failed to parse multiaddr");
+    println!("Listening on {:?}", listen_addr);
 
     let executor = move |fut: Pin<Box<dyn Future<Output = ()> + Send + 'static>>| {
         tokio::spawn(fut);
