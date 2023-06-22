@@ -253,9 +253,17 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     let (enr, enr_key) =
         generate_enr(ip4, tcp_udp, syncnets_bytes, attnets_bytes, eth2_bytes).await?;
 
+    // !!!
+    //
+    // FIX THE IP ISSUE (different ip for tcp and udp), needs to end up like the lighthouse enr tcp and udp field
+    //
+    // !!!
+
     let port: u16 = 9000;
-    let listen_addr = ListenConfig::from_ip(std::net::IpAddr::V4(ip4), port);
-    let discv5_config = Discv5ConfigBuilder::new(listen_addr).build();
+    // let ip = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
+    let listen_conf = ListenConfig::from_ip(std::net::IpAddr::V4(ip4), port);
+    println!("LISTEN ADDR: {:?}", listen_conf);
+    let discv5_config = Discv5ConfigBuilder::new(listen_conf).build();
 
     println!("SELF GENERATED ENR {:?}\n", enr);
     println!("SELF GENERATED ENR {}", enr);
@@ -299,7 +307,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         .timeout(Duration::from_secs(10))
         .boxed();
 
-    let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
+    let mut discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
 
     let behaviour = dummy::Behaviour;
 
@@ -308,6 +316,11 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     };
 
     task::block_on(async {
+        // !!!
+        //
+        // FIX THE IP ISSUE (different ip for tcp and udp), needs to end up like the lighthouse enr tcp and udp field
+        //
+        // !!!
         let listen_addr: Multiaddr = "/ip4/0.0.0.0/tcp/0"
             .parse()
             .expect("Failed to parse multiaddr");
@@ -331,7 +344,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
                     endpoint,
                     num_established,
                     concurrent_dial_errors,
-                    established_in
+                    established_in,
                 } => {
                     println!(
                         "Connection established to {:?} at {:?} (total: {:?}), concurrent dial errors: {:?}, established in {:?}",
@@ -349,20 +362,30 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
                         peer_id, endpoint, num_established, cause
                     );
                 }
-                SwarmEvent::IncomingConnection { local_addr, send_back_addr } => {
+                SwarmEvent::IncomingConnection {
+                    local_addr,
+                    send_back_addr,
+                } => {
                     println!(
                         "Incoming connection, addr: {:?} send_back_addr: {:?}",
                         local_addr, send_back_addr
                     );
                 }
-                SwarmEvent::IncomingConnectionError { local_addr, send_back_addr, error } => {
+                SwarmEvent::IncomingConnectionError {
+                    local_addr,
+                    send_back_addr,
+                    error,
+                } => {
                     println!(
                         "Incoming connection error, addr: {:?} send_back_addr: {:?} error: {:?}",
                         local_addr, send_back_addr, error
                     );
                 }
                 SwarmEvent::OutgoingConnectionError { peer_id, error } => {
-                    println!("Outgoing connection error, peer_id: {:?} error: {:?}", peer_id, error);
+                    println!(
+                        "Outgoing connection error, peer_id: {:?} error: {:?}",
+                        peer_id, error
+                    );
                 }
                 SwarmEvent::BannedPeer { peer_id, endpoint } => {
                     println!("Banned peer {:?} at {:?}", peer_id, endpoint);
@@ -370,11 +393,21 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
                 SwarmEvent::NewListenAddr { address, .. } => {
                     println!("Listening on {:?}", address);
                 }
-                SwarmEvent::ExpiredListenAddr { listener_id, address } => {
+                SwarmEvent::ExpiredListenAddr {
+                    listener_id,
+                    address,
+                } => {
                     println!("Expired listen addr {:?} {:?}", listener_id, address);
                 }
-                SwarmEvent::ListenerClosed { listener_id, addresses, reason } => {
-                    println!("Listener closed {:?} {:?} {:?}", listener_id, addresses, reason);
+                SwarmEvent::ListenerClosed {
+                    listener_id,
+                    addresses,
+                    reason,
+                } => {
+                    println!(
+                        "Listener closed {:?} {:?} {:?}",
+                        listener_id, addresses, reason
+                    );
                 }
                 SwarmEvent::ListenerError { listener_id, error } => {
                     println!("Listener error {:?} {:?}", listener_id, error);
@@ -385,7 +418,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
             }
         }
     });
-    
+
     Ok(found_peers)
 }
 
