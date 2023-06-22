@@ -364,7 +364,6 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
                 SwarmEvent::OutgoingConnectionError { peer_id, error } => {
                     println!("Outgoing connection error, peer_id: {:?} error: {:?}", peer_id, error);
                 }
-                #[allow(deprecated)]
                 SwarmEvent::BannedPeer { peer_id, endpoint } => {
                     println!("Banned peer {:?} at {:?}", peer_id, endpoint);
                 }
