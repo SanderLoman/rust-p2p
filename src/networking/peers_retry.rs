@@ -304,6 +304,12 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
 
     discv5.start().await.expect("Discv5 failed to start");
 
+
+    // !!!
+    // 
+    // We have to make our custom behaviour here
+    //
+    // !!!
     let behaviour = dummy::Behaviour;
 
     let executor = move |fut: Pin<Box<dyn Future<Output = ()> + Send + 'static>>| {
