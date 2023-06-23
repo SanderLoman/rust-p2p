@@ -259,10 +259,9 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     //
     // !!!
 
-    let port: u16 = 9000;
-    // let ip = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
-    let listen_conf = ListenConfig::from_ip(std::net::IpAddr::V4(ip4), port);
-    println!("LISTEN ADDR: {:?}", listen_conf);
+    let port: u16 = 7777;
+    let ip = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
+    let listen_conf = ListenConfig::from_ip(std::net::IpAddr::V4(ip), port);
     let discv5_config = Discv5ConfigBuilder::new(listen_conf).build();
 
     println!("SELF GENERATED ENR {:?}\n", enr);
@@ -309,6 +308,8 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
 
     let mut discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
 
+    discv5.start().await.expect("Discv5 failed to start");
+
     let behaviour = dummy::Behaviour;
 
     let executor = move |fut: Pin<Box<dyn Future<Output = ()> + Send + 'static>>| {
@@ -321,7 +322,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         // FIX THE IP ISSUE (different ip for tcp and udp), needs to end up like the lighthouse enr tcp and udp field
         //
         // !!!
-        let listen_addr: Multiaddr = "/ip4/0.0.0.0/tcp/0"
+        let listen_addr: Multiaddr = "/ip4/0.0.0.0/tcp/7777"
             .parse()
             .expect("Failed to parse multiaddr");
         let mut swarm = SwarmBuilder::with_executor(
