@@ -253,12 +253,6 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     let (enr, enr_key) =
         generate_enr(ip4, tcp_udp, syncnets_bytes, attnets_bytes, eth2_bytes).await?;
 
-    // !!!
-    //
-    // FIX THE IP ISSUE (different ip for tcp and udp), needs to end up like the lighthouse enr tcp and udp field
-    //
-    // !!!
-
     let port: u16 = 7777;
     let ip = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
     let listen_conf = ListenConfig::from_ip(std::net::IpAddr::V4(ip), port);
@@ -317,11 +311,6 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     };
 
     task::block_on(async {
-        // !!!
-        //
-        // FIX THE IP ISSUE (different ip for tcp and udp), needs to end up like the lighthouse enr tcp and udp field
-        //
-        // !!!
         let listen_addr: Multiaddr = "/ip4/0.0.0.0/tcp/7777"
             .parse()
             .expect("Failed to parse multiaddr");
