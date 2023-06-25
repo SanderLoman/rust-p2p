@@ -20,6 +20,7 @@ use libp2p::{
     core::upgrade, dns::DnsConfig, identity, identity::Keypair, kad::*, multiaddr, noise::*, ping,
     swarm::behaviour::*, swarm::*, yamux, Multiaddr, PeerId, Swarm, Transport,
 };
+use pnet::packet::ip;
 use rand::thread_rng;
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
@@ -163,19 +164,23 @@ pub async fn get_local_peer_info(
 
 /// !!!
 ///
-/// Maybe we need to change the ip and port for our own genereted ENR
-/// so we wont be using the same ip and port as lighthouse is running
+/// Maybe we need to change the ip and port for our own genereted ENR,
+/// so we wont be using the same ip and port as lighthouse is running.
+///
+/// Maybe we dont even need this function below.
+/// I think we need to create our own ip and port,
+/// because lighthouse is already using the same ip and port
 ///
 /// !!!
 
-pub fn parse_ip_and_port(
-    p2p_address: &str,
-) -> Result<(std::net::Ipv4Addr, u16), Box<dyn Error>> {
-    let mut parts = p2p_address.split("/");
-    let ip4 = "0.0.0.0".parse::<std::net::Ipv4Addr>()?;
-    let tcp_udp = parts.nth(1).unwrap().parse::<u16>()?;
-    Ok((ip4, tcp_udp))
-}
+// pub fn parse_ip_and_port(
+//     p2p_address: &str,
+// ) -> Result<(std::net::Ipv4Addr, u16), Box<dyn Error>> {
+//     let mut parts = p2p_address.split("/");
+//     let ip4 = "0.0.0.0".parse::<std::net::Ipv4Addr>()?;
+//     let tcp_udp = parts.nth(1).unwrap().parse::<u16>()?;
+//     Ok((ip4, tcp_udp))
+// }
 
 pub async fn decode_hex_value(hex_string: &str) -> Result<Vec<u8>, Box<dyn Error>> {
     let bytes =
@@ -195,7 +200,7 @@ pub async fn get_eth2_value(enr_string: &str) -> Option<String> {
 
 pub async fn generate_enr(
     ip4: std::net::Ipv4Addr,
-    tcp_udp: u16,
+    port: u16,
     syncnets_bytes: Vec<u8>,
     attnets_bytes: Vec<u8>,
     eth2_bytes: Vec<u8>,
@@ -203,8 +208,8 @@ pub async fn generate_enr(
     let combined_key = CombinedKey::generate_secp256k1();
     let enr = EnrBuilder::new("v4")
         .ip4(ip4)
-        .tcp4(tcp_udp)
-        .udp4(tcp_udp)
+        .tcp4(port)
+        .udp4(port)
         .add_value("syncnets", &syncnets_bytes)
         .add_value("attnets", &attnets_bytes)
         .add_value_rlp("eth2", eth2_bytes.into())
@@ -239,17 +244,17 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     ) = get_local_peer_info().await?;
 
     let decoded_enr: enr::Enr<CombinedKey> = Enr::from_str(&enr_local)?;
-
+    
     println!("LIGHTHOUSE ENR: {:?}\n", decoded_enr);
     println!("LIGHTHOUSE ENR: {}\n", decoded_enr);
-
-    let (ip4, tcp_udp) = parse_ip_and_port(&p2p_address_local)?;
+    
+    // let (ip4, tcp_udp) = parse_ip_and_port(&p2p_address_local)?;
     let attnets_bytes = decode_hex_value(&attnets_local).await?;
     let syncnets_bytes = decode_hex_value(&syncnets_local).await?;
 
     let enr_string = format!("{:?}", decoded_enr);
     let eth2_value = get_eth2_value(&enr_string).await;
-
+    
     // If eth2_value is None, return early
     let eth2_value = match eth2_value {
         Some(value) => value,
@@ -257,11 +262,16 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     };
 
     let eth2_bytes = decode_hex_value(&eth2_value).await?;
-    let (enr, enr_key) =
-        generate_enr(ip4, tcp_udp, syncnets_bytes, attnets_bytes, eth2_bytes).await?;
-
+    
     let port: u16 = 7777;
     let ip = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
+    // !!!
+    //
+    // NEED TO FIX IP ISSUE IN ENR (0.0.0.0:7777), needs to be a public ip
+    //
+    // !!!
+    let (enr, enr_key) = generate_enr(ip, port, syncnets_bytes, attnets_bytes, eth2_bytes).await?;
+
     let listen_conf = ListenConfig::from_ip(std::net::IpAddr::V4(ip), port);
     let discv5_config = Discv5ConfigBuilder::new(listen_conf).build();
 
@@ -311,9 +321,8 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
 
     discv5.start().await.expect("Discv5 failed to start");
 
-
     // !!!
-    // 
+    //
     // We have to make our custom behaviour here
     //
     // !!!
