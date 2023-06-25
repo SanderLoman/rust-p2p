@@ -162,13 +162,13 @@ pub async fn get_local_peer_info(
 }
 
 /// !!!
-/// 
+///
 /// Maybe we need to change the ip and port for our own genereted ENR
 /// so we wont be using the same ip and port as lighthouse is running
-/// 
+///
 /// !!!
 
-pub async fn parse_ip_and_port(
+pub fn parse_ip_and_port(
     p2p_address: &str,
 ) -> Result<(std::net::Ipv4Addr, u16), Box<dyn Error>> {
     let mut parts = p2p_address.split("/");
@@ -243,7 +243,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     println!("LIGHTHOUSE ENR: {:?}\n", decoded_enr);
     println!("LIGHTHOUSE ENR: {}\n", decoded_enr);
 
-    let (ip4, tcp_udp) = parse_ip_and_port(&p2p_address_local).await?;
+    let (ip4, tcp_udp) = parse_ip_and_port(&p2p_address_local)?;
     let attnets_bytes = decode_hex_value(&attnets_local).await?;
     let syncnets_bytes = decode_hex_value(&syncnets_local).await?;
 
