@@ -54,7 +54,7 @@ struct LogEntry {
 }
 
 #[derive(NetworkBehaviour, Default)]
-struct Behavior {
+pub struct Behavior {
     keep_alive: keep_alive::Behaviour,
     ping: ping::Behaviour,
 }
@@ -161,11 +161,18 @@ pub async fn get_local_peer_info(
     ))
 }
 
+/// !!!
+/// 
+/// Maybe we need to change the ip and port for our own genereted ENR
+/// so we wont be using the same ip and port as lighthouse is running
+/// 
+/// !!!
+
 pub async fn parse_ip_and_port(
     p2p_address: &str,
 ) -> Result<(std::net::Ipv4Addr, u16), Box<dyn Error>> {
     let mut parts = p2p_address.split("/");
-    let ip4 = parts.nth(2).unwrap().parse::<std::net::Ipv4Addr>()?;
+    let ip4 = "0.0.0.0".parse::<std::net::Ipv4Addr>()?;
     let tcp_udp = parts.nth(1).unwrap().parse::<u16>()?;
     Ok((ip4, tcp_udp))
 }
@@ -231,7 +238,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         syncnets_local,
     ) = get_local_peer_info().await?;
 
-    let decoded_enr = Enr::from_str(&enr_local)?;
+    let decoded_enr: enr::Enr<CombinedKey> = Enr::from_str(&enr_local)?;
 
     println!("LIGHTHOUSE ENR: {:?}\n", decoded_enr);
     println!("LIGHTHOUSE ENR: {}\n", decoded_enr);
