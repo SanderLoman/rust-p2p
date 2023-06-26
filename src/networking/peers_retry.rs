@@ -18,7 +18,7 @@ use libp2p::core::{identity::PublicKey, multiaddr::Protocol};
 use libp2p::kad::kbucket::{Entry, EntryRefView};
 use libp2p::{
     core::upgrade, dns::DnsConfig, identity, identity::Keypair, kad::*, multiaddr, noise::*, ping,
-    swarm::behaviour::*, swarm::*, yamux, Multiaddr, PeerId, Swarm, Transport,
+    swarm::behaviour::*, swarm::*, yamux, Multiaddr, PeerId, Swarm, Transport, autonat::*, floodsub::*, 
 };
 use pnet::packet::ip;
 use rand::thread_rng;
@@ -224,16 +224,16 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     ) = get_local_peer_info().await?;
 
     let decoded_enr: enr::Enr<CombinedKey> = Enr::from_str(&enr_local)?;
-    
+
     println!("LIGHTHOUSE ENR: {:?}\n", decoded_enr);
     println!("LIGHTHOUSE ENR: {}\n", decoded_enr);
-    
+
     let attnets_bytes = decode_hex_value(&attnets_local).await?;
     let syncnets_bytes = decode_hex_value(&syncnets_local).await?;
 
     let enr_string = format!("{:?}", decoded_enr);
     let eth2_value = get_eth2_value(&enr_string).await;
-    
+
     // If eth2_value is None, return early
     let eth2_value = match eth2_value {
         Some(value) => value,
@@ -241,7 +241,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     };
 
     let eth2_bytes = decode_hex_value(&eth2_value).await?;
-    
+
     let port: u16 = 7777;
     let ip = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
     // !!!
@@ -322,92 +322,91 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
             executor,
         )
         .build();
-
         swarm.listen_on(listen_addr).unwrap();
 
-        loop {
-            match swarm.select_next_some().await {
-                SwarmEvent::Behaviour(_) => {
-                    println!("Behaviour event");
-                }
-                SwarmEvent::ConnectionEstablished {
-                    peer_id,
-                    endpoint,
-                    num_established,
-                    concurrent_dial_errors,
-                    established_in,
-                } => {
-                    println!(
-                        "Connection established to {:?} at {:?} (total: {:?}), concurrent dial errors: {:?}, established in {:?}",
-                        peer_id, endpoint, num_established, concurrent_dial_errors, established_in
-                    );
-                }
-                SwarmEvent::ConnectionClosed {
-                    peer_id,
-                    endpoint,
-                    num_established,
-                    cause,
-                } => {
-                    println!(
-                        "Connection closed to {:?} at {:?} (total: {:?}), cause: {:?}",
-                        peer_id, endpoint, num_established, cause
-                    );
-                }
-                SwarmEvent::IncomingConnection {
-                    local_addr,
-                    send_back_addr,
-                } => {
-                    println!(
-                        "Incoming connection, addr: {:?} send_back_addr: {:?}",
-                        local_addr, send_back_addr
-                    );
-                }
-                SwarmEvent::IncomingConnectionError {
-                    local_addr,
-                    send_back_addr,
-                    error,
-                } => {
-                    println!(
-                        "Incoming connection error, addr: {:?} send_back_addr: {:?} error: {:?}",
-                        local_addr, send_back_addr, error
-                    );
-                }
-                SwarmEvent::OutgoingConnectionError { peer_id, error } => {
-                    println!(
-                        "Outgoing connection error, peer_id: {:?} error: {:?}",
-                        peer_id, error
-                    );
-                }
-                SwarmEvent::BannedPeer { peer_id, endpoint } => {
-                    println!("Banned peer {:?} at {:?}", peer_id, endpoint);
-                }
-                SwarmEvent::NewListenAddr { address, .. } => {
-                    println!("Listening on {:?}", address);
-                }
-                SwarmEvent::ExpiredListenAddr {
-                    listener_id,
-                    address,
-                } => {
-                    println!("Expired listen addr {:?} {:?}", listener_id, address);
-                }
-                SwarmEvent::ListenerClosed {
-                    listener_id,
-                    addresses,
-                    reason,
-                } => {
-                    println!(
-                        "Listener closed {:?} {:?} {:?}",
-                        listener_id, addresses, reason
-                    );
-                }
-                SwarmEvent::ListenerError { listener_id, error } => {
-                    println!("Listener error {:?} {:?}", listener_id, error);
-                }
-                SwarmEvent::Dialing(peer_id) => {
-                    println!("Dialing {:?}", peer_id);
-                }
-            }
-        }
+        // loop {
+        //     match swarm.select_next_some().await {
+        //         SwarmEvent::Behaviour(_) => {
+        //             println!("Behaviour event");
+        //         }
+        //         SwarmEvent::ConnectionEstablished {
+        //             peer_id,
+        //             endpoint,
+        //             num_established,
+        //             concurrent_dial_errors,
+        //             established_in,
+        //         } => {
+        //             println!(
+        //                 "Connection established to {:?} at {:?} (total: {:?}), concurrent dial errors: {:?}, established in {:?}",
+        //                 peer_id, endpoint, num_established, concurrent_dial_errors, established_in
+        //             );
+        //         }
+        //         SwarmEvent::ConnectionClosed {
+        //             peer_id,
+        //             endpoint,
+        //             num_established,
+        //             cause,
+        //         } => {
+        //             println!(
+        //                 "Connection closed to {:?} at {:?} (total: {:?}), cause: {:?}",
+        //                 peer_id, endpoint, num_established, cause
+        //             );
+        //         }
+        //         SwarmEvent::IncomingConnection {
+        //             local_addr,
+        //             send_back_addr,
+        //         } => {
+        //             println!(
+        //                 "Incoming connection, addr: {:?} send_back_addr: {:?}",
+        //                 local_addr, send_back_addr
+        //             );
+        //         }
+        //         SwarmEvent::IncomingConnectionError {
+        //             local_addr,
+        //             send_back_addr,
+        //             error,
+        //         } => {
+        //             println!(
+        //                 "Incoming connection error, addr: {:?} send_back_addr: {:?} error: {:?}",
+        //                 local_addr, send_back_addr, error
+        //             );
+        //         }
+        //         SwarmEvent::OutgoingConnectionError { peer_id, error } => {
+        //             println!(
+        //                 "Outgoing connection error, peer_id: {:?} error: {:?}",
+        //                 peer_id, error
+        //             );
+        //         }
+        //         SwarmEvent::BannedPeer { peer_id, endpoint } => {
+        //             println!("Banned peer {:?} at {:?}", peer_id, endpoint);
+        //         }
+        //         SwarmEvent::NewListenAddr { address, .. } => {
+        //             println!("Listening on {:?}", address);
+        //         }
+        //         SwarmEvent::ExpiredListenAddr {
+        //             listener_id,
+        //             address,
+        //         } => {
+        //             println!("Expired listen addr {:?} {:?}", listener_id, address);
+        //         }
+        //         SwarmEvent::ListenerClosed {
+        //             listener_id,
+        //             addresses,
+        //             reason,
+        //         } => {
+        //             println!(
+        //                 "Listener closed {:?} {:?} {:?}",
+        //                 listener_id, addresses, reason
+        //             );
+        //         }
+        //         SwarmEvent::ListenerError { listener_id, error } => {
+        //             println!("Listener error {:?} {:?}", listener_id, error);
+        //         }
+        //         SwarmEvent::Dialing(peer_id) => {
+        //             println!("Dialing {:?}", peer_id);
+        //         }
+        //     }
+        // }
     });
 
     Ok(found_peers)
