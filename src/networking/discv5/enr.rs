@@ -1,51 +1,114 @@
 #![deny(unsafe_code)]
 
-use async_std::task;
-use base64::prelude::*;
-use chrono::{DateTime, Local, TimeZone, Utc};
-use colored::*;
 use discv5::{
     enr,
-    enr::{ed25519_dalek, k256, CombinedKey, CombinedPublicKey, EnrBuilder, NodeId},
-    socket::ListenConfig,
-    Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Error, Discv5Event, Enr, TokioExecutor,
+    enr::{CombinedKey, EnrBuilder},
+    Enr,
 };
-use ethers::prelude::*;
 use eyre::Result;
-use futures::stream::{self, StreamExt};
-use futures::Future;
-use generic_array::GenericArray;
-use hex::*;
-use libp2p::core::{identity::PublicKey, multiaddr::Protocol};
-use libp2p::kad::kbucket::{Entry, EntryRefView};
-use libp2p::{
-    autonat::*, core::upgrade, dns::DnsConfig, floodsub::*, identity, identity::Keypair, kad::*,
-    multiaddr, noise::*, ping, swarm::behaviour::*, swarm::*, yamux, Multiaddr, PeerId, Swarm,
-    Transport,
-};
-use pnet::packet::ip;
-use rand::thread_rng;
 use reqwest::header::{HeaderMap, ACCEPT};
-use reqwest::Client;
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use sha2::{Digest, Sha256};
-use ssz::*;
-use ssz_derive::{Decode, Encode};
-use ssz_types::*;
-use std::collections::HashMap;
-use std::collections::HashSet;
 use std::error::Error;
-use std::fmt;
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4};
-use std::path::Path;
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
-use std::task::{Context, Poll};
-use std::time::Duration;
-use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader};
-use tokio::macros::support::Pin;
-use tokio::net::UnixStream;
-use tokio::runtime::Handle;
-use tokio::sync::mpsc;
-use tokio::time::timeout;
+
+pub async fn get_local_peer_info(
+) -> Result<(String, String, String, String, String, String), Box<dyn Error>> {
+    let url = "http://127.0.0.1:5052/eth/v1/node/identity";
+    let client = reqwest::Client::new();
+    let mut headers = HeaderMap::new();
+    headers.insert(ACCEPT, "application/json".parse().unwrap());
+    let res = client.get(url).headers(headers).send().await?;
+    let body = res.text().await?;
+    let json: Value = serde_json::from_str(&body)?;
+    let peer_id = json["data"]["peer_id"]
+        .as_str()
+        .ok_or("Peer ID not found")?
+        .to_owned();
+    let enr = json["data"]["enr"]
+        .as_str()
+        .ok_or("ENR not found")?
+        .to_owned();
+    let p2p_address = json["data"]["p2p_addresses"][0]
+        .as_str()
+        .ok_or("P2P address not found")?
+        .to_owned();
+    let discovery_address = json["data"]["discovery_addresses"][0]
+        .as_str()
+        .ok_or("Discovery address not found")?
+        .to_owned();
+    let attnets = json["data"]["metadata"]["attnets"]
+        .as_str()
+        .ok_or("attnets not found")?
+        .to_owned();
+    let syncnets = json["data"]["metadata"]["syncnets"]
+        .as_str()
+        .ok_or("syncnets not found")?
+        .to_owned();
+    Ok((
+        peer_id,
+        enr,
+        p2p_address,
+        discovery_address,
+        attnets,
+        syncnets,
+    ))
+}
+
+pub async fn decode_hex_value(hex_string: &str) -> Result<Vec<u8>, Box<dyn Error>> {
+    let bytes =
+        hex::decode(&hex_string.replace("0x", "")).map_err(|_| "Failed to parse hex string")?;
+    Ok(bytes)
+}
+
+pub async fn get_eth2_value(enr_string: &str) -> Option<String> {
+    if let Some(start) = enr_string.find("\"eth2\", \"") {
+        let rest = &enr_string[start + 9..];
+        if let Some(end) = rest.find("\")") {
+            return Some(rest[..end].to_string());
+        }
+    }
+    None
+}
+
+pub async fn generate_enr() -> Result<(Enr, CombinedKey), Box<dyn Error>> {
+    let (_, enr, _, _, attnets, syncnets) = get_local_peer_info().await?;
+
+    let ip4 = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
+    let port: u16 = 7777;
+
+    let syncnets_bytes = decode_hex_value(&syncnets).await?;
+    let attnets_bytes = decode_hex_value(&attnets).await?;
+
+    let decoded_enr: enr::Enr<CombinedKey> = Enr::from_str(&enr)?;
+
+    let enr_string = format!("{:?}", decoded_enr);
+    let eth2_value = get_eth2_value(&enr_string).await;
+
+    // If eth2_value is None, return early
+    let eth2_value = match eth2_value {
+        Some(value) => value,
+        None => return Err("Failed to get eth2 value from ENR".into()),
+    };
+
+    let eth2_bytes = decode_hex_value(&eth2_value).await?;
+
+    let combined_key = CombinedKey::generate_secp256k1();
+
+    let enr = EnrBuilder::new("v4")
+        .ip4(ip4)
+        .tcp4(port)
+        .udp4(port)
+        .add_value("syncnets", &syncnets_bytes)
+        .add_value("attnets", &attnets_bytes)
+        .add_value_rlp("eth2", eth2_bytes.into())
+        .build(&combined_key)
+        .map_err(|_| "Failed to generate ENR")?;
+
+    println!(
+        "FROM FILE: src/networking/discv5/enr.rs ||| ENR: {:?}\n",
+        enr
+    );
+    println!("FROM FILE: src/networking/discv5/enr.rs ||| ENR: {}\n", enr);
+
+    Ok((enr, combined_key))
+}

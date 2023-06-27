@@ -1,5 +1,6 @@
 #![deny(unsafe_code)]
 
+use crate::networking::discv5::enr::*;
 use async_std::task;
 use base64::prelude::*;
 use chrono::{DateTime, Local, TimeZone, Utc};
@@ -49,3 +50,9 @@ use tokio::net::UnixStream;
 use tokio::runtime::Handle;
 use tokio::sync::mpsc;
 use tokio::time::timeout;
+
+pub async fn setup_discv5() -> Result<(), Box<dyn Error>> {
+    println!("Setting up discv5...");
+    generate_enr().await?;
+    Ok(())
+}
