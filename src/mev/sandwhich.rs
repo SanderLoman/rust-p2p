@@ -1,4 +1,5 @@
 #![deny(unsafe_code)]
+#![allow(unused)]
 
 use dotenv::dotenv;
 use ethers::prelude::*;

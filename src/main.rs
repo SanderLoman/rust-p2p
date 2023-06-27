@@ -1,42 +1,28 @@
-// use ethers::core::{rand::thread_rng, types::transaction::eip2718::TypedTransaction};
-// use ethers_flashbots::*;
-// use url::Url;
-
 #![deny(unsafe_code)]
+
 use chrono::{DateTime, Local};
 use colored::*;
 use dotenv::dotenv;
 use ethers::prelude::*;
 use eyre::Result;
 
-use std::collections::HashMap;
+use networking::peers_retry;
 use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
 
-use libp2p::{
-    core::upgrade, dns::DnsConfig, identity, kad::*, noise::*, swarm::*, yamux, Multiaddr, PeerId,
-    Swarm, Transport,
-};
+// use strategies::sandwhich;
+// use networking::unused_functions;
+// use strategies::arbitrage;
+// use ethers::core::{rand::thread_rng, types::transaction::eip2718::TypedTransaction};
+// use ethers_flashbots::*;
+// use url::Url;
+// use std::collections::HashMap;
 
 mod networking {
     pub mod peers_retry;
-    pub mod peers;
+    pub mod unused_functions;
 }
-
-mod strategies {
-    pub mod arbitrage;
-    pub mod liquidations;
-    pub mod sandwhich;
-}
-
-use strategies::arbitrage;
-use strategies::liquidations;
-use strategies::sandwhich;
-use networking::peers;
-use networking::peers_retry;
-
-
 
 #[derive(Debug)]
 struct LogEntry {
@@ -89,8 +75,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let provider: Provider<Ws> = Provider::<Ws>::connect(localhost_rpc_url).await?;
     let provider_arc: Arc<Provider<Ws>> = Arc::new(provider.clone());
-
-    liquidations::liquidations().await?;
 
     let block_number: U64 = provider.get_block_number().await?;
     let gas_price: U256 = provider.get_gas_price().await?;

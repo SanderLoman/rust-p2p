@@ -1,3 +1,5 @@
+#![deny(unsafe_code)]
+
 use chrono::{DateTime, Local};
 use colored::*;
 use eyre::Result;

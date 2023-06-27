@@ -1,3 +1,5 @@
+#![deny(unsafe_code)]
+
 use async_std::task;
 use base64::prelude::*;
 use chrono::{DateTime, Local, TimeZone, Utc};
@@ -17,8 +19,9 @@ use hex::*;
 use libp2p::core::{identity::PublicKey, multiaddr::Protocol};
 use libp2p::kad::kbucket::{Entry, EntryRefView};
 use libp2p::{
-    core::upgrade, dns::DnsConfig, identity, identity::Keypair, kad::*, multiaddr, noise::*, ping,
-    swarm::behaviour::*, swarm::*, yamux, Multiaddr, PeerId, Swarm, Transport, autonat::*, floodsub::*, 
+    autonat::*, core::upgrade, dns::DnsConfig, floodsub::*, identity, identity::Keypair, kad::*,
+    multiaddr, noise::*, ping, swarm::behaviour::*, swarm::*, yamux, Multiaddr, PeerId, Swarm,
+    Transport,
 };
 use pnet::packet::ip;
 use rand::thread_rng;
@@ -34,7 +37,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::error::Error;
 use std::fmt;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4};
 use std::path::Path;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -55,7 +58,7 @@ struct LogEntry {
 }
 
 #[derive(NetworkBehaviour, Default)]
-pub struct Behavior {
+pub struct CustomBehavior {
     keep_alive: keep_alive::Behaviour,
     ping: ping::Behaviour,
 }
