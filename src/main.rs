@@ -6,23 +6,34 @@ use dotenv::dotenv;
 use ethers::prelude::*;
 use eyre::Result;
 
-use networking::peers_retry;
 use std::error::Error;
 use std::fmt;
 use std::sync::Arc;
 
-// use strategies::sandwhich;
-// use networking::unused_functions;
-// use strategies::arbitrage;
-// use ethers::core::{rand::thread_rng, types::transaction::eip2718::TypedTransaction};
-// use ethers_flashbots::*;
-// use url::Url;
-// use std::collections::HashMap;
+mod beacon_node;
+mod consensus;
+mod evm;
+mod mev;
+mod networking;
+// {
+    // pub mod discv5 {
+    //     pub mod enr;
+    //     pub mod discovery;
+    // }
+    // pub mod libp2p {
+    //     pub mod connections;
+    //     pub mod message_handling;
+    //     pub mod peer_management;
+    //     pub mod status_request;
+    // }
+    // pub mod peers_retry;
+// }
 
-mod networking {
-    pub mod peers_retry;
-    pub mod unused_functions;
-}
+use crate::mev::*;
+use beacon_node::*;
+use consensus::*;
+use evm::*;
+use networking::{discv5::*, libp2p::*};
 
 #[derive(Debug)]
 struct LogEntry {
@@ -88,70 +99,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     );
 
-    peers_retry::discover_peers().await?;
-
-    // peers::time_to_reach_geth(provider_arc).await?;
-
-    // let enodes = peers::get_enode_addresses().await?;
-
-    // let best_peers =  peers::process_enodes(enodes).await?;
-
-    // let mut peer_addresses = Vec::new();
-    // for peers in best_peers.values() {
-    //     peer_addresses.extend(peers.keys().cloned());
-    // }
-
-    // Connect to the top nodes and obtain data as quickly as possible
-    // let mut connected_nodes = HashMap::new();
-    // for enode in peer_addresses {
-    //     if let Some(peer_id) = PeerId::from_str(&enode) {
-    //         let multiaddr = format!("/p2p/{}", peer_id.to_base58());
-    //         if let Ok(stream) = libp2p::tcp::Config::new()
-    //             .dial(multiaddr.parse::<Multiaddr>().unwrap())
-    //             .await
-    //         {
-    //             let client = provider;
-    //             if let Ok(_) = client.get_block_number().await {
-    //                 connected_nodes.insert(enode, client);
-    //             }
-    //         }
-    //     }
-    // }
-
-    // // Disconnect from slow nodes and connect to fast nodes
-    // for (enode, client) in &connected_nodes {
-    //     if client.eth_syncing().await.unwrap().is_none() {
-    //         connected_nodes.remove(enode);
-    //     }
-    // }
-
-    // let mut slow_nodes = best_peers;
-    // slow_nodes.retain(|region, _| {
-    //     let mut region_slow = true;
-    //     if let Some(connected_region) = connected_nodes.get(region) {
-    //         for (enode, score) in slow_nodes.get(region).unwrap().iter() {
-    //             if connected_region.eth_syncing().await.unwrap().is_some()
-    //                 && score > &score_peer(Duration::from_secs(0))
-    //             {
-    //                 slow_nodes.get_mut(region).unwrap().remove(enode);
-    //             } else {
-    //                 region_slow = false;
-    //             }
-    //         }
-    //         false
-    //     } else {
-    //         region_slow
-    //     }
-    // });
-
-    // for (enode, client) in connected_nodes {
-    //     println!(
-    //         "Connected to {} with score {}",
-    //         enode,
-    //         score_peer(Duration::from_secs(0))
-    //     );
-    //     // Do something with the connected client...
-    // }
+    networking::peers_retry::discover_peers().await?;
+    networking::discv5::discovery::setup_discv5().await?;
 
     Ok(())
 }

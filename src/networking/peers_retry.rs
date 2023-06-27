@@ -257,8 +257,8 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     let listen_conf = ListenConfig::from_ip(std::net::IpAddr::V4(ip), port);
     let discv5_config = Discv5ConfigBuilder::new(listen_conf).build();
 
-    println!("SELF GENERATED ENR {:?}\n", enr);
-    println!("SELF GENERATED ENR {}", enr);
+    // println!("SELF GENERATED ENR {:?}\n", enr);
+    // println!("SELF GENERATED ENR {}", enr);
 
     let libp2p_local_key = Keypair::generate_secp256k1();
     let libp2p_local_peer_id = PeerId::from(libp2p_local_key.public());
