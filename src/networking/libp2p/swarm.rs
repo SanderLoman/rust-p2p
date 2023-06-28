@@ -1,6 +1,5 @@
 #![deny(unsafe_code)]
 
-use crate::networking::discv5::enr::*;
 use async_std::task;
 use base64::prelude::*;
 use chrono::{DateTime, Local, TimeZone, Utc};
@@ -50,18 +49,3 @@ use tokio::net::UnixStream;
 use tokio::runtime::Handle;
 use tokio::sync::mpsc;
 use tokio::time::timeout;
-
-use crate::networking::discv5::enr::*;
-
-pub async fn setup_discv5() -> Result<(), Box<dyn Error>> {
-    let port: u16 = 7777;
-    let ip = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
-    let listen_conf = ListenConfig::from_ip(std::net::IpAddr::V4(ip), port);
-    let discv5_config = Discv5ConfigBuilder::new(listen_conf).build();
-
-    let (enr, enr_key) = generate_enr().await?;
-
-    let mut discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
-    discv5.start().await.expect("Discv5 failed to start");
-    Ok(())
-}

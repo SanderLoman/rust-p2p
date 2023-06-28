@@ -122,84 +122,84 @@ pub async fn bootstrapped_peers() -> Result<Vec<(String, String, String, String)
     Ok(results)
 }
 
-pub async fn get_local_peer_info(
-) -> Result<(String, String, String, String, String, String), Box<dyn Error>> {
-    let url = "http://127.0.0.1:5052/eth/v1/node/identity";
-    let client = reqwest::Client::new();
-    let mut headers = HeaderMap::new();
-    headers.insert(ACCEPT, "application/json".parse().unwrap());
-    let res = client.get(url).headers(headers).send().await?;
-    let body = res.text().await?;
-    let json: Value = serde_json::from_str(&body)?;
-    let peer_id = json["data"]["peer_id"]
-        .as_str()
-        .ok_or("Peer ID not found")?
-        .to_owned();
-    let enr = json["data"]["enr"]
-        .as_str()
-        .ok_or("ENR not found")?
-        .to_owned();
-    let p2p_address = json["data"]["p2p_addresses"][0]
-        .as_str()
-        .ok_or("P2P address not found")?
-        .to_owned();
-    let discovery_address = json["data"]["discovery_addresses"][0]
-        .as_str()
-        .ok_or("Discovery address not found")?
-        .to_owned();
-    let attnets = json["data"]["metadata"]["attnets"]
-        .as_str()
-        .ok_or("attnets not found")?
-        .to_owned();
-    let syncnets = json["data"]["metadata"]["syncnets"]
-        .as_str()
-        .ok_or("syncnets not found")?
-        .to_owned();
-    Ok((
-        peer_id,
-        enr,
-        p2p_address,
-        discovery_address,
-        attnets,
-        syncnets,
-    ))
-}
+// pub async fn get_local_peer_info(
+// ) -> Result<(String, String, String, String, String, String), Box<dyn Error>> {
+//     let url = "http://127.0.0.1:5052/eth/v1/node/identity";
+//     let client = reqwest::Client::new();
+//     let mut headers = HeaderMap::new();
+//     headers.insert(ACCEPT, "application/json".parse().unwrap());
+//     let res = client.get(url).headers(headers).send().await?;
+//     let body = res.text().await?;
+//     let json: Value = serde_json::from_str(&body)?;
+//     let peer_id = json["data"]["peer_id"]
+//         .as_str()
+//         .ok_or("Peer ID not found")?
+//         .to_owned();
+//     let enr = json["data"]["enr"]
+//         .as_str()
+//         .ok_or("ENR not found")?
+//         .to_owned();
+//     let p2p_address = json["data"]["p2p_addresses"][0]
+//         .as_str()
+//         .ok_or("P2P address not found")?
+//         .to_owned();
+//     let discovery_address = json["data"]["discovery_addresses"][0]
+//         .as_str()
+//         .ok_or("Discovery address not found")?
+//         .to_owned();
+//     let attnets = json["data"]["metadata"]["attnets"]
+//         .as_str()
+//         .ok_or("attnets not found")?
+//         .to_owned();
+//     let syncnets = json["data"]["metadata"]["syncnets"]
+//         .as_str()
+//         .ok_or("syncnets not found")?
+//         .to_owned();
+//     Ok((
+//         peer_id,
+//         enr,
+//         p2p_address,
+//         discovery_address,
+//         attnets,
+//         syncnets,
+//     ))
+// }
 
-pub async fn decode_hex_value(hex_string: &str) -> Result<Vec<u8>, Box<dyn Error>> {
-    let bytes =
-        hex::decode(&hex_string.replace("0x", "")).map_err(|_| "Failed to parse hex string")?;
-    Ok(bytes)
-}
+// pub async fn decode_hex_value(hex_string: &str) -> Result<Vec<u8>, Box<dyn Error>> {
+//     let bytes =
+//         hex::decode(&hex_string.replace("0x", "")).map_err(|_| "Failed to parse hex string")?;
+//     Ok(bytes)
+// }
 
-pub async fn get_eth2_value(enr_string: &str) -> Option<String> {
-    if let Some(start) = enr_string.find("\"eth2\", \"") {
-        let rest = &enr_string[start + 9..];
-        if let Some(end) = rest.find("\")") {
-            return Some(rest[..end].to_string());
-        }
-    }
-    None
-}
+// pub async fn get_eth2_value(enr_string: &str) -> Option<String> {
+//     if let Some(start) = enr_string.find("\"eth2\", \"") {
+//         let rest = &enr_string[start + 9..];
+//         if let Some(end) = rest.find("\")") {
+//             return Some(rest[..end].to_string());
+//         }
+//     }
+//     None
+// }
 
-pub async fn generate_enr(
-    ip4: std::net::Ipv4Addr,
-    port: u16,
-    syncnets_bytes: Vec<u8>,
-    attnets_bytes: Vec<u8>,
-    eth2_bytes: Vec<u8>,
-) -> Result<(Enr, CombinedKey), Box<dyn Error>> {
-    let combined_key = CombinedKey::generate_secp256k1();
-    let enr = EnrBuilder::new("v4")
-        .ip4(ip4)
-        .tcp4(port)
-        .udp4(port)
-        .add_value("syncnets", &syncnets_bytes)
-        .add_value("attnets", &attnets_bytes)
-        .add_value_rlp("eth2", eth2_bytes.into())
-        .build(&combined_key)
-        .map_err(|_| "Failed to generate ENR")?;
-    Ok((enr, combined_key))
-}
+// pub async fn generate_enr(
+//     ip4: std::net::Ipv4Addr,
+//     port: u16,
+//     syncnets_bytes: Vec<u8>,
+//     attnets_bytes: Vec<u8>,
+//     eth2_bytes: Vec<u8>,
+// ) -> Result<(Enr, CombinedKey), Box<dyn Error>> {
+//     let combined_key = CombinedKey::generate_secp256k1();
+//     let enr = EnrBuilder::new("v4")
+//         .ip4(ip4)
+//         .tcp4(port)
+//         .udp4(port)
+//         .add_value("syncnets", &syncnets_bytes)
+//         .add_value("attnets", &attnets_bytes)
+//         .add_value_rlp("eth2", eth2_bytes.into())
+//         .build(&combined_key)
+//         .map_err(|_| "Failed to generate ENR")?;
+//     Ok((enr, combined_key))
+// }
 
 pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)>>, Box<dyn Error>>
 {
@@ -217,33 +217,33 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     //     println!("Number of peers bootstrapped: {:?}\n\n\n", peer.len());
     // }
 
-    let (
-        peer_id_local,
-        enr_local,
-        p2p_address_local,
-        discovery_address_local,
-        attnets_local,
-        syncnets_local,
-    ) = get_local_peer_info().await?;
+    // let (
+    //     peer_id_local,
+    //     enr_local,
+    //     p2p_address_local,
+    //     discovery_address_local,
+    //     attnets_local,
+    //     syncnets_local,
+    // ) = get_local_peer_info().await?;
 
-    let decoded_enr: enr::Enr<CombinedKey> = Enr::from_str(&enr_local)?;
+    // let decoded_enr: enr::Enr<CombinedKey> = Enr::from_str(&enr_local)?;
 
-    println!("LIGHTHOUSE ENR: {:?}\n", decoded_enr);
-    println!("LIGHTHOUSE ENR: {}\n", decoded_enr);
+    // println!("LIGHTHOUSE ENR: {:?}\n", decoded_enr);
+    // println!("LIGHTHOUSE ENR: {}\n", decoded_enr);
 
-    let attnets_bytes = decode_hex_value(&attnets_local).await?;
-    let syncnets_bytes = decode_hex_value(&syncnets_local).await?;
+    // let attnets_bytes = decode_hex_value(&attnets_local).await?;
+    // let syncnets_bytes = decode_hex_value(&syncnets_local).await?;
 
-    let enr_string = format!("{:?}", decoded_enr);
-    let eth2_value = get_eth2_value(&enr_string).await;
+    // let enr_string = format!("{:?}", decoded_enr);
+    // let eth2_value = get_eth2_value(&enr_string).await;
 
     // If eth2_value is None, return early
-    let eth2_value = match eth2_value {
-        Some(value) => value,
-        None => return Ok(found_peers),
-    };
+    // let eth2_value = match eth2_value {
+    //     Some(value) => value,
+    //     None => return Ok(found_peers),
+    // };
 
-    let eth2_bytes = decode_hex_value(&eth2_value).await?;
+    // let eth2_bytes = decode_hex_value(&eth2_value).await?;
 
     let port: u16 = 7777;
     let ip = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
@@ -252,56 +252,52 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
     // NEED TO FIX IP ISSUE IN ENR (0.0.0.0:7777), needs to be a public ip
     //
     // !!!
-    let (enr, enr_key) = generate_enr(ip, port, syncnets_bytes, attnets_bytes, eth2_bytes).await?;
+    // let (enr, enr_key) = generate_enr(ip, port, syncnets_bytes, attnets_bytes, eth2_bytes).await?;
 
     let listen_conf = ListenConfig::from_ip(std::net::IpAddr::V4(ip), port);
     let discv5_config = Discv5ConfigBuilder::new(listen_conf).build();
 
-    // println!("SELF GENERATED ENR {:?}\n", enr);
-    // println!("SELF GENERATED ENR {}", enr);
-
     let libp2p_local_key = Keypair::generate_secp256k1();
     let libp2p_local_peer_id = PeerId::from(libp2p_local_key.public());
 
-    let tcp = libp2p::tcp::tokio::Transport::new(libp2p::tcp::Config::default().nodelay(true));
-    let transport1 = libp2p::dns::TokioDnsConfig::system(tcp)?;
-    let transport2 = libp2p::dns::TokioDnsConfig::system(libp2p::tcp::tokio::Transport::new(
-        libp2p::tcp::Config::default().nodelay(true),
-    ))?;
+    // let tcp = libp2p::tcp::tokio::Transport::new(libp2p::tcp::Config::default().nodelay(true));
+    // let transport1 = libp2p::dns::TokioDnsConfig::system(tcp)?;
+    // let transport2 = libp2p::dns::TokioDnsConfig::system(libp2p::tcp::tokio::Transport::new(
+    //     libp2p::tcp::Config::default().nodelay(true),
+    // ))?;
 
-    let transport = transport1.or_transport(libp2p::websocket::WsConfig::new(transport2));
+    // let transport = transport1.or_transport(libp2p::websocket::WsConfig::new(transport2));
 
-    // mplex config
-    let mut mplex_config = libp2p::mplex::MplexConfig::new();
-    mplex_config.set_max_buffer_size(256);
-    mplex_config.set_max_buffer_behaviour(libp2p::mplex::MaxBufferBehaviour::Block);
+    // // mplex config
+    // let mut mplex_config = libp2p::mplex::MplexConfig::new();
+    // mplex_config.set_max_buffer_size(256);
+    // mplex_config.set_max_buffer_behaviour(libp2p::mplex::MaxBufferBehaviour::Block);
 
-    // yamux config
-    let mut yamux_config = libp2p::yamux::YamuxConfig::default();
-    yamux_config.set_window_update_mode(libp2p::yamux::WindowUpdateMode::on_read());
+    // // yamux config
+    // let mut yamux_config = libp2p::yamux::YamuxConfig::default();
+    // yamux_config.set_window_update_mode(libp2p::yamux::WindowUpdateMode::on_read());
 
-    fn generate_noise_config(
-        identity_keypair: &Keypair,
-    ) -> libp2p::noise::NoiseAuthenticated<XX, X25519Spec, ()> {
-        let static_dh_keys = libp2p::noise::Keypair::<X25519Spec>::new()
-            .into_authentic(identity_keypair)
-            .expect("signing can fail only once during starting a node");
-        libp2p::noise::NoiseConfig::xx(static_dh_keys).into_authenticated()
-    }
+    // fn generate_noise_config(
+    //     identity_keypair: &Keypair,
+    // ) -> libp2p::noise::NoiseAuthenticated<XX, X25519Spec, ()> {
+    //     let static_dh_keys = libp2p::noise::Keypair::<X25519Spec>::new()
+    //         .into_authentic(identity_keypair)
+    //         .expect("signing can fail only once during starting a node");
+    //     libp2p::noise::NoiseConfig::xx(static_dh_keys).into_authenticated()
+    // }
 
-    let upgraded_transport = transport
-        .upgrade(libp2p::core::upgrade::Version::V1)
-        .authenticate(generate_noise_config(&libp2p_local_key))
-        .multiplex(libp2p::core::upgrade::SelectUpgrade::new(
-            yamux_config,
-            mplex_config,
-        ))
-        .timeout(Duration::from_secs(10))
-        .boxed();
+    // let upgraded_transport = transport
+    //     .upgrade(libp2p::core::upgrade::Version::V1)
+    //     .authenticate(generate_noise_config(&libp2p_local_key))
+    //     .multiplex(libp2p::core::upgrade::SelectUpgrade::new(
+    //         yamux_config,
+    //         mplex_config,
+    //     ))
+    //     .timeout(Duration::from_secs(10))
+    //     .boxed();
 
-    let mut discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
-
-    discv5.start().await.expect("Discv5 failed to start");
+    // let mut discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
+    // discv5.start().await.expect("Discv5 failed to start");
 
     // !!!
     //
@@ -318,14 +314,14 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
         let listen_addr: Multiaddr = "/ip4/0.0.0.0/tcp/7777"
             .parse()
             .expect("Failed to parse multiaddr");
-        let mut swarm = SwarmBuilder::with_executor(
-            upgraded_transport,
-            behaviour,
-            libp2p_local_peer_id,
-            executor,
-        )
-        .build();
-        swarm.listen_on(listen_addr).unwrap();
+        // let mut swarm = SwarmBuilder::with_executor(
+        //     upgraded_transport,
+        //     behaviour,
+        //     libp2p_local_peer_id,
+        //     executor,
+        // )
+        // .build();
+        // swarm.listen_on(listen_addr).unwrap();
 
         // loop {
         //     match swarm.select_next_some().await {
@@ -417,7 +413,7 @@ pub async fn discover_peers() -> Result<Vec<Vec<(String, String, String, String)
 
 pub async fn handle_discovered_peers() -> Result<(), Box<dyn Error>> {
     let discovered_peers: Vec<Vec<(String, String, String, String)>> = discover_peers().await?;
-    let (peer_id, enr, p2p_address, discovery_addresss, attnets, syncnets) =
-        get_local_peer_info().await?;
+    // let (peer_id, enr, p2p_address, discovery_addresss, attnets, syncnets) =
+        // get_local_peer_info().await?;
     Ok(())
 }
