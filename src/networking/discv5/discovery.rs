@@ -51,8 +51,6 @@ use tokio::runtime::Handle;
 use tokio::sync::mpsc;
 use tokio::time::timeout;
 
-use crate::networking::discv5::enr::*;
-
 pub async fn setup_discv5() -> Result<(), Box<dyn Error>> {
     let port: u16 = 7777;
     let ip = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
