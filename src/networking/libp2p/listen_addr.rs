@@ -8,7 +8,7 @@ use discv5::{
     enr,
     enr::{ed25519_dalek, k256, CombinedKey, CombinedPublicKey, EnrBuilder, NodeId},
     socket::ListenConfig,
-    Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Error, Discv5Event, Enr, TokioExecutor,
+    Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Error, Discv5Event, Enr, TokioExecutor, IpMode
 };
 use ethers::prelude::*;
 use eyre::Result;

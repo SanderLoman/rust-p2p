@@ -99,8 +99,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     );
 
-    networking::peers_retry::discover_peers().await?;
-    networking::discv5::discovery::setup_discv5().await?;
+    networking::find_peers::discover_peers().await?;
+    networking::discv5::discovery::discv5_events().await;
     networking::libp2p::transport::setup_transport().await?;
 
     Ok(())

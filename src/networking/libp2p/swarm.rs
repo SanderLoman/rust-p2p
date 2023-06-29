@@ -20,7 +20,7 @@ use libp2p::core::{identity::PublicKey, multiaddr::Protocol};
 use libp2p::kad::kbucket::{Entry, EntryRefView};
 use libp2p::{
     autonat::*, core::upgrade, dns::DnsConfig, floodsub::*, identity, identity::Keypair, kad::*,
-    multiaddr, noise::*, ping, swarm::behaviour::*, swarm::*, yamux, Multiaddr, PeerId, Swarm,
+    multiaddr, noise::*, ping, swarm::behaviour::*, swarm::NetworkBehaviour, swarm::*, yamux, Multiaddr, PeerId, Swarm,
     Transport,
 };
 use pnet::packet::ip;
@@ -49,3 +49,33 @@ use tokio::net::UnixStream;
 use tokio::runtime::Handle;
 use tokio::sync::mpsc;
 use tokio::time::timeout;
+
+use super::listen_addr::*;
+use super::transport::*;
+use super::behaviour::*;
+
+pub async fn setup_swarm() -> Result<(), Box<dyn Error>> {
+    let upgraded_transport = setup_transport().await.unwrap();
+
+    let behaviour = dummy::Behaviour;
+    
+    let libp2p_local_key = Keypair::generate_secp256k1();
+    let libp2p_local_peer_id = PeerId::from(libp2p_local_key.public());
+
+    let executor = move |fut: Pin<Box<dyn Future<Output = ()> + Send + 'static>>| {
+        tokio::spawn(fut);
+    };
+
+    let mut swarm: Swarm<dummy::Behaviour> = SwarmBuilder::with_executor(
+        upgraded_transport,
+        behaviour,
+        libp2p_local_peer_id,
+        executor,
+    )
+    .build();
+
+    let listen_addr = setup_listen_addr().await.unwrap();
+    let test123 = Swarm::listen_on(&mut swarm, listen_addr).unwrap();
+println!("test123: {:?}", test123);
+    Ok(())
+}

@@ -9,7 +9,6 @@ use libp2p::{
 use std::error::Error;
 use std::time::Duration;
 
-
 pub async fn setup_transport() -> Result<libp2p::core::transport::Boxed<(PeerId, libp2p::core::muxing::StreamMuxerBox)>, Box<dyn Error>> {
     let libp2p_local_key = Keypair::generate_secp256k1();
 
