@@ -56,7 +56,7 @@ use tokio::sync::mpsc;
 use tokio::time::timeout;
 
 pub async fn setup_listen_addr() -> Result<Multiaddr, Box<dyn Error>> {
-    let listen_addr: Multiaddr = "/ip4/83.128.33.146/tcp/7777"
+    let listen_addr: Multiaddr = "/ip4/0.0.0.0/tcp/7777"
         .parse()
         .expect("Failed to parse multiaddr");
     Ok(listen_addr)

@@ -73,7 +73,7 @@ pub async fn get_eth2_value(enr_string: &str) -> Option<String> {
 pub async fn generate_enr() -> Result<(Enr, CombinedKey), Box<dyn Error>> {
     let (_, enr, _, _, attnets, syncnets) = get_local_peer_info().await?;
 
-    let ip4 = "83.128.33.146".parse::<std::net::Ipv4Addr>().unwrap();
+    let ip4 = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
     let port: u16 = 7777;
 
     let syncnets_bytes = decode_hex_value(&syncnets).await?;
