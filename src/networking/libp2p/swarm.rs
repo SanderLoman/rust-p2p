@@ -75,7 +75,8 @@ pub async fn setup_swarm() -> Result<(), Box<dyn Error>> {
     .build();
 
     let listen_addr = setup_listen_addr().await.unwrap();
+    println!("Listening on {:?}", listen_addr);
     let test123 = Swarm::listen_on(&mut swarm, listen_addr).unwrap();
-println!("test123: {:?}", test123);
+
     Ok(())
 }
