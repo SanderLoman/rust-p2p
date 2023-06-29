@@ -10,7 +10,7 @@ use discv5::{
     enr::{ed25519_dalek, k256, CombinedKey, CombinedPublicKey, EnrBuilder, NodeId},
     socket::ListenConfig,
     Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Error, Discv5Event, Enr, IpMode,
-    TokioExecutor,
+    TokioExecutor, DefaultProtocolId
 };
 use ethers::prelude::*;
 use eyre::Result;
@@ -72,36 +72,31 @@ pub async fn discv5_events() {
     let discv5 = setup_discv5().await.unwrap();
     let mut event_stream = discv5.event_stream().await.unwrap();
 
-    while let Some(event) = event_stream.next().await {
+    while let Some(event) = event_stream.recv().await {
         match event {
             discv5::Discv5Event::Discovered(enr) => {
-                println!("Discovered node with PeerId: {}", enr.peer_id());
-                // handle the discovered event here
+                println!("Discovered ENR: {}", enr);
+                // handle the Discovered event here
             }
             discv5::Discv5Event::EnrAdded { enr, replaced } => {
-                println!("Added ENR with PeerId: {}", enr.peer_id());
-                if let Some(replaced_enr) = replaced {
-                    println!("Replaced ENR with PeerId: {}", replaced_enr.peer_id());
-                }
+                println!("Added ENR: {}, replaced: {:?}", enr, replaced);
                 // handle the EnrAdded event here
             }
             discv5::Discv5Event::NodeInserted { node_id, replaced } => {
-                println!("Inserted node with NodeId: {}", node_id);
-                if let Some(replaced_node_id) = replaced {
-                    println!("Replaced node with NodeId: {}", replaced_node_id);
-                }
+                println!("Inserted NodeId: {}, replaced: {:?}", node_id, replaced);
                 // handle the NodeInserted event here
             }
             discv5::Discv5Event::SocketUpdated(addr) => {
-                println!("Updated socket address to: {}", addr);
+                println!("Updated socket address: {}", addr);
                 // handle the SocketUpdated event here
             }
-            discv5::Discv5Event::FindNodeResult { key, closer_peers } => {
-                println!("FindNodeResult with NodeId: {}", key);
-                // handle the FindNodeResult event here
-                for peer in closer_peers {
-                    println!("Closer peer with PeerId: {}", peer.peer_id());
-                }
+            discv5::Discv5Event::SessionEstablished(enr, socket_addr) => {
+                println!("Established session with ENR: {}, socketAddr: {}", enr, socket_addr);
+                // handle the SessionEstablished event here
+            }
+            discv5::Discv5Event::TalkRequest(node_id) => {
+                println!("Received talk request from NodeId: {:?}", node_id);
+                // handle the TalkRequest event here
             }
         }
     }
