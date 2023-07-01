@@ -9,8 +9,8 @@ use discv5::{
     enr,
     enr::{ed25519_dalek, k256, CombinedKey, CombinedPublicKey, EnrBuilder, NodeId},
     socket::ListenConfig,
-    Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Error, Discv5Event, Enr, IpMode,
-    TokioExecutor, DefaultProtocolId
+    DefaultProtocolId, Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Error, Discv5Event, Enr,
+    IpMode, TokioExecutor,
 };
 use ethers::prelude::*;
 use eyre::Result;
@@ -64,6 +64,15 @@ pub async fn setup_discv5() -> Result<Discv5, Box<dyn Error>> {
     let mut discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
     discv5.start().await.expect("Discv5 failed to start");
 
+    let enr_loc_id = discv5.local_enr().node_id();
+    println!("Local ENR: {:?}", enr_loc_id);
+    discv5.find_node(enr_loc_id).await.unwrap();
+    println!("Looking for given NodeId:");
+
+    let test123: enr::Enr<CombinedKey> = Enr::from_str("enr:-Ly4QMQKI6HuHJC1PINo0aRFKKWYlgHGjYeU75qopb8c7axkAFLjSVIe5EbfiSBV2L2yzGOkWsL0tbITZZk87TAGmrQvh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFOAIZKJc2VjcDI1NmsxoQKdh3pTIY35bjJPDx-fTgzMmRKKh_ou0e5jYrv2320pGYhzeW5jbmV0cwCDdGNwguzug3VkcILs7g")?;
+    // discv5.send_ping(test123).await.unwrap();
+    // discv5.talk_req(enr, protocol, request)
+
     discv5.event_stream().await.unwrap();
     Ok(discv5)
 }
@@ -71,6 +80,8 @@ pub async fn setup_discv5() -> Result<Discv5, Box<dyn Error>> {
 pub async fn discv5_events() {
     let discv5 = setup_discv5().await.unwrap();
     let mut event_stream = discv5.event_stream().await.unwrap();
+
+    println!("Waiting for events...");
 
     while let Some(event) = event_stream.recv().await {
         match event {
@@ -91,7 +102,10 @@ pub async fn discv5_events() {
                 // handle the SocketUpdated event here
             }
             discv5::Discv5Event::SessionEstablished(enr, socket_addr) => {
-                println!("Established session with ENR: {}, socketAddr: {}", enr, socket_addr);
+                println!(
+                    "Established session with ENR: {}, socketAddr: {}",
+                    enr, socket_addr
+                );
                 // handle the SessionEstablished event here
             }
             discv5::Discv5Event::TalkRequest(node_id) => {
