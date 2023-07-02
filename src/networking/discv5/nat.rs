@@ -103,10 +103,6 @@ fn add_port_mapping(
     protocol_string: &'static str,
     log: &slog::Logger,
 ) -> Result<(), ()> {
-    // We add specific port mappings rather than getting the router to arbitrary assign
-    // one.
-    // I've found this to be more reliable. If multiple users are behind a single
-    // router, they should ideally try to set different port numbers.
     let mapping_string = &format!("lighthouse-{}", protocol_string);
     for _ in 0..2 {
         match gateway.add_port(protocol, socket.port(), socket, 0, mapping_string) {
