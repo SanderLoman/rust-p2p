@@ -147,6 +147,7 @@ fn add_port_mapping(
     Err(())
 }
 
+// !!! MAYBE NOT NEEDED !!!
 // Removes the specified TCP and UDP port mappings.
 // pub fn remove_mappings(tcp_port: Option<u16>, udp_port: Option<u16>, log: &slog::Logger) {
 //     if tcp_port.is_some() || udp_port.is_some() {
