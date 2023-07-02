@@ -73,12 +73,18 @@ pub async fn get_eth2_value(enr_string: &str) -> Option<String> {
 }
 
 pub async fn generate_enr() -> Result<(Enr, CombinedKey), Box<dyn Error>> {
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+
+    let log = slog::Logger::root(drain, slog::o!());
+
     let (_, enr, _, _, attnets, syncnets) = get_local_peer_info().await?;
 
     let decoded_enr: enr::Enr<CombinedKey> = Enr::from_str(&enr)?;
 
-    println!("LIGHTHOUSE ENR: {:?}\n", decoded_enr);
-    println!("LIGHTHOUSE ENR: {}\n", decoded_enr);
+    info!(log, "LIGHTHOUSE ENR: {:?}", decoded_enr);
+    info!(log, "LIGHTHOUSE ENR: {}", decoded_enr);
 
     let ip4 = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
     let port: u16 = 7777;
@@ -87,13 +93,8 @@ pub async fn generate_enr() -> Result<(Enr, CombinedKey), Box<dyn Error>> {
         tcp_port: port,
         udp_port: port,
     };
-    let decorator = slog_term::TermDecorator::new().build();
-    let drain = slog_term::FullFormat::new(decorator).build().fuse();
-    let drain = slog_async::Async::new(drain).build().fuse();
-
-    let log = slog::Logger::root(drain, slog::o!());
-
-    UPnPConfig::set_upnp_mappings(upnp_config, log);
+    let logclone = log.clone();
+    UPnPConfig::set_upnp_mappings(upnp_config, logclone);
 
     let syncnets_bytes = decode_hex_value(&syncnets).await?;
     let attnets_bytes = decode_hex_value(&attnets).await?;
@@ -123,11 +124,14 @@ pub async fn generate_enr() -> Result<(Enr, CombinedKey), Box<dyn Error>> {
         .build(&combined_key)
         .map_err(|_| "Failed to generate ENR")?;
 
-    println!(
-        "FROM FILE: src/networking/discv5/enr.rs ||| ENR: {:?}\n",
-        enr
+    info!(
+        log,
+        "FROM FILE: src/networking/discv5/enr.rs ||| ENR: {:?}\n", enr
     );
-    println!("FROM FILE: src/networking/discv5/enr.rs ||| ENR: {}\n", enr);
+    info!(
+        log,
+        "FROM FILE: src/networking/discv5/enr.rs ||| ENR: {}\n", enr
+    );
 
     Ok((enr, combined_key))
 }

@@ -51,14 +51,14 @@ use tokio::net::UnixStream;
 use tokio::runtime::Handle;
 use tokio::sync::mpsc;
 use tokio::time::timeout;
+use slog::*;
 
 pub async fn setup_discv5() -> Result<Discv5, Box<dyn Error>> {
     let port: u16 = 7777;
     let ip = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
     let listen_conf = ListenConfig::from_ip(std::net::IpAddr::V4(ip), port);
-    let lol123 = listen_conf.with_ipv4(ip, port);
-
-    let discv5_config = Discv5ConfigBuilder::new(lol123).build();
+    
+    let discv5_config = Discv5ConfigBuilder::new(listen_conf).build();
 
     let (enr, enr_key) = generate_enr().await?;
 
