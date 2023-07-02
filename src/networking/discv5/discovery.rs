@@ -56,8 +56,9 @@ pub async fn setup_discv5() -> Result<Discv5, Box<dyn Error>> {
     let port: u16 = 7777;
     let ip = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
     let listen_conf = ListenConfig::from_ip(std::net::IpAddr::V4(ip), port);
+    let lol123 = listen_conf.with_ipv4(ip, port);
 
-    let discv5_config = Discv5ConfigBuilder::new(listen_conf).build();
+    let discv5_config = Discv5ConfigBuilder::new(lol123).build();
 
     let (enr, enr_key) = generate_enr().await?;
 
@@ -65,13 +66,8 @@ pub async fn setup_discv5() -> Result<Discv5, Box<dyn Error>> {
     discv5.start().await.expect("Discv5 failed to start");
 
     let enr_loc_id = discv5.local_enr().node_id();
-    println!("Local ENR: {:?}", enr_loc_id);
-    discv5.find_node(enr_loc_id).await.unwrap();
-    println!("Looking for given NodeId:");
 
-    let test123: enr::Enr<CombinedKey> = Enr::from_str("enr:-Ly4QMQKI6HuHJC1PINo0aRFKKWYlgHGjYeU75qopb8c7axkAFLjSVIe5EbfiSBV2L2yzGOkWsL0tbITZZk87TAGmrQvh2F0dG5ldHOIAAAAAAAAAACEZXRoMpBH63KzkAAAcv__________gmlkgnY0gmlwhFOAIZKJc2VjcDI1NmsxoQKdh3pTIY35bjJPDx-fTgzMmRKKh_ou0e5jYrv2320pGYhzeW5jbmV0cwCDdGNwguzug3VkcILs7g")?;
-    // discv5.send_ping(test123).await.unwrap();
-    // discv5.talk_req(enr, protocol, request)
+    discv5.find_node(enr_loc_id).await.unwrap();
 
     discv5.event_stream().await.unwrap();
     Ok(discv5)

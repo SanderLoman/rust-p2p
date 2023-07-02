@@ -1,5 +1,6 @@
 #![deny(unsafe_code)]
 
+use crate::nat::*;
 use discv5::{
     enr,
     enr::{CombinedKey, EnrBuilder},
@@ -10,6 +11,7 @@ use reqwest::header::{HeaderMap, ACCEPT};
 use serde_json::Value;
 use std::error::Error;
 use std::str::FromStr;
+use slog::*;
 
 pub async fn get_local_peer_info(
 ) -> Result<(String, String, String, String, String, String), Box<dyn Error>> {
@@ -73,8 +75,20 @@ pub async fn get_eth2_value(enr_string: &str) -> Option<String> {
 pub async fn generate_enr() -> Result<(Enr, CombinedKey), Box<dyn Error>> {
     let (_, enr, _, _, attnets, syncnets) = get_local_peer_info().await?;
 
+    let decoded_enr: enr::Enr<CombinedKey> = Enr::from_str(&enr)?;
+
+    println!("LIGHTHOUSE ENR: {:?}\n", decoded_enr);
+    println!("LIGHTHOUSE ENR: {}\n", decoded_enr);
+
     let ip4 = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
     let port: u16 = 7777;
+
+    let upnp_config = UPnPConfig {
+        tcp_port: port,
+        udp_port: port,
+    };
+    let log = slog::Logger::root(slog::Discard, slog::o!());
+    UPnPConfig::set_upnp_mappings(upnp_config, log);
 
     let syncnets_bytes = decode_hex_value(&syncnets).await?;
     let attnets_bytes = decode_hex_value(&attnets).await?;
