@@ -86,16 +86,6 @@ pub fn construct_upnp_mappings(config: UPnPConfig, log: slog::Logger) {
                         external_socket
                     }).ok()
                     };
-
-                    match (tcp_socket, udp_socket) {
-                        (Some(tcp_socket), Some(udp_socket)) => {
-                            info!(log, "UPnP routes established"; "tcp_socket" => format!("{}:{}", tcp_socket.ip(), tcp_socket.port()), "udp_socket" => format!("{}:{}", udp_socket.ip(), udp_socket.port()));
-                            return;
-                        }
-                        _ => {
-                            info!(log, "UPnP no routes constructed");
-                        }
-                    }
                 }
                 _ => debug!(log, "UPnP no routes constructed. IPv6 not supported"),
             }
