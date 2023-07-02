@@ -20,8 +20,8 @@ use libp2p::core::{identity::PublicKey, multiaddr::Protocol};
 use libp2p::kad::kbucket::{Entry, EntryRefView};
 use libp2p::{
     autonat::*, core::upgrade, dns::DnsConfig, floodsub::*, identity, identity::Keypair, kad::*,
-    multiaddr, noise::*, ping, swarm::behaviour::*, swarm::NetworkBehaviour, swarm::*, yamux, Multiaddr, PeerId, Swarm,
-    Transport,
+    multiaddr, noise::*, ping, swarm::behaviour::*, swarm::NetworkBehaviour, swarm::*, yamux,
+    Multiaddr, PeerId, Swarm, Transport,
 };
 use pnet::packet::ip;
 use rand::thread_rng;
@@ -49,16 +49,22 @@ use tokio::net::UnixStream;
 use tokio::runtime::Handle;
 use tokio::sync::mpsc;
 use tokio::time::timeout;
+use slog::*;
 
+use super::behaviour::*;
 use super::listen_addr::*;
 use super::transport::*;
-use super::behaviour::*;
 
 pub async fn setup_swarm() -> Result<(), Box<dyn Error>> {
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+
+    let log = slog::Logger::root(drain, slog::o!());
     let upgraded_transport = setup_transport().await.unwrap();
 
     let behaviour = dummy::Behaviour;
-    
+
     let libp2p_local_key = Keypair::generate_secp256k1();
     let libp2p_local_peer_id = PeerId::from(libp2p_local_key.public());
 
@@ -75,7 +81,7 @@ pub async fn setup_swarm() -> Result<(), Box<dyn Error>> {
     .build();
 
     let listen_addr = setup_listen_addr().await.unwrap();
-    println!("Listening on {:?}", listen_addr);
+    info!(log, "Listening on {:?}", listen_addr);
     let test123 = Swarm::listen_on(&mut swarm, listen_addr).unwrap();
 
     Ok(())

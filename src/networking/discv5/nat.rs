@@ -1,5 +1,5 @@
 use if_addrs::get_if_addrs;
-use slog::{debug, info};
+use slog::{debug, info, error};
 use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 
 /// Configuration required to construct the UPnP port mappings.
@@ -21,7 +21,7 @@ impl UPnPConfig {
 pub fn construct_upnp_mappings(config: UPnPConfig, log: slog::Logger) {
     info!(log, "UPnP Attempting to initialise routes");
     match igd::search_gateway(Default::default()) {
-        Err(e) => info!(log, "UPnP not available"; "error" => %e),
+        Err(e) => error!(log, "UPnP not available"; "error" => %e),
         Ok(gateway) => {
             // Need to find the local listening address matched with the router subnet
             let interfaces = match get_if_addrs() {
@@ -59,7 +59,7 @@ pub fn construct_upnp_mappings(config: UPnPConfig, log: slog::Logger) {
                     // one.
                     // I've found this to be more reliable. If multiple users are behind a single
                     // router, they should ideally try to set different port numbers.
-                    let tcp_socket = add_port_mapping(
+                    let tcp = add_port_mapping(
                         &gateway,
                         igd::PortMappingProtocol::TCP,
                         libp2p_socket,
@@ -71,7 +71,7 @@ pub fn construct_upnp_mappings(config: UPnPConfig, log: slog::Logger) {
                         external_socket
                     }).ok();
 
-                    let udp_socket = {
+                    let udp = {
                         let discovery_socket = SocketAddrV4::new(address, config.udp_port);
                         add_port_mapping(
                             &gateway,
@@ -86,6 +86,8 @@ pub fn construct_upnp_mappings(config: UPnPConfig, log: slog::Logger) {
                         external_socket
                     }).ok()
                     };
+
+                    info!(log, "UPnP routes established"; "tcp_socket" => ?tcp, "udp_socket" => ?udp)
                 }
                 _ => debug!(log, "UPnP no routes constructed. IPv6 not supported"),
             }
