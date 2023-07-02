@@ -1,13 +1,10 @@
 #![deny(unsafe_code)]
 
-use chrono::{DateTime, Local};
-use colored::*;
 use dotenv::dotenv;
 use ethers::prelude::*;
 use eyre::Result;
 
 use std::error::Error;
-use std::fmt;
 use std::sync::Arc;
 
 mod beacon_node;
@@ -15,57 +12,12 @@ mod consensus;
 mod evm;
 mod mev;
 mod networking;
-// {
-    // pub mod discv5 {
-    //     pub mod enr;
-    //     pub mod discovery;
-    // }
-    // pub mod libp2p {
-    //     pub mod connections;
-    //     pub mod message_handling;
-    //     pub mod peer_management;
-    //     pub mod status_request;
-    // }
-    // pub mod peers_retry;
-// }
 
 use crate::mev::*;
 use beacon_node::*;
 use consensus::*;
 use evm::*;
 use networking::{discv5::*, libp2p::*};
-
-#[derive(Debug)]
-struct LogEntry {
-    time: DateTime<Local>,
-    level: LogLevel,
-    message: String,
-}
-
-#[derive(Debug)]
-#[allow(unused)]
-enum LogLevel {
-    Info,
-    Warning,
-    Error,
-    Critical,
-}
-
-impl fmt::Display for LogEntry {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let time_str: String = format!("{}", self.time.format("%m-%d|%H:%M:%S%.3f"));
-        let msg_str: &str = self.message.as_str();
-
-        let level_str: ColoredString = match self.level {
-            LogLevel::Info => "INFO".green(),
-            LogLevel::Warning => "WARN".yellow(),
-            LogLevel::Error => "ERRO".red(),
-            LogLevel::Critical => "CRIT".magenta(),
-        };
-
-        write!(f, "{} [{}] {}", level_str, time_str, msg_str)
-    }
-}
 
 #[tokio::main()]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -89,15 +41,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let block_number: U64 = provider.get_block_number().await?;
     let gas_price: U256 = provider.get_gas_price().await?;
-
-    println!(
-        "{}",
-        LogEntry {
-            time: Local::now(),
-            level: LogLevel::Info,
-            message: format!("gas_price {:?}", gas_price),
-        }
-    );
 
     networking::libp2p::swarm::setup_swarm().await?;
     networking::find_peers::discover_peers().await?;
