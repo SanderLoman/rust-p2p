@@ -87,7 +87,7 @@ pub async fn generate_enr() -> Result<(Enr, CombinedKey), Box<dyn Error>> {
     info!(log, "LIGHTHOUSE ENR: {}", decoded_enr);
 
     let ip4 = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
-    let port: u16 = 7777;
+    let port: u16 = 0;
 
     let upnp_config = UPnPConfig {
         tcp_port: port,

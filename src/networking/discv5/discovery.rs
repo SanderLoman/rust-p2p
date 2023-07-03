@@ -54,7 +54,7 @@ use tokio::time::timeout;
 use slog::*;
 
 pub async fn setup_discv5() -> Result<Discv5, Box<dyn Error>> {
-    let port: u16 = 7777;
+    let port: u16 = 0;
     let ip = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
     let listen_conf = ListenConfig::from_ip(std::net::IpAddr::V4(ip), port);
     

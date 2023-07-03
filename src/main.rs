@@ -44,8 +44,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     networking::libp2p::swarm::setup_swarm().await?;
     networking::find_peers::discover_peers().await?;
-    networking::discv5::discovery::setup_discv5().await?;
     networking::libp2p::transport::setup_transport().await?;
+    networking::discv5::discovery::setup_discv5().await?;
 
     Ok(())
 }
