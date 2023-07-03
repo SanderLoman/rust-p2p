@@ -1,6 +1,9 @@
 use if_addrs::get_if_addrs;
 use slog::{debug, info, error};
 use std::net::{IpAddr, SocketAddr, SocketAddrV4};
+use igd;
+use igd::SearchOptions;
+use std::time::Duration;
 
 /// Configuration required to construct the UPnP port mappings.
 pub struct UPnPConfig {
@@ -12,7 +15,6 @@ pub struct UPnPConfig {
 
 impl UPnPConfig {
     pub fn set_upnp_mappings(config: UPnPConfig, log: slog::Logger) {
-        // only use debug and info
         construct_upnp_mappings(config, log);
     }
 }
@@ -20,7 +22,11 @@ impl UPnPConfig {
 /// Attempts to construct external port mappings with UPnP.
 pub fn construct_upnp_mappings(config: UPnPConfig, log: slog::Logger) {
     info!(log, "UPnP Attempting to initialise routes");
-    match igd::search_gateway(Default::default()) {
+    let opts = SearchOptions {
+        timeout: Some(Duration::from_secs(30)),
+        ..Default::default()
+    };
+    match igd::search_gateway(opts) {
         Err(e) => error!(log, "UPnP not available"; "error" => %e),
         Ok(gateway) => {
             // Need to find the local listening address matched with the router subnet
@@ -32,8 +38,6 @@ pub fn construct_upnp_mappings(config: UPnPConfig, log: slog::Logger) {
                 }
             };
             let local_ip = interfaces.iter().find_map(|interface| {
-                // Just use the first IP of the first interface that is not a loopback and not an
-                // ipv6 address.
                 if !interface.is_loopback() {
                     interface.ip().is_ipv4().then(|| interface.ip())
                 } else {
@@ -55,10 +59,6 @@ pub fn construct_upnp_mappings(config: UPnPConfig, log: slog::Logger) {
                 IpAddr::V4(address) => {
                     let libp2p_socket = SocketAddrV4::new(address, config.tcp_port);
                     let external_ip = gateway.get_external_ip();
-                    // We add specific port mappings rather than getting the router to arbitrary assign
-                    // one.
-                    // I've found this to be more reliable. If multiple users are behind a single
-                    // router, they should ideally try to set different port numbers.
                     let tcp = add_port_mapping(
                         &gateway,
                         igd::PortMappingProtocol::TCP,

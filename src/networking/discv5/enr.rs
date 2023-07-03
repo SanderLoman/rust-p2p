@@ -126,11 +126,11 @@ pub async fn generate_enr() -> Result<(Enr, CombinedKey), Box<dyn Error>> {
 
     info!(
         log,
-        "FROM FILE: src/networking/discv5/enr.rs ||| ENR: {:?}\n", enr
+        "SELF ENR: {:?}\n", enr
     );
     info!(
         log,
-        "FROM FILE: src/networking/discv5/enr.rs ||| ENR: {}\n", enr
+        "SELF ENR: {}\n", enr
     );
 
     Ok((enr, combined_key))

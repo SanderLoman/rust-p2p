@@ -18,8 +18,8 @@ use generic_array::GenericArray;
 use hex::*;
 use libp2p::core::{identity::PublicKey, multiaddr::Protocol};
 use libp2p::gossipsub::{
-    FastMessageId, GossipsubConfig, GossipsubConfigBuilder, GossipsubMessage, MessageId,
-    RawGossipsubMessage, ValidationMode,
+    FastMessageId, Config, ConfigBuilder, Message, MessageId,
+    RawMessage, ValidationMode,
 };
 use libp2p::kad::kbucket::{Entry, EntryRefView};
 use libp2p::{
