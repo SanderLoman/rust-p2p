@@ -2,8 +2,6 @@
 
 use async_std::task;
 use base64::prelude::*;
-use chrono::{DateTime, Local, TimeZone, Utc};
-use colored::*;
 use discv5::{
     enr,
     enr::{ed25519_dalek, k256, CombinedKey, CombinedPublicKey, EnrBuilder, NodeId},
@@ -36,7 +34,6 @@ use ssz_types::*;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::error::Error;
-use std::fmt;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4};
 use std::path::Path;
 use std::str::FromStr;
@@ -49,44 +46,6 @@ use tokio::net::UnixStream;
 use tokio::runtime::Handle;
 use tokio::sync::mpsc;
 use tokio::time::timeout;
-
-#[derive(Debug)]
-struct LogEntry {
-    time: DateTime<Local>,
-    level: LogLevel,
-    message: String,
-}
-
-#[derive(NetworkBehaviour, Default)]
-pub struct CustomBehavior {
-    keep_alive: keep_alive::Behaviour,
-    ping: ping::Behaviour,
-}
-
-#[derive(Debug)]
-#[allow(unused)]
-enum LogLevel {
-    Info,
-    Warning,
-    Error,
-    Critical,
-}
-
-impl fmt::Display for LogEntry {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let time_str: String = format!("{}", self.time.format("%m-%d|%H:%M:%S%.3f"));
-        let msg_str: &str = self.message.as_str();
-
-        let level_str: ColoredString = match self.level {
-            LogLevel::Info => "INFO".green(),
-            LogLevel::Warning => "WARN".yellow(),
-            LogLevel::Error => "ERRO".red(),
-            LogLevel::Critical => "CRIT".magenta(),
-        };
-
-        write!(f, "{} [{}] {}", level_str, time_str, msg_str)
-    }
-}
 
 // curl -X 'GET' 'http://127.0.0.1:5052/eth/v1/node/peers' -H 'accept: application/json'
 pub async fn bootstrapped_peers() -> Result<Vec<(String, String, String, String)>, Box<dyn Error>> {
