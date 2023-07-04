@@ -1,8 +1,8 @@
 use igd::search_gateway;
 use igd::AddPortError;
-use std::net::{SocketAddrV4, Ipv4Addr};
 use igd::PortMappingProtocol;
-use slog::{Drain, info, error};
+use slog::{error, info, Drain};
+use std::net::{Ipv4Addr, SocketAddrV4};
 
 pub struct Nat {
     gateway: igd::Gateway,
@@ -13,13 +13,13 @@ impl Nat {
         let decorator = slog_term::TermDecorator::new().build();
         let drain = slog_term::FullFormat::new(decorator).build().fuse();
         let drain = slog_async::Async::new(drain).build().fuse();
-    
+
         let log = slog::Logger::root(drain, slog::o!());
         let gateway = match search_gateway(Default::default()) {
             Ok(gateway) => {
                 info!(log, "UPnP gateway found"; "gateway" => format!("{}", gateway));
                 gateway
-            },
+            }
             Err(e) => {
                 error!(log, "UPnP not available"; "error" => %e);
                 return Err(Box::new(e));
@@ -51,7 +51,6 @@ impl Nat {
         Ok(())
     }
 
-    
     #[allow(unused)]
     pub fn remove_port_mapping(
         &self,
