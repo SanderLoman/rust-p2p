@@ -7,10 +7,12 @@ use discv5::{
     Enr,
 };
 use eyre::Result;
+use igd::{self, PortMappingProtocol};
 use reqwest::header::{HeaderMap, ACCEPT};
 use serde_json::Value;
 use slog::*;
 use std::error::Error;
+use std::net::SocketAddrV4;
 use std::str::FromStr;
 
 pub async fn get_local_peer_info(
@@ -87,14 +89,35 @@ pub async fn generate_enr() -> Result<(Enr, CombinedKey), Box<dyn Error>> {
     info!(log, "LIGHTHOUSE ENR: {}", decoded_enr);
 
     let ip4 = "0.0.0.0".parse::<std::net::Ipv4Addr>().unwrap();
-    let port: u16 = 0;
+    let port: u16 = 7777;
 
-    let upnp_config = UPnPConfig {
-        tcp_port: port,
-        udp_port: port,
-    };
-    let logclone = log.clone();
-    UPnPConfig::set_upnp_mappings(upnp_config, logclone);
+    // Create an instance of the Nat struct
+    info!(log, "Creating NAT instance...");
+    let nat = Nat::new().await?;
+    info!(log, "NAT instance created");
+
+    // Get the public IP of the gateway
+    info!(log, "Sourcing public IP from gateway...");
+    let ip = nat.get_public_ip()?;
+    info!(log, "Public IP: {:?}", ip);
+
+    // Add port mappings
+    // Assuming local_addr is the local address of your node
+    let local_addr = SocketAddrV4::new(ip4, port);
+    nat.add_port_mapping(
+        PortMappingProtocol::TCP,
+        port,
+        local_addr,
+        3600,
+        "Ethereum Beacon Node",
+    )?;
+    nat.add_port_mapping(
+        PortMappingProtocol::UDP,
+        port,
+        local_addr,
+        3600,
+        "Ethereum Beacon Node",
+    )?;
 
     let syncnets_bytes = decode_hex_value(&syncnets).await?;
     let attnets_bytes = decode_hex_value(&attnets).await?;
@@ -124,14 +147,8 @@ pub async fn generate_enr() -> Result<(Enr, CombinedKey), Box<dyn Error>> {
         .build(&combined_key)
         .map_err(|_| "Failed to generate ENR")?;
 
-    info!(
-        log,
-        "SELF ENR: {:?}\n", enr
-    );
-    info!(
-        log,
-        "SELF ENR: {}\n", enr
-    );
+    info!(log, "SELF ENR: {:?}\n", enr);
+    info!(log, "SELF ENR: {}\n", enr);
 
     Ok((enr, combined_key))
 }
