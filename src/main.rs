@@ -11,12 +11,12 @@ use std::sync::Arc;
 async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
 
-    let geth_rpc_endpoint: &str = "/home/sander/.ethereum/goerli/geth.ipc";
+    // let geth_rpc_endpoint: &str = "/home/sander/.ethereum/goerli/geth.ipc";
 
-    // Later we will push to this vec when we get the enode urls from the geth nodes
-    let static_nodes_remove: Vec<&str> = vec![];
+    // // Later we will push to this vec when we get the enode urls from the geth nodes
+    // let static_nodes_remove: Vec<&str> = vec![];
 
-    let static_nodes_add: Vec<&str> = vec![];
+    // let static_nodes_add: Vec<&str> = vec![];
 
     // let test_wallet_private_key: String =
     //     std::env::var("TESTWALLET_PRIVATE_KEY").expect("TESTWALLET_PRIVATE_KEY must be set");
