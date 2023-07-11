@@ -2,4 +2,3 @@
 
 pub mod discovery;
 pub mod enr;
-pub mod nat;

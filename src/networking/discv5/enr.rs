@@ -1,6 +1,5 @@
 #![deny(unsafe_code)]
 
-use crate::nat::*;
 use discv5::{
     enr,
     enr::{CombinedKey, EnrBuilder},
