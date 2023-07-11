@@ -32,6 +32,3 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
-// try get the beacon node blocks and check how long it takes to receive them from another peer and maybe check how long it takes for geth to receive it from the beacon node
-
-// eth_callBundle is for simulating a transaction bundle and seeing if it will be included in the next block mev-geth supports this
