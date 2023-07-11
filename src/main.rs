@@ -7,18 +7,6 @@ use eyre::Result;
 use std::error::Error;
 use std::sync::Arc;
 
-mod beacon_node;
-mod consensus;
-mod evm;
-mod mev;
-mod networking;
-
-use crate::mev::*;
-use beacon_node::*;
-use consensus::*;
-use evm::*;
-use networking::{discv5::*, libp2p::*};
-
 #[tokio::main()]
 async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
@@ -41,11 +29,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // let block_number: U64 = provider.get_block_number().await?;
     // let gas_price: U256 = provider.get_gas_price().await?;
-
-    networking::libp2p::swarm::setup_swarm().await?;
-    networking::find_peers::discover_peers().await?;
-    networking::libp2p::transport::setup_transport().await?;
-    networking::discv5::discovery::setup_discv5().await?;
 
     Ok(())
 }
