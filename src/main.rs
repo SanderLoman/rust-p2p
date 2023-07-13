@@ -1,11 +1,9 @@
 #![deny(unsafe_code)]
 
 use dotenv::dotenv;
-use ethers::prelude::*;
 use eyre::Result;
 
 use std::error::Error;
-use std::sync::Arc;
 
 #[tokio::main()]
 async fn main() -> Result<(), Box<dyn Error>> {
