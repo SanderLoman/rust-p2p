@@ -2,11 +2,16 @@
 
 #![deny(unsafe_code)]
 
-use eyre::Result;
+use crate::arbitrage::*;
 use crate::liquidations::*;
 use crate::sandwhich::*;
-use crate::arbitrage::*;
+use eyre::Result;
+use std::error::Error;
 
-pub async fn meving() -> Result<()> {
+pub async fn meving() -> Result<(), Box<dyn Error>> {
+    let _ = sandwhich::sandwhich().await?;
+    let _ = arbitrage::arbitrage().await?;
+    let _ = liquidations::liquidations().await?;
+
     Ok(())
 }

@@ -3,9 +3,9 @@
 use dotenv::dotenv;
 use eyre::Result;
 
-use std::error::Error;
 use mev::mev::meving;
 use networking::*;
+use std::error::Error;
 
 #[tokio::main()]
 async fn main() -> Result<(), Box<dyn Error>> {

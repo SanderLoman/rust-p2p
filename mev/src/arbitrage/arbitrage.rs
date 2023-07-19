@@ -1,4 +1,8 @@
 #![deny(unsafe_code)]
-#![allow(unused)]
 
-pub fn arbitrage() {}
+use eyre::Result;
+use std::error::Error;
+
+pub async fn arbitrage() -> Result<(), Box<dyn Error>> {
+    Ok(())
+}

@@ -1,3 +1,8 @@
 #![deny(unsafe_code)]
 
-pub async fn liquidations() {}
+use eyre::Result;
+use std::error::Error;
+
+pub async fn liquidations() -> Result<(), Box<dyn Error>> {
+    Ok(())
+}
