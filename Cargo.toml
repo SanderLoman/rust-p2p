@@ -1,6 +1,6 @@
 [package]
-name = "mev"
-version = "0.1.0"
+name = "wagmi"
+version = "69.69.69"
 edition = "2021"
 
 [dependencies]
