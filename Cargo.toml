@@ -1,3 +1,8 @@
+[workspace]
+members = [
+    "mev",
+]
+
 [package]
 name = "wagmi"
 version = "69.69.69"
