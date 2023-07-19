@@ -1,0 +1,9 @@
+[package]
+name = "networking"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+# libp2p = { version = "0.51.3", features = ["secp256k1", "ed25519", "tcp", "dns", "async-std", "noise", "mplex", "yamux", "websocket", "ping", "macros", "kad", "mdns", "macros", "tokio", "websocket", "gossipsub", "autonat", "floodsub", "identify", "quic"] }
+# discv5 = { version = "0.3.0", features = ["libp2p"] }

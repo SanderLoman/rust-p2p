@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "mev",
+    "networking",
 ]
 
 [package]
