@@ -121,6 +121,9 @@ checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
 [[package]]
 name = "mev"
 version = "0.1.0"
+dependencies = [
+ "eyre",
+]
 
 [[package]]
 name = "miniz_oxide"
@@ -314,6 +317,7 @@ version = "69.69.69"
 dependencies = [
  "dotenv",
  "eyre",
+ "mev",
  "tokio",
 ]
 

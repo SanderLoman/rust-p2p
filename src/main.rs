@@ -4,10 +4,13 @@ use dotenv::dotenv;
 use eyre::Result;
 
 use std::error::Error;
+use mev::*;
 
 #[tokio::main()]
 async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
+
+    let hello_from_mev = mev::
 
     // let geth_rpc_endpoint: &str = "/home/sander/.ethereum/goerli/geth.ipc";
 

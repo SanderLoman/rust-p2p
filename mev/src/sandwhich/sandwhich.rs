@@ -1,9 +1,6 @@
 #![deny(unsafe_code)]
 #![allow(unused)]
 
-use dotenv::dotenv;
-use ethers::prelude::*;
-use ethers_flashbots::*;
 use eyre::Result;
 
 // probs going to end up merging all of these into one function
