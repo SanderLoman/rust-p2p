@@ -3,7 +3,7 @@
 use dotenv::dotenv;
 use eyre::Result;
 
-use mev::mev::meving;
+use mev::mevs::meving;
 use networking::*;
 use std::error::Error;
 
