@@ -4,13 +4,23 @@ use discv5::{
     enr::{CombinedKey, EnrBuilder},
     Enr,
 };
-use reqwest::header::{HeaderMap, HeaderValue, ACCEPT};
+use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
 use std::error::Error;
 
 async fn get_local_enr() -> Result<Enr, Box<dyn Error>> {
     // start a beacon client for this to work
     // curl -X 'GET' 'http://127.0.0.1:5052/eth/v1/node/identity' -H 'accept: application/json'
+    let client = Client::new();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(ACCEPT, "application/json".parse().unwrap());
+
+    let res = client.get("http://127.0.0.1:5052/eth/v1/node/identity")
+        .headers(headers)
+        .send()
+        .await?;
+    
     Ok()
 }
 
