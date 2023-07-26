@@ -49,9 +49,7 @@ pub async fn generate_enr() -> Result<Enr, Box<dyn Error>> {
     let decoded_enr = Enr::from_str(&local_enr)?;
     println!("LOCAL DECODED ENR: {:?}\n", decoded_enr);
 
-    // Get an available port
-    let listener = TcpListener::bind((ip4, 0))?;
-    let port = listener.local_addr()?.port();
+    let port = 7777;
 
     let enr: discv5::enr::Enr<CombinedKey> = EnrBuilder::new("v4")
         .ip4(ip4)
@@ -62,7 +60,7 @@ pub async fn generate_enr() -> Result<Enr, Box<dyn Error>> {
         .add_value("syncnets", &syncnets)
         .build(&enr_combined_key)?;
 
-    println!("GENERATED ENR: {:?}\n", enr);
+    println!("GENERATED ENR: {}\n", enr);
 
     // Decode the ENR
     let decoded_generated_enr = Enr::from_str(&enr.to_base64()).unwrap();
