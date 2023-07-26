@@ -2988,6 +2988,7 @@ dependencies = [
  "eyre",
  "libp2p",
  "reqwest",
+ "serde_json",
 ]
 
 [[package]]

@@ -2,17 +2,13 @@
 
 use dotenv::dotenv;
 use eyre::Result;
-
-use mev::mevs::meving;
-use networking::*;
 use std::error::Error;
 
 #[tokio::main()]
 async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
 
-    let hello_from_mev = meving().await?;
-    println!("{hello_from_mev:?}");
+    networking::p2p::start_p2p_networking().await?;
 
     // let geth_rpc_endpoint: &str = "/home/sander/.ethereum/goerli/geth.ipc";
 
