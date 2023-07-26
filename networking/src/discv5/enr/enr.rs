@@ -40,7 +40,6 @@ pub async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4A
     Ok((enr, attnets.to_vec(), eth2.to_vec(), syncnets.to_vec(), ip4))
 }
 
-// fix the ip4, might have to find out how to extract the right part of the local ENR where the tcp ip and udp ports are
 pub async fn generate_enr() -> Result<Enr, Box<dyn Error>> {
     let enr_combined_key: CombinedKey = CombinedKey::generate_secp256k1();
     let (local_enr, attnets, eth2, syncnets, ip4) = get_local_enr().await?;
