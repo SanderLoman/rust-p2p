@@ -1,5 +1,6 @@
 #![deny(unsafe_code)]
 
+use crate::create_logger;
 use discv5::{
     enr::{CombinedKey, EnrBuilder},
     Enr,
@@ -13,6 +14,8 @@ use std::str::FromStr;
 
 pub async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>>
 {
+    let log = create_logger();
+
     let client = Client::new();
 
     let mut headers = HeaderMap::new();
@@ -37,16 +40,17 @@ pub async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4A
     let syncnets = decoded_enr.get("syncnets").unwrap().clone();
     let ip4 = decoded_enr.ip4().unwrap();
 
+    slog::info!(log, "LOCAL ENR: {}", enr);
+    slog::info!(log, "LOCAL DECODED ENR: {:?}", decoded_enr);
+
     Ok((enr, attnets.to_vec(), eth2.to_vec(), syncnets.to_vec(), ip4))
 }
 
 pub async fn generate_enr() -> Result<Enr, Box<dyn Error>> {
-    let enr_combined_key: CombinedKey = CombinedKey::generate_secp256k1();
-    let (local_enr, attnets, eth2, syncnets, ip4) = get_local_enr().await?;
+    let log = create_logger();
 
-    println!("LOCAL ENR: {}\n", local_enr);
-    let decoded_enr = Enr::from_str(&local_enr)?;
-    println!("LOCAL DECODED ENR: {:?}\n", decoded_enr);
+    let enr_combined_key: CombinedKey = CombinedKey::generate_secp256k1();
+    let (_, attnets, eth2, syncnets, ip4) = get_local_enr().await?;
 
     let port = 7777;
 
@@ -59,12 +63,11 @@ pub async fn generate_enr() -> Result<Enr, Box<dyn Error>> {
         .add_value("syncnets", &syncnets)
         .build(&enr_combined_key)?;
 
-    println!("GENERATED ENR: {}\n", enr);
-
     // Decode the ENR
     let decoded_generated_enr = Enr::from_str(&enr.to_base64()).unwrap();
 
-    println!("DECODED GENERATED ENR: {:?}\n", decoded_generated_enr);
+    slog::info!(log, "GENERATED ENR: {}", enr);
+    slog::info!(log, "DECODED GENERATED ENR: {:?}", decoded_generated_enr);
 
     Ok(enr)
 }
