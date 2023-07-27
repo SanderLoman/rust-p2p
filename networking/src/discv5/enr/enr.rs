@@ -12,7 +12,7 @@ use std::error::Error;
 use std::net::Ipv4Addr;
 use std::str::FromStr;
 
-pub async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>>
+async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>>
 {
     let log = create_logger();
 
