@@ -8,6 +8,7 @@ use discv5::{
     Discv5ConfigBuilder, Discv5Event, Enr, ListenConfig,
 };
 use std::error::Error;
+use std::time::Duration;
 
 pub async fn setup_discovery_process() -> Result<(), Box<dyn Error>> {
     let log = create_logger();
@@ -17,20 +18,24 @@ pub async fn setup_discovery_process() -> Result<(), Box<dyn Error>> {
     let listen_port = enr.udp4().unwrap();
     slog::debug!(log, "Listening on: {}", listen_addr);
 
-    let config = Discv5ConfigBuilder::new(ListenConfig::Ipv4 { ip: listen_addr , port: listen_port })
-        .build();
+    // probs change later.
+    let config = Discv5ConfigBuilder::new(ListenConfig::Ipv4 {
+        ip: listen_addr,
+        port: listen_port,
+    })
+    .build();
 
     slog::debug!(log, "config: {:?}", config);
 
     let mut discv5: Discv5 = Discv5::new(enr, enr_key, config).unwrap();
 
+    let cloned_local_enr = local_enr.clone();
     discv5.add_enr(local_enr).unwrap();
-
+    discv5.start().await.unwrap();
     discv5.table_entries().iter().for_each(|enr| {
         slog::debug!(log, "{:?}", enr);
     });
-
-    discv5.start().await.unwrap();
+    discv5.send_ping(cloned_local_enr).await.unwrap();
 
     Ok(())
 }
