@@ -29,13 +29,11 @@ pub async fn setup_discovery_process() -> Result<(), Box<dyn Error>> {
 
     let mut discv5: Discv5 = Discv5::new(enr, enr_key, config).unwrap();
 
-    let cloned_local_enr = local_enr.clone();
     discv5.add_enr(local_enr).unwrap();
     discv5.start().await.unwrap();
     discv5.table_entries().iter().for_each(|enr| {
         slog::debug!(log, "{:?}", enr);
     });
-    discv5.send_ping(cloned_local_enr).await.unwrap();
 
     Ok(())
 }
