@@ -12,7 +12,7 @@ use std::error::Error;
 use std::net::Ipv4Addr;
 use std::time::Duration;
 
-pub async fn setup_discovery_process() -> Result<(), Box<dyn Error>> {
+pub async fn setup_discv5() -> Result<(), Box<dyn Error>> {
     let log = create_logger();
     let (local_enr, enr, enr_key) = generate_enr().await?;
 
