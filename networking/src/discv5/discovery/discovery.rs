@@ -1,5 +1,4 @@
 #![deny(unsafe_code)]
-#![allow(unused_imports)]
 
 use crate::create_logger;
 use crate::discv5::enr::enr::generate_enr;
