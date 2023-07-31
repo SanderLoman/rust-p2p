@@ -38,7 +38,7 @@ async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr)
     let attnets = decoded_enr.get("attnets").unwrap().clone();
     let eth2 = decoded_enr.get("eth2").unwrap().clone();
     let syncnets = decoded_enr.get("syncnets").unwrap().clone();
-    let ip4 = decoded_enr.ip4().unwrap();
+    let ip4 = decoded_enr.ip4().unwrap_or_else(|| Ipv4Addr::new(190,88,86,22));
 
     slog::info!(log, "LOCAL ENR: {}", enr);
     slog::info!(log, "LOCAL DECODED ENR: {:?}", decoded_enr);

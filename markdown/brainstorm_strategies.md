@@ -35,3 +35,23 @@
     <span style="color: green;">**buy**</span>/<span style="color: green;">**Vbuy**</span>/<span style="color: green;">**Vbuy**</span>/<span style="color: green;">**Vbuy**</span>/<span style="color: green;">**Vbuy**</span>/<span style="color: green;">**Vbuy**</span>/<span style="color: red;">**Lsell**</span>/<span style="color: red;">**Vsell**</span>/<span style="color: red;">**Vsell**</span>/<span style="color: red;">**Vsell**</span>/<span style="color: green;">**Lbuy**</span>. With <span style="color: red;">**Lsell**</span> being the 12 ETH that we see in the right picture we pretty much front-ran TX 2 and then we sold just a little more than the 10 ETH that we originally bought in TX 1. This is because there was a sell order of another victim, our bot calculated the amount of slippage the selling victem had, and depending on that it will sell the 10 ETH + the slippage amount. And then right after the <span style="color: red;">**Vsell**</span> it will buy back the initial selling amount that we sold. Resulting in a profit of X amount of ETH, because we were able to buy back the exact same amount of tokens at a lower price.
   - **Notice:** Sometimes we can only front-run sell side when ever we possess some tokens already. So in the beginning of launches we need to buy tokens and make sure they are not rugs or salmonella tokens.
   - Obviously we can expand this way more depending on the transactions in the mempool.
+
+# BELOW IS EXTRA MIGHT REMOVE LATER
+
+#### Visual Representation of the Idea:
+The provided image illustrates two examples of transaction sequences. Both examples achieve similar outcomes, but the sequence on the right accomplishes the task in one fewer step. This should result in more gas efficiency. However, it's important to note that the right sequence relies on a user placing a sell order that can be front-run.
+
+#### Explanation of the Chained-Sandwich Method:
+The basic example in the image demonstrates a sequence of transactions: `Buy -> Vbuy -> Sell -> Sell -> Vsell -> Buy`. This sequence can be modified and expanded based on the transactions waiting in the mempool.
+
+For instance, if there are numerous buy and sell orders for a certain token, the sequence could be adjusted to: `Buy -> Vbuy -> Vbuy -> Vbuy -> Vbuy -> Vbuy -> Lsell -> Vsell -> Vsell -> Vsell -> Lbuy`.
+
+In this sequence, "Lsell" represents a large sell order, similar to the 12 ETH transaction in the right image. This transaction essentially front-runs TX 2, selling slightly more than the 10 ETH initially bought in TX 1. This is possible because there's a sell order from another user (the victim). The bot calculates the amount of slippage the victim's sell order would cause, and based on this, it sells the original 10 ETH plus the slippage amount.
+
+Immediately after the Vsell transaction, the bot executes an Lbuy transaction to buy back the initial selling amount. This results in a profit because the bot is able to buy back the same amount of tokens at a lower price due to the slippage caused by its own sell orders.
+
+#### Important Note:
+In some cases, front-running on the sell side is only possible if we already possess some tokens. Therefore, at the beginning of launches, it's necessary to buy tokens while ensuring they are not "rugs" or "salmonella" tokens (terms used in the crypto world to describe scam or worthless tokens).
+
+This method can be further expanded and adapted based on the transactions in the mempool. The goal is to maximize efficiency and profit while minimizing gas costs.
+
