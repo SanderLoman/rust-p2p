@@ -10,7 +10,7 @@ use libp2p::{
 use std::error::Error;
 use std::time::Duration;
 
-pub async fn setup_transport() -> Result<libp2p::core::transport::Boxed<(PeerId, libp2p::core::muxing::StreamMuxerBox)>, Box<dyn Error>> {
+pub async fn setup_transport() -> Result<(libp2p::core::transport::Boxed<(PeerId, libp2p::core::muxing::StreamMuxerBox)>, Keypair), Box<dyn Error>> {
     let libp2p_local_key = Keypair::generate_secp256k1();
 
     let tcp = libp2p::tcp::tokio::Transport::new(libp2p::tcp::Config::default().nodelay(true));
@@ -49,5 +49,5 @@ pub async fn setup_transport() -> Result<libp2p::core::transport::Boxed<(PeerId,
         .timeout(Duration::from_secs(10))
         .boxed();
 
-    Ok(upgraded_transport)
+    Ok((upgraded_transport, libp2p_local_key))
 }

@@ -3,59 +3,50 @@
 use crate::create_logger;
 use crate::libp2p::transport::transport::setup_transport;
 
-use libp2p::{
-    identity,
-    mdns::{Mdns, MdnsConfig},
-    mplex::MplexConfig,
-    noise::{Keypair, NoiseConfig, X25519Spec},
-    swarm::SwarmBuilder,
-    swarm::SwarmEvent,
-    yamux::YamuxConfig,
-    Multiaddr, PeerId, Swarm,
-};
-use futures::executor::block_on;
+use libp2p::{identity, swarm::SwarmBuilder, PeerId};
 use std::error::Error;
 use tokio::runtime::Handle;
-use futures::future::FutureExt;
 
 // #[derive(NetworkBehaviour)]
 struct Behaviour {
     // Define your network behaviour here
 }
 
-pub async fn run() {
-    // Create a random PeerId
-    let id_keys = identity::Keypair::generate_ed25519();
-    let peer_id = PeerId::from(id_keys.public());
+pub async fn setup_swarm() -> Result<(), Box<dyn Error>> {
+    let log = create_logger();
 
-    // Create a transport.
-    let transport = match setup_transport().await {
-        Ok(t) => t,
-        Err(e) => {
-            eprintln!("Failed to setup transport: {:?}", e);
-            return;
-        }
-    };
+    // Get the transport and the local key pair.
+    let (transport, local_keys) = setup_transport().await.unwrap();
 
-    // Create a Swarm to manage peers and events.
+    // We use the key pair from the transport.rs file otherwise we generate 2 different keys.
+    let local_keys = local_keys;
+    let local_peer_id = PeerId::from(local_keys.public());
+
+    // Here we just use the transport from the transport.rs file.
+    let transport = transport;
+
     let mut swarm = {
-        // Create a dummy behaviour.
+        // Dummy behaviour, this will be changed later.
         let behaviour = libp2p::swarm::dummy::Behaviour;
 
-        // Create a Swarm to manage peers and events.
         let executor = {
             let executor = Handle::current();
             move |fut: _| {
                 executor.spawn(fut);
             }
         };
-        SwarmBuilder::with_executor(transport, behaviour, peer_id, executor).build()
+
+        // Build the Swarm
+        SwarmBuilder::with_executor(transport, behaviour, local_peer_id, executor).build()
     };
 
+    // Listen on all interfaces and the port we desire,
+    // could listen on port 0 to listen on whatever port the OS assigns us.
+    swarm
+        .listen_on("/ip4/0.0.0.0/tcp/7777".parse().unwrap())
+        .unwrap();
 
+    slog::debug!(log, "{:?}", swarm.network_info());
 
-    // Listen on all interfaces and the port we desire (could listen on port 0 to listen on whatever port the OS assigns us).
-    swarm.listen_on("/ip4/0.0.0.0/tcp/7777".parse().unwrap()).unwrap();
-
-    
+    Ok(())
 }
