@@ -10,8 +10,8 @@ pub async fn start_p2p_networking() -> Result<()> {
     let log = create_logger();
     slog::info!(log, "Starting p2p networking");
     setup_transport().await.unwrap();
-    start_discv5().await.unwrap();
     setup_swarm().await.unwrap();
+    start_discv5().await.unwrap();
 
 
     Ok(())

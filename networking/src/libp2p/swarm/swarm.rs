@@ -3,7 +3,7 @@
 use crate::create_logger;
 use crate::libp2p::transport::transport::setup_transport;
 
-use libp2p::{identity, swarm::SwarmBuilder, PeerId};
+use libp2p::{identity, swarm::{SwarmBuilder, SwarmEvent}, PeerId, futures::StreamExt};
 use std::error::Error;
 use tokio::runtime::Handle;
 
@@ -46,7 +46,65 @@ pub async fn setup_swarm() -> Result<(), Box<dyn Error>> {
         .listen_on("/ip4/0.0.0.0/tcp/7777".parse().unwrap())
         .unwrap();
 
-    slog::debug!(log, "{:?}", swarm.network_info());
-
-    Ok(())
+    slog::debug!(log, "{:?}", swarm.network_info());        
+    
+    loop {
+        match swarm.select_next_some().await {
+            SwarmEvent::OutgoingConnectionError { peer_id, error } => {
+                slog::debug!(log, "peer_id: {:?}; Outgoing Connection Error: {:?}", peer_id, error);
+            }
+            #[allow(deprecated)]
+            SwarmEvent::BannedPeer { peer_id, endpoint } => {
+                slog::debug!(log, "Banned Peer: {:?}; endpoint: {:?};", peer_id, endpoint);
+            }
+            SwarmEvent::ListenerError { listener_id, error } => {
+                slog::debug!(log, "Listener Error: {:?}", error);
+            }
+            SwarmEvent::Dialing(peer_id) => {
+                slog::debug!(log, "Dialing: {:?}", peer_id);
+            }
+            SwarmEvent::Behaviour(event) => {
+                slog::debug!(log, "Behaviour Event: {:?}", event);
+            }
+            SwarmEvent::ConnectionEstablished {
+                peer_id,
+                endpoint,
+                num_established,
+                concurrent_dial_errors,
+                established_in
+            } => {
+                slog::debug!(log, "Connection established with peer {:?}; at endpoint {:?}; concurrent_dial_errors: {:?}; established_in: {:?};",
+                    peer_id, endpoint, concurrent_dial_errors, established_in
+                );
+                slog::debug!(log, "There are now {} peers connected to us.", num_established);
+            }
+            SwarmEvent::ConnectionClosed {
+                peer_id,
+                endpoint,
+                num_established,
+                cause
+            } => {
+                slog::debug!(log, 
+                    "Connection with peer {:?} at endpoint {:?} closed, cause: {:?}.",
+                    peer_id, endpoint, cause
+                );
+                slog::debug!(log, "There are now {} peers connected to us.", num_established);
+            }
+            SwarmEvent::NewListenAddr {address, listener_id} => {
+                slog::debug!(log, "Now listening on {:?}; listener_id: {:?};", address, listener_id);
+            }
+            SwarmEvent::ExpiredListenAddr {address, listener_id} => {
+                slog::debug!(log, "No longer listening on {:?}; listener_id: {:?};", address, listener_id);
+            }
+            SwarmEvent::ListenerClosed { addresses, reason, listener_id } => {
+                slog::debug!(log, "Listener closed: {:?}; addresses: {:?}; listener_id: {:?};", reason, addresses, listener_id);
+            }
+            SwarmEvent::IncomingConnection { local_addr, send_back_addr } => {
+                slog::debug!(log, "Incoming connection from {:?}, send_back_addr: {:?}", local_addr, send_back_addr);
+            }
+            SwarmEvent::IncomingConnectionError { error, local_addr, send_back_addr } => {
+                slog::debug!(log, "Incoming connection error: {:?}; local_addr: {:?}, send_back_addr: {:?}", error, local_addr, send_back_addr);
+            }
+        }
+    }
 }
