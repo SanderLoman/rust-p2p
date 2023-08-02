@@ -52,13 +52,10 @@ pub async fn run() {
         SwarmBuilder::with_executor(transport, behaviour, peer_id, executor).build()
     };
 
-    // Listen on all interfaces and whatever port the OS assigns.
-    swarm.listen_on("/ip4/0.0.0.0/tcp/0".parse().unwrap()).unwrap();
 
-    // Reach out to another node.
-    if let Some(to_dial) = std::env::args().nth(1) {
-        let addr = to_dial.parse::<Multiaddr>().unwrap();
-        swarm.dial(addr).unwrap();
-        println!("Dialed {:?}", to_dial);
-    }
+
+    // Listen on all interfaces and the port we desire (could listen on port 0 to listen on whatever port the OS assigns us).
+    swarm.listen_on("/ip4/0.0.0.0/tcp/7777".parse().unwrap()).unwrap();
+
+    
 }
