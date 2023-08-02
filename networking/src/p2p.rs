@@ -11,7 +11,5 @@ pub async fn start_p2p_networking() -> Result<()> {
     let transport = setup_transport().await.unwrap();
     start_discv5().await.unwrap();
 
-    transport.
-
     Ok(())
 }

@@ -3037,12 +3037,14 @@ version = "0.1.0"
 dependencies = [
  "discv5",
  "eyre",
+ "futures",
  "libp2p",
  "reqwest",
  "serde_json",
  "slog",
  "slog-async",
  "slog-term",
+ "tokio",
 ]
 
 [[package]]
