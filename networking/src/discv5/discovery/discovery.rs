@@ -26,7 +26,8 @@ pub async fn start_discv5() -> Result<Discv5, Box<dyn Error>> {
     let discv5_config = Discv5ConfigBuilder::new(discv5_listen_config)
         .ban_duration(Some(Duration::from_secs(60)))
         .query_timeout(Duration::from_secs(10))
-        .request_timeout(Duration::from_secs(10))
+        .request_retries(1)
+        .request_timeout(Duration::from_secs(1))
         .query_parallelism(3)
         .query_peer_timeout(Duration::from_secs(3))
         .ping_interval(Duration::from_secs(300))
@@ -39,9 +40,6 @@ pub async fn start_discv5() -> Result<Discv5, Box<dyn Error>> {
 
     let cloned_local_enr = local_enr.clone();
     discv5.start().await.unwrap();
-    discv5.send_ping(cloned_enr).await.unwrap();
-    discv5.kbuckets();
-
 
     let mut discv_events = discv5.event_stream().await.unwrap();
 
