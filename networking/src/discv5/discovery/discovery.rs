@@ -50,6 +50,7 @@ pub async fn start_discv5() -> Result<Discv5, Box<dyn Error>> {
             }
             Some(Discv5Event::Discovered(enr)) => {
                 slog::debug!(log, "Discovered: {:?}", enr);
+                
             }
             Some(Discv5Event::NodeInserted { node_id, replaced }) => {
                 slog::debug!(

@@ -58,7 +58,7 @@ pub async fn setup_swarm() -> Result<(), Box<dyn Error>> {
                 slog::debug!(log, "Banned Peer: {:?}; endpoint: {:?};", peer_id, endpoint);
             }
             SwarmEvent::ListenerError { listener_id, error } => {
-                slog::debug!(log, "Listener Error: {:?}", error);
+                slog::debug!(log, "Listener Error: {:?}; listener_id: {:?};", error, listener_id);
             }
             SwarmEvent::Dialing(peer_id) => {
                 slog::debug!(log, "Dialing: {:?}", peer_id);
