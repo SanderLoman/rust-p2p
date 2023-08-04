@@ -1,6 +1,7 @@
 #![deny(unsafe_code)]
 
 use crate::create_logger;
+use crate::libp2p::swarm::behaviour::CustomBehaviour;
 use crate::libp2p::transport::transport::setup_transport;
 
 use libp2p::{
@@ -32,7 +33,7 @@ pub async fn setup_swarm() -> Result<(), Box<dyn Error>> {
 
     let mut swarm = {
         // Dummy behaviour, this will be changed later.
-        let behaviour = libp2p::swarm::dummy::Behaviour;
+        let behaviour = ;
 
         let executor = {
             let executor = Handle::current();
