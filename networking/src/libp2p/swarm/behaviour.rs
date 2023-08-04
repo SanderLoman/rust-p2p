@@ -3,18 +3,16 @@
 use libp2p::{
     ping::{Behaviour, Config as PingConfig},
     swarm::NetworkBehaviour,
-    Swarm,
-    PeerId,
     swarm::SwarmEvent,
+    PeerId, Swarm,
 };
 
-// #[derive(NetworkBehaviour)]
-pub struct CustomBehaviour {
-
+// Write our own custom behaviour later on when we have a better understanding
+// of what we want to do when we discover peers and connect to them.
+pub trait CustomBehaviour {
+    fn new(&self);
 }
 
-impl CustomBehaviour {
-    pub fn new() -> Self {
-        CustomBehaviour {}
-    }
+impl<T: NetworkBehaviour> CustomBehaviour for T {
+    fn new(&self) {}
 }
