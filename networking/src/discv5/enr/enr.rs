@@ -12,8 +12,7 @@ use std::error::Error;
 use std::net::Ipv4Addr;
 use std::str::FromStr;
 
-async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>>
-{
+async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>> {
     let log = create_logger();
 
     let client = Client::new();
@@ -38,10 +37,12 @@ async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr)
     let attnets = decoded_enr.get("attnets").unwrap().clone();
     let eth2 = decoded_enr.get("eth2").unwrap().clone();
     let syncnets = decoded_enr.get("syncnets").unwrap().clone();
-    let ip4 = decoded_enr.ip4().unwrap_or_else(|| Ipv4Addr::new(190,88,86,22));
+    let ip4 = decoded_enr
+        .ip4()
+        .unwrap_or_else(|| Ipv4Addr::new(190, 88, 86, 22));
 
-    slog::info!(log, "LOCAL ENR: {}", enr);
-    slog::info!(log, "LOCAL DECODED ENR: {:?}", decoded_enr);
+    slog::info!(log, "Local ENR"; "enr" => %enr);
+    slog::info!(log, "Local Decoded ENR"; "decoded_enr" => ?decoded_enr);
 
     Ok((enr, attnets.to_vec(), eth2.to_vec(), syncnets.to_vec(), ip4))
 }
@@ -66,11 +67,10 @@ pub async fn generate_enr() -> Result<(Enr, Enr, CombinedKey), Box<dyn Error>> {
     // Decode the ENR
     let decoded_generated_enr = Enr::from_str(&enr.to_base64()).unwrap();
 
-    slog::info!(log, "GENERATED ENR: {}", enr);
-    slog::info!(log, "DECODED GENERATED ENR: {:?}", decoded_generated_enr);
+    slog::info!(log, "Generated ENR"; "enr" => %enr);
+    slog::info!(log, "Decoded Generated ENR"; "decoded_generated_enr" => ?decoded_generated_enr);
 
     let local_enr = Enr::from_str(&local_enr)?;
 
     Ok((local_enr, enr, enr_combined_key))
 }
-

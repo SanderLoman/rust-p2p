@@ -17,11 +17,11 @@ pub async fn start_discv5() -> Result<Discv5, Box<dyn Error>> {
 
     let listen_addr = std::net::Ipv4Addr::new(0, 0, 0, 0);
     let listen_port = enr.udp4().unwrap();
-    slog::debug!(log, "Listening on: {}", listen_addr);
+    slog::debug!(log, "Listening on"; "listen_addr" => %listen_addr);
 
     let discv5_listen_config =
         discv5::ListenConfig::from_ip(Ipv4Addr::UNSPECIFIED.into(), listen_port);
-    slog::debug!(log, "discv5_listen_config: {:?}", discv5_listen_config);
+    slog::debug!(log, "discv5_listen_config"; "config" => ?discv5_listen_config);
 
     let discv5_config = Discv5ConfigBuilder::new(discv5_listen_config)
         .ban_duration(Some(Duration::from_secs(60)))
@@ -33,7 +33,7 @@ pub async fn start_discv5() -> Result<Discv5, Box<dyn Error>> {
         .ping_interval(Duration::from_secs(300))
         .build();
 
-    slog::debug!(log, "config: {:?}", discv5_config);
+    slog::debug!(log, "discv5_config"; "config" => ?discv5_config);
 
     let cloned_enr = enr.clone();
     let mut discv5: Discv5 = Discv5::new(enr, enr_key, discv5_config).unwrap();
@@ -46,30 +46,19 @@ pub async fn start_discv5() -> Result<Discv5, Box<dyn Error>> {
     loop {
         match discv_events.recv().await {
             Some(Discv5Event::SocketUpdated(socket_addr)) => {
-                slog::debug!(log, "Socket Updated: {:?}", socket_addr);
+                slog::debug!(log, "Socket Updated"; "socket_addr" => ?socket_addr);
             }
             Some(Discv5Event::Discovered(enr)) => {
-                slog::debug!(log, "Discovered: {:?}", enr);
-                
+                slog::debug!(log, "Discovered"; "enr" => ?enr);
             }
             Some(Discv5Event::NodeInserted { node_id, replaced }) => {
-                slog::debug!(
-                    log,
-                    "node_id: {:?}; replaced: {:?}",
-                    node_id,
-                    replaced
-                );
+                slog::debug!(log, "Node Inserted"; "node_id" => %node_id, "replaced" => ?replaced);
             }
             Some(Discv5Event::EnrAdded { enr, replaced }) => {
-                slog::debug!(log, "Enr Added: {:?}; replaced: {:?}", enr, replaced);
+                slog::debug!(log, "Enr Added"; "enr" => ?enr, "replaced" => ?replaced);
             }
             Some(Discv5Event::SessionEstablished(enr, socket_addr)) => {
-                slog::debug!(
-                    log,
-                    "Session Established: {:?}; socket_addr: {:?}",
-                    enr,
-                    socket_addr
-                );
+                slog::debug!(log, "Session Established"; "enr" => ?enr, "socket_addr" => ?socket_addr);
             }
             Some(Discv5Event::TalkRequest(_)) => {
                 slog::debug!(log, "Talk Request Received");
