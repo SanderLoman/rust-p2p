@@ -33,7 +33,7 @@ pub async fn setup_swarm() -> Result<(), Box<dyn Error>> {
 
     let mut swarm = {
         // Dummy behaviour, this will be changed later.
-        let behaviour = ;
+        let behaviour = libp2p::swarm::dummy::Behaviour;
 
         let executor = {
             let executor = Handle::current();
