@@ -3045,6 +3045,7 @@ dependencies = [
  "slog-async",
  "slog-term",
  "tokio",
+ "void",
 ]
 
 [[package]]

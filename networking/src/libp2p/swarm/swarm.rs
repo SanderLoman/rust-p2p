@@ -1,7 +1,7 @@
 #![deny(unsafe_code)]
 
 use crate::create_logger;
-use crate::libp2p::swarm::behaviour::CustomBehaviour;
+// use crate::libp2p::swarm::behaviour::CustomBehaviour;
 use crate::libp2p::transport::transport::setup_transport;
 
 use libp2p::{
