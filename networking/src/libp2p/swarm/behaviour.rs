@@ -16,8 +16,4 @@ use slog::{debug, Logger};
 
 
 #[derive(NetworkBehaviour)]
-pub struct MyBehaviour {
-    // You can embed other behaviors here, like `Ping`, `Identify`, etc.
-    // ping: libp2p::ping::Ping,
-}
-
+pub struct MyBehaviour {}
