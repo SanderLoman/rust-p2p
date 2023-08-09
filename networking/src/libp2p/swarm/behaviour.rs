@@ -13,3 +13,11 @@ use libp2p::swarm::dummy::ConnectionHandler;
 use libp2p::swarm::{NetworkBehaviour, PollParameters, ToSwarm};
 use libp2p::{Multiaddr, PeerId};
 use slog::{debug, Logger};
+
+
+#[derive(NetworkBehaviour)]
+pub struct MyBehaviour {
+    // You can embed other behaviors here, like `Ping`, `Identify`, etc.
+    // ping: libp2p::ping::Ping,
+}
+
