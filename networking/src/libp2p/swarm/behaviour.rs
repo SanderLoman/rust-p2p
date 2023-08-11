@@ -9,11 +9,13 @@ use futures::StreamExt;
 use libp2p::core::ConnectedPoint;
 use libp2p::swarm::behaviour::{ConnectionClosed, ConnectionEstablished, DialFailure, FromSwarm};
 use libp2p::swarm::dial_opts::{DialOpts, PeerCondition};
-use libp2p::swarm::dummy::ConnectionHandler;
+use libp2p::swarm::dummy::{Behaviour, ConnectionHandler};
 use libp2p::swarm::{NetworkBehaviour, PollParameters, ToSwarm};
 use libp2p::{Multiaddr, PeerId};
 use slog::{debug, Logger};
 
 
 #[derive(NetworkBehaviour)]
-pub struct MyBehaviour {}
+pub struct MyBehaviour {
+    
+}
