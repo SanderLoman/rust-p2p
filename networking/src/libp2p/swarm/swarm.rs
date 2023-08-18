@@ -13,11 +13,6 @@ use libp2p::{
 use std::error::Error;
 use tokio::runtime::Handle;
 
-// #[derive(NetworkBehaviour)]
-struct Behaviour {
-    // Define your network behaviour here
-}
-
 pub async fn setup_swarm() -> Result<(), Box<dyn Error>> {
     let log = create_logger();
 
