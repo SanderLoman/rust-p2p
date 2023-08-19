@@ -16,6 +16,6 @@ use slog::{debug, Logger};
 
 
 #[derive(NetworkBehaviour)]
-pub struct MyBehaviour {
+pub struct CustomBehavior {
     
 }
