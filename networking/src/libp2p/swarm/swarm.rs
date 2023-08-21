@@ -1,7 +1,7 @@
 #![deny(unsafe_code)]
 
 use crate::create_logger;
-use crate::libp2p::behaviour::behaviour::CustomBehavior;
+// use crate::libp2p::behaviour::behaviour::CustomBehavior;
 use crate::libp2p::transport::transport::setup_transport;
 
 use libp2p::{
@@ -42,8 +42,10 @@ pub async fn setup_swarm() -> Result<(), Box<dyn Error>> {
 
     // Listen on all interfaces and the port we desire,
     // could listen on port 0 to listen on whatever port the OS assigns us.
+    let listen_addr = format!("/ip4/0.0.0.0/tcp/8888/p2p/{}", local_peer_id.to_string());
+    slog::debug!(log, "Listening on"; "listen_addr" => ?listen_addr);
     swarm
-        .listen_on("/ip4/0.0.0.0/tcp/7777".parse().unwrap())
+        .listen_on(listen_addr.parse().unwrap())
         .unwrap();
 
     slog::debug!(log, "Swarm Info"; "network_info" => ?swarm.network_info());

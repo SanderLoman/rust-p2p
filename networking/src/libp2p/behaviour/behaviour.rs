@@ -4,6 +4,11 @@ use std::task::{Context, Poll};
 use void::Void;
 
 use crate::create_logger;
+use super::encryption;
+use super::gossip;
+use super::identify;
+use super::eth2rpc;
+
 use discv5::Enr;
 use futures::StreamExt;
 use libp2p::core::ConnectedPoint;
@@ -17,15 +22,13 @@ use slog::{debug, Logger};
 #[derive(NetworkBehaviour)]
 pub struct CustomBehavior {
     /// The routing pub-sub mechanism for eth2.
-    pub gossipsub: Gossipsub,
+    pub gossipsub: libp2p::gossipsub::Behaviour,
     /// The Eth2 RPC specified in the wire-0 protocol.
-    pub eth2_rpc: RPC<RequestId<AppReqId>, TSpec>,
+    pub eth2_rpc: ,
     /// Discv5 Discovery protocol.
-    pub discovery: Discovery<TSpec>,
+    pub discovery: discv5::Discv5,
     /// Keep regular connection to peers and disconnect if absent.
     // NOTE: The id protocol is used for initial interop. This will be removed by mainnet.
     /// Provides IP addresses and peer information.
-    pub identify: Identify,
-    /// The peer manager that keeps track of peer's reputation and status.
-    pub peer_manager: PeerManager<TSpec>,
+    pub identify: libp2p::identify::Behaviour,
 }

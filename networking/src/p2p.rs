@@ -11,10 +11,10 @@ pub async fn start_p2p_networking() -> Result<(), Box<dyn Error>> {
     let log = create_logger();
     slog::info!(log, "Starting p2p networking");
     setup_transport().await.unwrap();
-    let swarm_future = setup_swarm();
-    let discv5_future = start_discv5();
+    let swarm = setup_swarm();
+    let discv5 = start_discv5();
 
-    tokio::try_join!(swarm_future, discv5_future)?;
+    tokio::try_join!(swarm, discv5)?;
 
 
     Ok(())
