@@ -7,9 +7,26 @@ use discv5::{
     enr, handler, kbucket, metrics, packet, permit_ban, rpc, service, socket, Discv5, Discv5Config,
     Discv5ConfigBuilder, Discv5Event, Enr, ListenConfig,
 };
+use futures::Future;
+use libp2p::PeerId;
+use lru::LruCache;
 use std::error::Error;
 use std::net::Ipv4Addr;
 use std::time::Duration;
+use std::pin::Pin;
+
+// https://github.com/sigp/lighthouse/blob/stable/beacon_node/lighthouse_network/src/discovery/mod.rs#L191C27-L191C27
+// pub struct Discovery<TSubstream> {
+//     cached_enrs: LruCache<PeerId, Enr>,
+//     discv5: Discv5,
+//     event_stream: ,
+// }
+
+// impl<TSubstream> Discovery<TSubstream> {
+//     pub fn new() -> Result<Self, Box<dyn Error>> {
+
+//     }
+// }
 
 pub async fn start_discv5() -> Result<Discv5, Box<dyn Error>> {
     let log = create_logger();

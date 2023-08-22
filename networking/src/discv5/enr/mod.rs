@@ -1,1 +1,1 @@
-pub mod enr;
+pub(crate) mod enr;
