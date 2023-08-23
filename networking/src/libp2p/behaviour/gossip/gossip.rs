@@ -6,5 +6,5 @@ use libp2p::gossipsub::Message;
 
 pub struct Gossipsub {
     /// The underlying libp2p gossipsub behaviour.
-    pub inner: Behaviour,
+    pub gossip_behaviour: Behaviour,
 }
