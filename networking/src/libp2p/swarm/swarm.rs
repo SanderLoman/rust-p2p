@@ -12,11 +12,11 @@ use libp2p::{
 use std::error::Error;
 use tokio::runtime::Handle;
 
-pub async fn setup_swarm(local_peer_id: Keypair) -> Result<(), Box<dyn Error>> {
+pub async fn setup_swarm(local_swarm_peer_id: libp2p::PeerId, local_transport_key: Keypair  ) -> Result<(), Box<dyn Error>> {
     let log = create_logger();
 
     // Get the transport and the local key pair.
-    let transport = setup_transport(local_peer_id).await.unwrap();
+    let transport = setup_transport(local_transport_key).await.unwrap();
 
     let mut swarm = {
         // Dummy behaviour, this will be changed later.
@@ -30,12 +30,12 @@ pub async fn setup_swarm(local_peer_id: Keypair) -> Result<(), Box<dyn Error>> {
         };
 
         // Build the Swarm
-        SwarmBuilder::with_executor(transport, behaviour, local_peer_id, executor).build()
+        SwarmBuilder::with_executor(transport, behaviour, local_swarm_peer_id, executor).build()
     };
 
     // Listen on all interfaces and the port we desire,
     // could listen on port 0 to listen on whatever port the OS assigns us.
-    let listen_addr = format!("/ip4/0.0.0.0/tcp/8888/p2p/{}", local_peer_id.to_string());
+    let listen_addr = format!("/ip4/0.0.0.0/tcp/8888/p2p/{}", local_swarm_peer_id.to_string());
     slog::debug!(log, "Listening on"; "listen_addr" => ?listen_addr);
     swarm.listen_on(listen_addr.parse().unwrap()).unwrap();
 

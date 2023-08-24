@@ -9,24 +9,24 @@
 use crate::create_logger;
 use crate::discv5::discovery::discovery::start_discv5;
 use crate::libp2p::swarm::swarm::setup_swarm;
-use crate::discv5::enr::generate_enr;
 use eyre::Result;
+use libp2p::PeerId;
 use libp2p::core::identity::Keypair;
-use slog::Logger;
 use std::error::Error;
-
-const LOG: Logger = create_logger();
 
 pub struct P2PNetwork {
     pub swarm: libp2p::swarm::Swarm<libp2p::swarm::dummy::Behaviour>,
 }
 
 pub async fn start_p2p_networking() -> Result<(), Box<dyn Error>> {
-    slog::info!(LOG, "Starting p2p networking");
+    let log: slog::Logger = create_logger();
+    slog::info!(log, "Starting p2p networking");
 
-    let libp2p_local_keys = Keypair::generate_secp256k1();
+    let local_transport_key: Keypair = Keypair::generate_secp256k1();
+    let local_swarm_peer_id: PeerId = PeerId::from(local_transport_key.public());
+    println!("Local Swarm Peer Id: {:?}", local_swarm_peer_id);
 
-    let swarm = setup_swarm(libp2p_local_keys);
+    let swarm = setup_swarm(local_swarm_peer_id, local_transport_key);
     let discv5 = start_discv5();
 
     tokio::try_join!(swarm, discv5)?;

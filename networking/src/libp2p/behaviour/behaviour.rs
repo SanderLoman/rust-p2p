@@ -21,7 +21,7 @@ use libp2p::swarm::{NetworkBehaviour, PollParameters, ToSwarm};
 use libp2p::{Multiaddr, PeerId};
 use slog::{debug, Logger};
 
-#[derive(NetworkBehaviour)]
+// #[derive(NetworkBehaviour)]
 pub struct CustomBehavior {
     /// The routing pub-sub mechanism for eth2.
     pub gossipsub: super::gossip::gossip::Gossipsub,

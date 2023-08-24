@@ -5277,6 +5277,9 @@ dependencies = [
  "eyre",
  "mev",
  "networking",
+ "slog",
+ "slog-async",
+ "slog-term",
  "tokio",
 ]
 

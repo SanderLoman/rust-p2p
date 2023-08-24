@@ -3,9 +3,13 @@
 use dotenv::dotenv;
 use eyre::Result;
 use std::error::Error;
+use slog::Logger;
+
+use networking::create_logger;
 
 #[tokio::main()]
 async fn main() -> Result<(), Box<dyn Error>> {
+    let log: slog::Logger = create_logger();
     dotenv().ok();
 
     networking::p2p::start_p2p_networking().await?;
