@@ -5,7 +5,7 @@ use discv5::enr::{CombinedKey, Enr, EnrBuilder};
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
 use serde_json::Value;
-use libp2p::{Multiaddr, PeerId};
+use libp2p::PeerId;
 use std::error::Error;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::str::FromStr;
