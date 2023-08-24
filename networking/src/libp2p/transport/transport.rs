@@ -3,16 +3,17 @@
 
 use eyre::Result;
 use libp2p::{
+    core::{muxing::StreamMuxerBox, transport::Boxed},
     identity::Keypair,
-    noise::*, PeerId,
-    Transport,
+    noise::*,
+    PeerId, Transport,
 };
 use std::error::Error;
 use std::time::Duration;
 
-pub async fn setup_transport() -> Result<(libp2p::core::transport::Boxed<(PeerId, libp2p::core::muxing::StreamMuxerBox)>, Keypair), Box<dyn Error>> {
-    let libp2p_local_key = Keypair::generate_secp256k1();
+type BoxedTransport = Boxed<(PeerId, StreamMuxerBox)>;
 
+pub async fn setup_transport(local_priv_key: Keypair) -> Result<BoxedTransport, Box<dyn Error>> {
     let tcp = libp2p::tcp::tokio::Transport::new(libp2p::tcp::Config::default().nodelay(true));
     let transport1 = libp2p::dns::TokioDnsConfig::system(tcp)?;
     let transport2 = libp2p::dns::TokioDnsConfig::system(libp2p::tcp::tokio::Transport::new(
@@ -41,7 +42,7 @@ pub async fn setup_transport() -> Result<(libp2p::core::transport::Boxed<(PeerId
 
     let upgraded_transport = transport
         .upgrade(libp2p::core::upgrade::Version::V1)
-        .authenticate(generate_noise_config(&libp2p_local_key))
+        .authenticate(generate_noise_config(&local_priv_key))
         .multiplex(libp2p::core::upgrade::SelectUpgrade::new(
             yamux_config,
             mplex_config,
@@ -49,5 +50,5 @@ pub async fn setup_transport() -> Result<(libp2p::core::transport::Boxed<(PeerId
         .timeout(Duration::from_secs(10))
         .boxed();
 
-    Ok((upgraded_transport, libp2p_local_key))
+    Ok(upgraded_transport)
 }

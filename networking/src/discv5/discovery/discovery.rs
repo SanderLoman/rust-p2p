@@ -1,7 +1,7 @@
 #![deny(unsafe_code)]
 
 use crate::create_logger;
-use crate::discv5::enr::enr::generate_enr;
+use crate::discv5::enr::generate_enr;
 use discv5::*;
 use discv5::{
     enr, handler, kbucket, metrics, packet, permit_ban, rpc, service, socket, Discv5, Discv5Config,

@@ -6,24 +6,17 @@ use crate::libp2p::transport::transport::setup_transport;
 
 use libp2p::{
     futures::StreamExt,
+    identity::Keypair,
     swarm::{SwarmBuilder, SwarmEvent},
-    PeerId,
 };
 use std::error::Error;
 use tokio::runtime::Handle;
 
-pub async fn setup_swarm() -> Result<(), Box<dyn Error>> {
+pub async fn setup_swarm(local_peer_id: Keypair) -> Result<(), Box<dyn Error>> {
     let log = create_logger();
 
     // Get the transport and the local key pair.
-    let (transport, local_keys) = setup_transport().await.unwrap();
-
-    // We use the key pair from the transport.rs file otherwise we generate 2 different keys.
-    let local_keys = local_keys;
-    let local_peer_id = PeerId::from(local_keys.public());
-
-    // Here we just use the transport from the transport.rs file.
-    let transport = transport;
+    let transport = setup_transport(local_peer_id).await.unwrap();
 
     let mut swarm = {
         // Dummy behaviour, this will be changed later.
@@ -44,9 +37,7 @@ pub async fn setup_swarm() -> Result<(), Box<dyn Error>> {
     // could listen on port 0 to listen on whatever port the OS assigns us.
     let listen_addr = format!("/ip4/0.0.0.0/tcp/8888/p2p/{}", local_peer_id.to_string());
     slog::debug!(log, "Listening on"; "listen_addr" => ?listen_addr);
-    swarm
-        .listen_on(listen_addr.parse().unwrap())
-        .unwrap();
+    swarm.listen_on(listen_addr.parse().unwrap()).unwrap();
 
     slog::debug!(log, "Swarm Info"; "network_info" => ?swarm.network_info());
 
