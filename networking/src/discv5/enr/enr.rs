@@ -1,76 +1,243 @@
 #![deny(unsafe_code)]
 
-use crate::create_logger;
-use discv5::{
-    enr::{CombinedKey, EnrBuilder},
-    Enr,
-};
-use reqwest::header::{HeaderMap, ACCEPT};
-use reqwest::Client;
-use serde_json::Value;
-use std::error::Error;
-use std::net::Ipv4Addr;
-use std::str::FromStr;
+// I dont know if im going to keep this code or not, but I want to keep it around for now.
 
-async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>> {
-    let log = create_logger();
 
-    let client = Client::new();
+use discv5::enr::{CombinedKey, CombinedPublicKey};
+use discv5::Enr;
+use libp2p::core::{identity::Keypair, multiaddr::Protocol};
+use libp2p::{Multiaddr, PeerId};
 
-    let mut headers = HeaderMap::new();
-    headers.insert(ACCEPT, "application/json".parse().unwrap());
+/// Extend ENR for libp2p types.
+pub trait EnrExt {
+    /// The libp2p `PeerId` for the record.
+    fn peer_id(&self) -> PeerId;
 
-    let res = client
-        .get("http://127.0.0.1:5052/eth/v1/node/identity")
-        .headers(headers)
-        .send()
-        .await?;
+    /// Returns a list of multiaddrs if the ENR has an `ip` and either a `tcp` or `udp` key **or** an `ip6` and either a `tcp6` or `udp6`.
+    /// The vector remains empty if these fields are not defined.
+    fn multiaddr(&self) -> Vec<Multiaddr>;
 
-    let body = res.text().await?;
-    let v: Value = serde_json::from_str(&body)?;
-    let enr = v["data"]["enr"].as_str().unwrap().to_string();
+    /// Returns a list of multiaddrs with the `PeerId` prepended.
+    fn multiaddr_p2p(&self) -> Vec<Multiaddr>;
 
-    // Decode the ENR
-    let decoded_enr = Enr::from_str(&enr)?;
+    /// Returns any multiaddrs that contain the TCP protocol with the `PeerId` prepended.
+    fn multiaddr_p2p_tcp(&self) -> Vec<Multiaddr>;
 
-    // Extract the attnets, eth2, and syncnets fields
-    let attnets = decoded_enr.get("attnets").unwrap().clone();
-    let eth2 = decoded_enr.get("eth2").unwrap().clone();
-    let syncnets = decoded_enr.get("syncnets").unwrap().clone();
-    let ip4 = decoded_enr
-        .ip4()
-        .unwrap_or_else(|| Ipv4Addr::new(83, 128, 37, 242));
+    /// Returns any multiaddrs that contain the UDP protocol with the `PeerId` prepended.
+    fn multiaddr_p2p_udp(&self) -> Vec<Multiaddr>;
 
-    slog::info!(log, "Local ENR"; "enr" => %enr);
-    slog::info!(log, "Local Decoded ENR"; "decoded_enr" => ?decoded_enr);
-
-    Ok((enr, attnets.to_vec(), eth2.to_vec(), syncnets.to_vec(), ip4))
+    /// Returns any multiaddrs that contain the TCP protocol.
+    fn multiaddr_tcp(&self) -> Vec<Multiaddr>;
 }
 
-pub async fn generate_enr() -> Result<(Enr, Enr, CombinedKey), Box<dyn Error>> {
-    let log = create_logger();
+/// Extend ENR CombinedPublicKey for libp2p types.
+pub trait CombinedKeyPublicExt {
+    /// Converts the publickey into a peer id, without consuming the key.
+    fn as_peer_id(&self) -> PeerId;
+}
 
-    let enr_combined_key: CombinedKey = CombinedKey::generate_secp256k1();
-    let (local_enr, attnets, eth2, syncnets, ip4) = get_local_enr().await?;
+/// Extend ENR CombinedKey for conversion to libp2p keys.
+pub trait CombinedKeyExt {
+    /// Converts a libp2p key into an ENR combined key.
+    fn from_libp2p(key: &libp2p::core::identity::Keypair) -> Result<CombinedKey, &'static str>;
+}
 
-    let port = 7777;
+impl EnrExt for Enr {
+    /// The libp2p `PeerId` for the record.
+    fn peer_id(&self) -> PeerId {
+        self.public_key().as_peer_id()
+    }
 
-    let enr: discv5::enr::Enr<CombinedKey> = EnrBuilder::new("v4")
-        .ip4(ip4)
-        .tcp4(port)
-        .udp4(port)
-        .add_value("attnets", &attnets)
-        .add_value("eth2", &eth2)
-        .add_value("syncnets", &syncnets)
-        .build(&enr_combined_key)?;
+    /// Returns a list of multiaddrs if the ENR has an `ip` and either a `tcp` or `udp` key **or** an `ip6` and either a `tcp6` or `udp6`.
+    /// The vector remains empty if these fields are not defined.
+    fn multiaddr(&self) -> Vec<Multiaddr> {
+        let mut multiaddrs: Vec<Multiaddr> = Vec::new();
+        if let Some(ip) = self.ip4() {
+            if let Some(udp) = self.udp4() {
+                let mut multiaddr: Multiaddr = ip.into();
+                multiaddr.push(Protocol::Udp(udp));
+                multiaddrs.push(multiaddr);
+            }
 
-    // Decode the ENR
-    let decoded_generated_enr = Enr::from_str(&enr.to_base64()).unwrap();
+            if let Some(tcp) = self.tcp4() {
+                let mut multiaddr: Multiaddr = ip.into();
+                multiaddr.push(Protocol::Tcp(tcp));
+                multiaddrs.push(multiaddr);
+            }
+        }
+        if let Some(ip6) = self.ip6() {
+            if let Some(udp6) = self.udp6() {
+                let mut multiaddr: Multiaddr = ip6.into();
+                multiaddr.push(Protocol::Udp(udp6));
+                multiaddrs.push(multiaddr);
+            }
 
-    slog::info!(log, "Generated ENR"; "enr" => %enr);
-    slog::info!(log, "Decoded Generated ENR"; "decoded_generated_enr" => ?decoded_generated_enr);
+            if let Some(tcp6) = self.tcp6() {
+                let mut multiaddr: Multiaddr = ip6.into();
+                multiaddr.push(Protocol::Tcp(tcp6));
+                multiaddrs.push(multiaddr);
+            }
+        }
+        multiaddrs
+    }
 
-    let local_enr = Enr::from_str(&local_enr)?;
+    /// Returns a list of multiaddrs if the ENR has an `ip` and either a `tcp` or `udp` key **or** an `ip6` and either a `tcp6` or `udp6`.
+    /// The vector remains empty if these fields are not defined.
+    ///
+    /// This also prepends the `PeerId` into each multiaddr with the `P2p` protocol.
+    fn multiaddr_p2p(&self) -> Vec<Multiaddr> {
+        let peer_id = self.peer_id();
+        let mut multiaddrs: Vec<Multiaddr> = Vec::new();
+        if let Some(ip) = self.ip4() {
+            if let Some(udp) = self.udp4() {
+                let mut multiaddr: Multiaddr = ip.into();
+                multiaddr.push(Protocol::Udp(udp));
+                multiaddr.push(Protocol::P2p(peer_id.into()));
+                multiaddrs.push(multiaddr);
+            }
 
-    Ok((local_enr, enr, enr_combined_key))
+            if let Some(tcp) = self.tcp4() {
+                let mut multiaddr: Multiaddr = ip.into();
+                multiaddr.push(Protocol::Tcp(tcp));
+                multiaddr.push(Protocol::P2p(peer_id.into()));
+                multiaddrs.push(multiaddr);
+            }
+        }
+        if let Some(ip6) = self.ip6() {
+            if let Some(udp6) = self.udp6() {
+                let mut multiaddr: Multiaddr = ip6.into();
+                multiaddr.push(Protocol::Udp(udp6));
+                multiaddr.push(Protocol::P2p(peer_id.into()));
+                multiaddrs.push(multiaddr);
+            }
+
+            if let Some(tcp6) = self.tcp6() {
+                let mut multiaddr: Multiaddr = ip6.into();
+                multiaddr.push(Protocol::Tcp(tcp6));
+                multiaddr.push(Protocol::P2p(peer_id.into()));
+                multiaddrs.push(multiaddr);
+            }
+        }
+        multiaddrs
+    }
+
+    /// Returns a list of multiaddrs if the ENR has an `ip` and a `tcp` key **or** an `ip6` and a `tcp6`.
+    /// The vector remains empty if these fields are not defined.
+    ///
+    /// This also prepends the `PeerId` into each multiaddr with the `P2p` protocol.
+    fn multiaddr_p2p_tcp(&self) -> Vec<Multiaddr> {
+        let peer_id = self.peer_id();
+        let mut multiaddrs: Vec<Multiaddr> = Vec::new();
+        if let Some(ip) = self.ip4() {
+            if let Some(tcp) = self.tcp4() {
+                let mut multiaddr: Multiaddr = ip.into();
+                multiaddr.push(Protocol::Tcp(tcp));
+                multiaddr.push(Protocol::P2p(peer_id.into()));
+                multiaddrs.push(multiaddr);
+            }
+        }
+        if let Some(ip6) = self.ip6() {
+            if let Some(tcp6) = self.tcp6() {
+                let mut multiaddr: Multiaddr = ip6.into();
+                multiaddr.push(Protocol::Tcp(tcp6));
+                multiaddr.push(Protocol::P2p(peer_id.into()));
+                multiaddrs.push(multiaddr);
+            }
+        }
+        multiaddrs
+    }
+
+    /// Returns a list of multiaddrs if the ENR has an `ip` and a `udp` key **or** an `ip6` and a `udp6`.
+    /// The vector remains empty if these fields are not defined.
+    ///
+    /// This also prepends the `PeerId` into each multiaddr with the `P2p` protocol.
+    fn multiaddr_p2p_udp(&self) -> Vec<Multiaddr> {
+        let peer_id = self.peer_id();
+        let mut multiaddrs: Vec<Multiaddr> = Vec::new();
+        if let Some(ip) = self.ip4() {
+            if let Some(udp) = self.udp4() {
+                let mut multiaddr: Multiaddr = ip.into();
+                multiaddr.push(Protocol::Udp(udp));
+                multiaddr.push(Protocol::P2p(peer_id.into()));
+                multiaddrs.push(multiaddr);
+            }
+        }
+        if let Some(ip6) = self.ip6() {
+            if let Some(udp6) = self.udp6() {
+                let mut multiaddr: Multiaddr = ip6.into();
+                multiaddr.push(Protocol::Udp(udp6));
+                multiaddr.push(Protocol::P2p(peer_id.into()));
+                multiaddrs.push(multiaddr);
+            }
+        }
+        multiaddrs
+    }
+
+    /// Returns a list of multiaddrs if the ENR has an `ip` and either a `tcp` or `udp` key **or** an `ip6` and either a `tcp6` or `udp6`.
+    /// The vector remains empty if these fields are not defined.
+    fn multiaddr_tcp(&self) -> Vec<Multiaddr> {
+        let mut multiaddrs: Vec<Multiaddr> = Vec::new();
+        if let Some(ip) = self.ip4() {
+            if let Some(tcp) = self.tcp4() {
+                let mut multiaddr: Multiaddr = ip.into();
+                multiaddr.push(Protocol::Tcp(tcp));
+                multiaddrs.push(multiaddr);
+            }
+        }
+        if let Some(ip6) = self.ip6() {
+            if let Some(tcp6) = self.tcp6() {
+                let mut multiaddr: Multiaddr = ip6.into();
+                multiaddr.push(Protocol::Tcp(tcp6));
+                multiaddrs.push(multiaddr);
+            }
+        }
+        multiaddrs
+    }
+}
+
+impl CombinedKeyPublicExt for CombinedPublicKey {
+    /// Converts the publickey into a peer id, without consuming the key.
+    ///
+    /// This is only available with the `libp2p` feature flag.
+    fn as_peer_id(&self) -> PeerId {
+        match self {
+            Self::Secp256k1(pk) => {
+                let pk_bytes = pk.to_sec1_bytes();
+                let libp2p_pk = libp2p::identity::PublicKey::try_into_secp256k1(
+                    libp2p::core::identity::PublicKey::decode(&pk_bytes).expect("valid public key"),
+                );
+                PeerId::from_public_key(&libp2p_pk)
+            }
+            Self::Ed25519(pk) => {
+                let pk_bytes = pk.to_bytes();
+                let libp2p_pk = libp2p::identity::PublicKey::try_into_ed25519(
+                    libp2p::core::identity::ed25519::PublicKey::decode(&pk_bytes)
+                        .expect("valid public key"),
+                );
+                PeerId::from_public_key(&libp2p_pk)
+            }
+        }
+    }
+}
+
+impl CombinedKeyExt for CombinedKey {
+    fn from_libp2p(key: &libp2p::core::identity::Keypair) -> Result<CombinedKey, &'static str> {
+        match key {
+            Keypair::try_into_secp256k1(key) => {
+                let secret =
+                    discv5::enr::k256::ecdsa::SigningKey::from_slice(&key.secret().to_bytes())
+                        .expect("libp2p key must be valid");
+                Ok(CombinedKey::Secp256k1(secret))
+            }
+            Keypair::try_into_ed25519(key) => {
+                let ed_keypair = discv5::enr::ed25519_dalek::SigningKey::from_bytes(
+                    &(key.encode()[..32])
+                        .try_into()
+                        .expect("libp2p key must be valid"),
+                );
+                Ok(CombinedKey::from(ed_keypair))
+            }
+            Keypair::Ecdsa(_) => Err("Ecdsa keypairs not supported"),
+        }
+    }
 }
