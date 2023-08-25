@@ -9,10 +9,10 @@ use networking::create_logger;
 
 #[tokio::main()]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let log: slog::Logger = create_logger();
+    let log: Logger = create_logger();
     dotenv().ok();
 
-    networking::p2p::start_p2p_networking().await?;
+    networking::p2p::start_p2p_networking(log).await?;
 
     // let geth_rpc_endpoint: &str = "/home/sander/.ethereum/goerli/geth.ipc";
 

@@ -21,14 +21,12 @@ use libp2p::swarm::{NetworkBehaviour, PollParameters, ToSwarm};
 use libp2p::{Multiaddr, PeerId};
 use slog::{debug, Logger};
 
-// #[derive(NetworkBehaviour)]
+#[derive(NetworkBehaviour)]
 pub struct CustomBehavior {
     /// The routing pub-sub mechanism for eth2.
-    pub gossipsub: super::gossip::gossip::Gossipsub,
-    /// The Eth2 RPC specified in the wire-0 protocol.
-    // pub eth2_rpc: ,
+    pub gossipsub: super::gossip::Gossipsub,
     /// Discv5 Discovery protocol.
-    pub discovery: discv5::Discv5,
+    pub discovery: crate::discv5::discovery::Discovery,
     /// Keep regular connection to peers and disconnect if absent.
     // NOTE: The id protocol is used for initial interop. This will be removed by mainnet.
     /// Provides IP addresses and peer information.

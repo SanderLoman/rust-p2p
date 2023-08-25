@@ -1,4 +1,4 @@
-pub(crate) mod enr;
+#![deny(unsafe_code)]
 
 use crate::create_logger;
 use discv5::enr::{CombinedKey, Enr, EnrBuilder};
@@ -6,7 +6,7 @@ use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
 use serde_json::Value;
 use std::error::Error;
-use std::net::{Ipv4Addr, Ipv6Addr};
+use std::net::Ipv4Addr;
 use std::str::FromStr;
 
 pub async fn generate_enr(
