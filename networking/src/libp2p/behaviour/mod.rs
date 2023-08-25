@@ -1,7 +1,7 @@
 pub mod behaviour;
+pub mod eth2rpc;
 pub mod gossip;
 pub mod identify;
-pub mod eth2rpc;
 
 use std::collections::HashMap;
 use std::net::IpAddr;
