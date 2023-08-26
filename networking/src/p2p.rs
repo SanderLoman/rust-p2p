@@ -6,7 +6,7 @@
 /// It also sets up the identify protocol which is used for initial interop.
 ///
 /// This file will be used in the main.rs file (the main entry point for the entire application), where other components come together aswell.
-use crate::discv5::discovery::start_discv5;
+// use crate::discv5::discovery::start_discv5;
 use crate::libp2p::behaviour::CustomBehavior;
 use crate::libp2p::swarm::swarm::setup_swarm;
 use eyre::Result;
@@ -34,9 +34,9 @@ pub async fn start_p2p_networking(log: slog::Logger) -> Result<(), Box<dyn Error
     let local_swarm_peer_id: PeerId = PeerId::from(local_transport_key.public());
 
     let swarm = setup_swarm(local_swarm_peer_id, local_transport_key, log);
-    let discv5 = start_discv5();
+    // let discv5 = start_discv5();
 
-    tokio::try_join!(swarm, discv5)?;
+    tokio::try_join!(swarm)?;
 
     Ok(())
 }
