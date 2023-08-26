@@ -3,6 +3,7 @@
 use libp2p::identity::PublicKey;
 use libp2p::swarm::dummy::ConnectionHandler;
 use libp2p::swarm::NetworkBehaviour;
+use slog::Logger;
 use void::Void;
 
 pub struct Identity {
@@ -80,7 +81,7 @@ impl NetworkBehaviour for Identity {
 }
 
 impl Identity {
-    pub fn new(key: PublicKey) -> Self {
+    pub fn new(key: PublicKey, log: Logger) -> Self {
         Identity {
             identify_behaviour: libp2p::identify::Behaviour::new(libp2p::identify::Config::new(
                 "".to_string(),

@@ -13,13 +13,13 @@ use void::Void;
 
 use crate::create_logger;
 
-use crate::libp2p::behaviour::gossip::Gossipsub as CustomGossipsub;
 use crate::discv5::discovery::Discovery as CustomDiscovery;
+use crate::libp2p::behaviour::gossip::Gossipsub as CustomGossipsub;
+use crate::libp2p::behaviour::identify::Identity as CustomIdentity;
 
 use discv5::Enr;
 use futures::StreamExt;
 use libp2p::core::ConnectedPoint;
-use libp2p::identify::Behaviour as Identify;
 use libp2p::swarm::behaviour::{ConnectionClosed, ConnectionEstablished, DialFailure, FromSwarm};
 use libp2p::swarm::dial_opts::{DialOpts, PeerCondition};
 use libp2p::swarm::dummy::{Behaviour, ConnectionHandler};
@@ -36,5 +36,5 @@ pub struct CustomBehavior {
     /// Keep regular connection to peers and disconnect if absent.
     // NOTE: The id protocol is used for initial interop. This will be removed by mainnet.
     /// Provides IP addresses and peer information.
-    pub identify: Identify,
+    pub identify: CustomIdentity,
 }
