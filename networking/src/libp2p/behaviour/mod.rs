@@ -1,4 +1,5 @@
-pub mod behaviour;
+#![deny(unsafe_code)]
+
 pub mod eth2rpc;
 pub mod gossip;
 pub mod identify;
@@ -11,6 +12,9 @@ use void::Void;
 // use crate::discv5::discovery::Discovery;
 
 use crate::create_logger;
+
+use crate::libp2p::behaviour::gossip::Gossipsub as CustomGossipsub;
+use crate::discv5::discovery::Discovery as CustomDiscovery;
 
 use discv5::Enr;
 use futures::StreamExt;
@@ -26,9 +30,9 @@ use slog::{debug, Logger};
 #[derive(NetworkBehaviour)]
 pub struct CustomBehavior {
     /// The routing pub-sub mechanism for eth2.
-    pub gossipsub: crate::libp2p::behaviour::gossip::Gossipsub,
+    pub gossipsub: CustomGossipsub,
     /// Discv5 Discovery protocol.
-    pub discovery: crate::discv5::discovery::Discovery,
+    pub discovery: CustomDiscovery,
     /// Keep regular connection to peers and disconnect if absent.
     // NOTE: The id protocol is used for initial interop. This will be removed by mainnet.
     /// Provides IP addresses and peer information.

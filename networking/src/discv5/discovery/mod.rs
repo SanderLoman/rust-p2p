@@ -4,16 +4,19 @@ use crate::create_logger;
 use crate::discv5::enr::*;
 use discv5::*;
 use discv5::{
-    enr, handler, kbucket, metrics, packet, permit_ban, rpc, service, socket, Discv5, Discv5Config,
-    Discv5ConfigBuilder, Discv5Event, Enr, ListenConfig, enr::CombinedKey
+    enr, enr::CombinedKey, handler, kbucket, metrics, packet, permit_ban, rpc, service, socket,
+    Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Event, Enr, ListenConfig,
 };
 use futures::Future;
+use libp2p::swarm::NetworkBehaviour;
 use libp2p::PeerId;
 use lru::LruCache;
 use std::error::Error;
 use std::net::Ipv4Addr;
-use std::time::Duration;
+use std::num::NonZeroUsize;
 use std::pin::Pin;
+use std::time::Duration;
+use void::Void;
 
 // https://github.com/sigp/lighthouse/blob/stable/beacon_node/lighthouse_network/src/discovery/mod.rs#L191C27-L191C27
 pub struct Discovery {
@@ -29,7 +32,7 @@ impl Discovery {
         config: Discv5Config,
     ) -> Result<Self, Box<dyn Error>> {
         let discv5 = Discv5::new(enr, enr_key, config)?;
-        let cached_enrs = LruCache::new(1000);
+        let cached_enrs = LruCache::new(NonZeroUsize::new(1000).unwrap());
         Ok(Discovery {
             cached_enrs,
             discv5,
@@ -37,13 +40,80 @@ impl Discovery {
     }
 }
 
+impl NetworkBehaviour for Discovery {
+    type ConnectionHandler = libp2p::swarm::dummy::ConnectionHandler;
+    type OutEvent = Void;
+
+    // fn new_handler(&mut self) -> Self::ConnectionHandler {}
+
+    fn addresses_of_peer(&mut self, _: &PeerId) -> Vec<libp2p::Multiaddr> {
+        Vec::new()
+    }
+
+    fn handle_established_inbound_connection(
+        &mut self,
+        _connection_id: libp2p::swarm::ConnectionId,
+        peer: PeerId,
+        local_addr: &libp2p::Multiaddr,
+        remote_addr: &libp2p::Multiaddr,
+    ) -> Result<libp2p::swarm::THandler<Self>, libp2p::swarm::ConnectionDenied> {
+        Ok(libp2p::swarm::dummy::ConnectionHandler)
+    }
+
+    fn handle_established_outbound_connection(
+        &mut self,
+        _connection_id: libp2p::swarm::ConnectionId,
+        peer: PeerId,
+        addr: &libp2p::Multiaddr,
+        role_override: libp2p::core::Endpoint,
+    ) -> Result<libp2p::swarm::THandler<Self>, libp2p::swarm::ConnectionDenied> {
+        Ok(libp2p::swarm::dummy::ConnectionHandler)
+    }
+
+    fn handle_pending_inbound_connection(
+        &mut self,
+        _connection_id: libp2p::swarm::ConnectionId,
+        _local_addr: &libp2p::Multiaddr,
+        _remote_addr: &libp2p::Multiaddr,
+    ) -> Result<(), libp2p::swarm::ConnectionDenied> {
+        Ok(())
+    }
+
+    fn handle_pending_outbound_connection(
+        &mut self,
+        _connection_id: libp2p::swarm::ConnectionId,
+        maybe_peer: Option<PeerId>,
+        _addresses: &[libp2p::Multiaddr],
+        _effective_role: libp2p::core::Endpoint,
+    ) -> Result<Vec<libp2p::Multiaddr>, libp2p::swarm::ConnectionDenied> {
+        Ok(Vec::new())
+    }
+
+    fn on_connection_handler_event(
+        &mut self,
+        _peer_id: PeerId,
+        _connection_id: libp2p::swarm::ConnectionId,
+        _event: libp2p::swarm::THandlerOutEvent<Self>,
+    ) {
+    }
+
+    fn on_swarm_event(&mut self, event: libp2p::swarm::FromSwarm<Self::ConnectionHandler>) {}
+
+    fn poll(
+        &mut self,
+        cx: &mut std::task::Context<'_>,
+        params: &mut impl libp2p::swarm::PollParameters,
+    ) -> std::task::Poll<libp2p::swarm::ToSwarm<Self::OutEvent, libp2p::swarm::THandlerInEvent<Self>>>
+    {
+        std::task::Poll::Pending
+    }
+}
+
 pub async fn start_discv5() -> Result<Discv5, Box<dyn Error>> {
     let log = create_logger();
     let (local_enr, enr, enr_key) = generate_enr().await?;
 
-    let listen_addr = std::net::Ipv4Addr::new(0, 0, 0, 0);
     let listen_port = enr.udp4().unwrap();
-    slog::debug!(log, "Listening on"; "listen_addr" => %listen_addr);
 
     let discv5_listen_config =
         discv5::ListenConfig::from_ip(Ipv4Addr::UNSPECIFIED.into(), listen_port);

@@ -1,26 +1,58 @@
 #![deny(unsafe_code)]
 
-use crate::create_logger;
-// use crate::libp2p::behaviour::behaviour::CustomBehavior;
+use crate::discv5::enr::generate_enr;
+use crate::libp2p::behaviour::gossip::Gossipsub as CustomGossipsub;
+use crate::discv5::discovery::Discovery as CustomDiscovery;
+use crate::libp2p::behaviour::identify::Identity as CustomIdentity;
+use crate::libp2p::behaviour::CustomBehavior as Behaviour;
 use crate::libp2p::transport::transport::setup_transport;
 
+use discv5::Discv5ConfigBuilder;
 use libp2p::{
     futures::StreamExt,
     identity::Keypair,
     swarm::{SwarmBuilder, SwarmEvent},
 };
 use std::error::Error;
-use tokio::runtime::Handle;
+use std::net::Ipv4Addr;
+use std::time::Duration;
+use tokio::runtime::Handle;;
+use slog::o;
 
-pub async fn setup_swarm(local_swarm_peer_id: libp2p::PeerId, local_transport_key: Keypair  ) -> Result<(), Box<dyn Error>> {
-    let log = create_logger();
+pub async fn setup_swarm(
+    swarm_peer_id: libp2p::PeerId,
+    transport_key: Keypair,
+    log: slog::Logger,
+) -> Result<(), Box<dyn Error>> {
+    let log = log.new(o!("Service" => "Swarm"));
 
     // Get the transport and the local key pair.
-    let transport = setup_transport(local_transport_key).await.unwrap();
+    let transport = setup_transport(transport_key).await.unwrap();
 
     let mut swarm = {
-        // Dummy behaviour, this will be changed later.
-        let behaviour = libp2p::swarm::dummy::Behaviour;
+        let (lh_enr, enr, key) = generate_enr().await?;
+
+        let listen_port = enr.udp4().unwrap();
+
+        let discv5_listen_config =
+            discv5::ListenConfig::from_ip(Ipv4Addr::UNSPECIFIED.into(), listen_port);
+
+        let discv5_config = Discv5ConfigBuilder::new(discv5_listen_config)
+            .ban_duration(Some(Duration::from_secs(60)))
+            .query_timeout(Duration::from_secs(10))
+            .request_retries(1)
+            .request_timeout(Duration::from_secs(1))
+            .query_parallelism(3)
+            .query_peer_timeout(Duration::from_secs(3))
+            .ping_interval(Duration::from_secs(300))
+            .build();
+
+        let behaviour = Behaviour {
+            gossipsub: CustomGossipsub::new(swarm_peer_id, transport_key, log), //libp2p
+            // CustomGossipsub::new(local_peer_id, keypair, log), //libp2p
+            discovery: CustomDiscovery::new(enr, key, discv5_config).unwrap(), //discv5
+            identify: CustomIdentity::new()
+        };
 
         let executor = {
             let executor = Handle::current();
@@ -30,12 +62,15 @@ pub async fn setup_swarm(local_swarm_peer_id: libp2p::PeerId, local_transport_ke
         };
 
         // Build the Swarm
-        SwarmBuilder::with_executor(transport, behaviour, local_swarm_peer_id, executor).build()
+        SwarmBuilder::with_executor(transport, behaviour, swarm_peer_id, executor).build()
     };
 
     // Listen on all interfaces and the port we desire,
     // could listen on port 0 to listen on whatever port the OS assigns us.
-    let listen_addr = format!("/ip4/0.0.0.0/tcp/8888/p2p/{}", local_swarm_peer_id.to_string());
+    let listen_addr = format!(
+        "/ip4/0.0.0.0/tcp/8888/p2p/{}",
+        local_swarm_peer_id.to_string()
+    );
     slog::debug!(log, "Listening on"; "listen_addr" => ?listen_addr);
     swarm.listen_on(listen_addr.parse().unwrap()).unwrap();
 
