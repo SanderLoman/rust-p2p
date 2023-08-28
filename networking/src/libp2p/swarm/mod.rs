@@ -1,14 +1,18 @@
 #![deny(unsafe_code)]
 
+pub mod events;
+
 use crate::discv5::discovery::Discovery as CustomDiscovery;
 use crate::discv5::discovery::enr::generate_enr;
 use crate::libp2p::behaviour::gossip::Gossipsub as CustomGossipsub;
 use crate::libp2p::behaviour::identify::Identity as CustomIdentity;
 use crate::libp2p::behaviour::CustomBehavior as Behaviour;
 use crate::libp2p::transport::transport::setup_transport;
+use crate::libp2p::behaviour::CustomBehavior;
 
 use discv5::Discv5ConfigBuilder;
 use libp2p::{
+    Swarm,
     futures::StreamExt,
     identity::{Keypair, PublicKey},
     swarm::{SwarmBuilder, SwarmEvent},
@@ -22,7 +26,7 @@ pub async fn setup_swarm(
     swarm_peer_id: libp2p::PeerId,
     transport_key: Keypair,
     log: slog::Logger,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<Swarm<CustomBehavior>, Box<dyn Error>> {
     let transport = setup_transport(transport_key.clone()).await.unwrap();
     let log_for_gossip = log.clone();
     let log_for_identity = log.clone();
@@ -72,75 +76,5 @@ pub async fn setup_swarm(
 
     slog::debug!(log, "Swarm Info"; "network_info" => ?swarm.network_info());
 
-    loop {
-        match swarm.select_next_some().await {
-            SwarmEvent::OutgoingConnectionError { peer_id, error } => {
-                slog::debug!(log, "Outgoing Connection Error"; "peer_id" => ?peer_id, "error" => ?error);
-            }
-            #[allow(deprecated)]
-            SwarmEvent::BannedPeer { peer_id, endpoint } => {
-                slog::debug!(log, "Banned Peer"; "peer_id" => %peer_id, "endpoint" => ?endpoint);
-            }
-            SwarmEvent::ListenerError { listener_id, error } => {
-                slog::debug!(log, "Listener Error"; "listener_id" => ?listener_id, "error" => ?error);
-            }
-            SwarmEvent::Dialing(peer_id) => {
-                slog::debug!(log, "Dialing"; "peer_id" => %peer_id);
-            }
-            SwarmEvent::Behaviour(event) => {
-                slog::debug!(log, "Behaviour Event"; "event" => ?event);
-            }
-            SwarmEvent::ConnectionEstablished {
-                peer_id,
-                endpoint,
-                num_established,
-                concurrent_dial_errors,
-                established_in,
-            } => {
-                slog::debug!(log, "Connection established"; "peer_id" => %peer_id, "endpoint" => ?endpoint, "concurrent_dial_errors" => ?concurrent_dial_errors, "established_in" => ?established_in);
-                slog::debug!(log, "Peers connected"; "num_established" => ?num_established);
-            }
-            SwarmEvent::ConnectionClosed {
-                peer_id,
-                endpoint,
-                num_established,
-                cause,
-            } => {
-                slog::debug!(log, "Connection closed"; "peer_id" => %peer_id, "endpoint" => ?endpoint, "cause" => ?cause);
-                slog::debug!(log, "Peers connected"; "num_established" => num_established);
-            }
-            SwarmEvent::NewListenAddr {
-                address,
-                listener_id,
-            } => {
-                slog::debug!(log, "New Listen Address"; "address" => ?address, "listener_id" => ?listener_id);
-            }
-            SwarmEvent::ExpiredListenAddr {
-                address,
-                listener_id,
-            } => {
-                slog::debug!(log, "Expired Listen Address"; "address" => ?address, "listener_id" => ?listener_id);
-            }
-            SwarmEvent::ListenerClosed {
-                addresses,
-                reason,
-                listener_id,
-            } => {
-                slog::debug!(log, "Listener closed"; "reason" => ?reason, "addresses" => ?addresses, "listener_id" => ?listener_id);
-            }
-            SwarmEvent::IncomingConnection {
-                local_addr,
-                send_back_addr,
-            } => {
-                slog::debug!(log, "Incoming connection"; "local_addr" => ?local_addr, "send_back_addr" => ?send_back_addr);
-            }
-            SwarmEvent::IncomingConnectionError {
-                error,
-                local_addr,
-                send_back_addr,
-            } => {
-                slog::debug!(log, "Incoming connection error"; "error" => ?error, "local_addr" => ?local_addr, "send_back_addr" => ?send_back_addr);
-            }
-        }
-    }
+    Ok(swarm)
 }

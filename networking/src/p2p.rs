@@ -12,18 +12,33 @@ use crate::libp2p::swarm::setup_swarm;
 use eyre::Result;
 use libp2p::core::identity::Keypair;
 use libp2p::PeerId;
+use slog::Logger;
 use std::error::Error;
 
 pub struct P2PNetwork {
-    // pub swarm: libp2p::swarm::Swarm<CustomBehavior>,
+    pub swarm: libp2p::swarm::Swarm<CustomBehavior>,
 }
 
 impl P2PNetwork {
-    pub fn new() -> Result<Self> {
+    pub async fn new(log: Logger) -> Result<Self> {
+        let log_for_swarm_events = log.clone();
+        let log2 = log.clone();
         let local_transport_key: Keypair = Keypair::generate_secp256k1();
         let local_swarm_peer_id: PeerId = PeerId::from(local_transport_key.public());
 
-        Ok(P2PNetwork {})
+        let mut swarm = setup_swarm(local_swarm_peer_id, local_transport_key, log)
+            .await
+            .unwrap();
+
+        // Pass a mutable reference to swarm
+        let swarm_events =
+            crate::libp2p::swarm::events::swarm_events(&mut swarm, log_for_swarm_events).await;
+
+        Ok(P2PNetwork { swarm })
+    }
+
+    pub async fn start() -> Result<()> {
+        Ok(())
     }
 }
 

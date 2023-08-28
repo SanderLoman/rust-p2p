@@ -24,7 +24,6 @@ impl Identity {
 impl NetworkBehaviour for Identity {
     type ConnectionHandler = ConnectionHandler;
     type OutEvent = Void;
-    
     fn new_handler(&mut self) -> Self::ConnectionHandler {
         ConnectionHandler
     }

@@ -36,6 +36,8 @@ impl Discovery {
     ) -> Result<Self, Box<dyn Error>> {
         let discv5 = Discv5::new(enr, enr_key, config)?;
         let cached_enrs = LruCache::new(NonZeroUsize::new(1000).unwrap());
+
+        
         Ok(Discovery {
             cached_enrs,
             discv5,
