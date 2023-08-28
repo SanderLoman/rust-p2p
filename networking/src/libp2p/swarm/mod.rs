@@ -1,7 +1,7 @@
 #![deny(unsafe_code)]
 
 use crate::discv5::discovery::Discovery as CustomDiscovery;
-use crate::discv5::enr::generate_enr;
+use crate::discv5::discovery::enr::generate_enr;
 use crate::libp2p::behaviour::gossip::Gossipsub as CustomGossipsub;
 use crate::libp2p::behaviour::identify::Identity as CustomIdentity;
 use crate::libp2p::behaviour::CustomBehavior as Behaviour;

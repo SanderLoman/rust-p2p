@@ -1,10 +1,12 @@
 #![deny(unsafe_code)]
 
+pub mod enr;
+
 use crate::create_logger;
-use crate::discv5::enr::*;
+use crate::discv5::discovery::enr::*;
 use discv5::*;
 use discv5::{
-    enr, enr::CombinedKey, handler, kbucket, metrics, packet, permit_ban, rpc, service, socket,
+    enr as discv5_enr, enr::CombinedKey, handler, kbucket, metrics, packet, permit_ban, rpc, service, socket,
     Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Event, Enr, ListenConfig,
 };
 use futures::Future;
