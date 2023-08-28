@@ -8,6 +8,7 @@ use discv5::{
     Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Event, Enr, ListenConfig,
 };
 use futures::Future;
+use libp2p::swarm::dummy::ConnectionHandler;
 use libp2p::swarm::NetworkBehaviour;
 use libp2p::PeerId;
 use lru::LruCache;
@@ -41,10 +42,12 @@ impl Discovery {
 }
 
 impl NetworkBehaviour for Discovery {
-    type ConnectionHandler = libp2p::swarm::dummy::ConnectionHandler;
+    type ConnectionHandler = ConnectionHandler;
     type OutEvent = Void;
 
-    // fn new_handler(&mut self) -> Self::ConnectionHandler {}
+    fn new_handler(&mut self) -> Self::ConnectionHandler {
+        ConnectionHandler
+    }
 
     fn addresses_of_peer(&mut self, _: &PeerId) -> Vec<libp2p::Multiaddr> {
         Vec::new()

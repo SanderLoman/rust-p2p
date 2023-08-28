@@ -3,7 +3,7 @@
 use libp2p::gossipsub::Behaviour;
 use libp2p::gossipsub::*;
 use libp2p::identity::Keypair;
-use libp2p::swarm::{ConnectionHandler, NetworkBehaviour};
+use libp2p::swarm::{dummy::ConnectionHandler, NetworkBehaviour};
 use libp2p::PeerId;
 use slog::Logger;
 use std::time::Duration;
@@ -30,10 +30,12 @@ impl Gossipsub {
 }
 
 impl NetworkBehaviour for Gossipsub {
-    type ConnectionHandler = libp2p::swarm::dummy::ConnectionHandler;
+    type ConnectionHandler = ConnectionHandler;
     type OutEvent = Void;
 
-    // fn new_handler(&mut self) -> Self::ConnectionHandler {}
+    fn new_handler(&mut self) -> Self::ConnectionHandler {
+        ConnectionHandler
+    }
 
     fn addresses_of_peer(&mut self, _: &PeerId) -> Vec<libp2p::Multiaddr> {
         Vec::new()

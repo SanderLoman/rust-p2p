@@ -8,7 +8,7 @@
 /// This file will be used in the main.rs file (the main entry point for the entire application), where other components come together aswell.
 // use crate::discv5::discovery::start_discv5;
 use crate::libp2p::behaviour::CustomBehavior;
-use crate::libp2p::swarm::swarm::setup_swarm;
+use crate::libp2p::swarm::setup_swarm;
 use eyre::Result;
 use libp2p::core::identity::Keypair;
 use libp2p::PeerId;

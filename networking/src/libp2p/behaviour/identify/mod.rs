@@ -10,9 +10,21 @@ pub struct Identity {
     identify_behaviour: libp2p::identify::Behaviour,
 }
 
+impl Identity {
+    pub fn new(key: PublicKey, log: Logger) -> Self {
+        Identity {
+            identify_behaviour: libp2p::identify::Behaviour::new(libp2p::identify::Config::new(
+                "".to_string(),
+                key
+            )),
+        }
+    }
+}
+
 impl NetworkBehaviour for Identity {
     type ConnectionHandler = ConnectionHandler;
     type OutEvent = Void;
+    
     fn new_handler(&mut self) -> Self::ConnectionHandler {
         ConnectionHandler
     }
@@ -77,16 +89,5 @@ impl NetworkBehaviour for Identity {
     ) -> std::task::Poll<libp2p::swarm::ToSwarm<Self::OutEvent, libp2p::swarm::THandlerInEvent<Self>>>
     {
         std::task::Poll::Pending
-    }
-}
-
-impl Identity {
-    pub fn new(key: PublicKey, log: Logger) -> Self {
-        Identity {
-            identify_behaviour: libp2p::identify::Behaviour::new(libp2p::identify::Config::new(
-                "".to_string(),
-                key
-            )),
-        }
     }
 }
