@@ -26,13 +26,9 @@ impl P2PNetwork {
         let local_transport_key: Keypair = Keypair::generate_secp256k1();
         let local_swarm_peer_id: PeerId = PeerId::from(local_transport_key.public());
 
-        let mut swarm = setup_swarm(local_swarm_peer_id, local_transport_key, log)
+        let swarm = setup_swarm(local_swarm_peer_id, local_transport_key, log)
             .await
             .unwrap();
-
-        // Pass a mutable reference to swarm
-        let swarm_events =
-            crate::libp2p::swarm::events::swarm_events(&mut swarm, log_for_swarm_events).await;
 
         Ok(P2PNetwork { swarm })
     }

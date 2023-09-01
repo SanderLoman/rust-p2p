@@ -1,12 +1,11 @@
 #![deny(unsafe_code)]
 
 use crate::libp2p::behaviour::CustomBehavior;
-use eyre::Result;
 use futures::StreamExt;
 use libp2p::{swarm::SwarmEvent, Swarm};
 use slog::Logger;
 
-pub async fn swarm_events(swarm: &mut Swarm<CustomBehavior>, log: Logger) -> Result<()> {
+pub async fn swarm_events(swarm: &mut Swarm<CustomBehavior>, log: Logger) {
     loop {
         match swarm.select_next_some().await {
             SwarmEvent::Behaviour(event) => {
@@ -74,6 +73,4 @@ pub async fn swarm_events(swarm: &mut Swarm<CustomBehavior>, log: Logger) -> Res
             _ => {}
         }
     }
-
-    Ok(())
 }

@@ -1,6 +1,5 @@
 #![deny(unsafe_code)]
 
-pub mod eth2rpc;
 pub mod gossip;
 pub mod identify;
 
@@ -33,8 +32,6 @@ pub struct CustomBehavior {
     pub gossipsub: CustomGossipsub,
     /// Discv5 Discovery protocol.
     pub discovery: CustomDiscovery,
-    /// Keep regular connection to peers and disconnect if absent.
-    // NOTE: The id protocol is used for initial interop. This will be removed by mainnet.
     /// Provides IP addresses and peer information.
     pub identify: CustomIdentity,
 }

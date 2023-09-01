@@ -15,7 +15,7 @@ use libp2p::{
     Swarm,
     futures::StreamExt,
     identity::{Keypair, PublicKey},
-    swarm::{SwarmBuilder, SwarmEvent},
+    swarm::{SwarmBuilder, SwarmEvent, NetworkBehaviour},
 };
 use std::error::Error;
 use std::net::Ipv4Addr;
