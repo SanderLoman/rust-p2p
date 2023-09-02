@@ -2,20 +2,21 @@
 
 pub mod events;
 
-use crate::discv5::discovery::Discovery as CustomDiscovery;
+use super::swarm::events::swarm_events;
 use crate::discv5::discovery::enr::generate_enr;
+use crate::discv5::discovery::Discovery as CustomDiscovery;
 use crate::libp2p::behaviour::gossip::Gossipsub as CustomGossipsub;
 use crate::libp2p::behaviour::identify::Identity as CustomIdentity;
 use crate::libp2p::behaviour::CustomBehavior as Behaviour;
-use crate::libp2p::transport::transport::setup_transport;
 use crate::libp2p::behaviour::CustomBehavior;
+use crate::libp2p::transport::transport::setup_transport;
 
 use discv5::Discv5ConfigBuilder;
 use libp2p::{
-    Swarm,
     futures::StreamExt,
     identity::{Keypair, PublicKey},
-    swarm::{SwarmBuilder, SwarmEvent, NetworkBehaviour},
+    swarm::{NetworkBehaviour, SwarmBuilder, SwarmEvent},
+    Swarm,
 };
 use std::error::Error;
 use std::net::Ipv4Addr;
@@ -76,5 +77,8 @@ pub async fn setup_swarm(
 
     slog::debug!(log, "Swarm Info"; "network_info" => ?swarm.network_info());
 
+    swarm_events(&mut swarm, log.clone()).await;
+
+    // CODE DOES NOT REACH HERE, FIX THIS
     Ok(swarm)
 }
