@@ -11,12 +11,15 @@ use crate::libp2p::behaviour::CustomBehavior;
 use crate::libp2p::swarm::setup_swarm;
 use eyre::Result;
 use libp2p::core::identity::Keypair;
+use libp2p::swarm::Swarm;
 use libp2p::PeerId;
 use slog::Logger;
 use std::error::Error;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 pub struct P2PNetwork {
-    pub swarm: libp2p::swarm::Swarm<CustomBehavior>,
+    pub swarm: Arc<Mutex<Swarm<CustomBehavior>>>,
 }
 
 impl P2PNetwork {

@@ -18,16 +18,16 @@ use libp2p::{
     swarm::{NetworkBehaviour, SwarmBuilder, SwarmEvent},
     Swarm,
 };
-use std::error::Error;
 use std::net::Ipv4Addr;
 use std::time::Duration;
-use tokio::runtime::Handle;
+use std::{error::Error, sync::Arc};
+use tokio::{runtime::Handle, sync::Mutex};
 
 pub async fn setup_swarm(
     swarm_peer_id: libp2p::PeerId,
     transport_key: Keypair,
     log: slog::Logger,
-) -> Result<Swarm<CustomBehavior>, Box<dyn Error>> {
+) -> Result<Arc<Mutex<Swarm<CustomBehavior>>>, Box<dyn Error>> {
     let transport = setup_transport(transport_key.clone()).await.unwrap();
     let log_for_gossip = log.clone();
     let log_for_identity = log.clone();
@@ -54,7 +54,7 @@ pub async fn setup_swarm(
 
         let behaviour = Behaviour {
             gossipsub: CustomGossipsub::new(swarm_peer_id, transport_key, log_for_gossip),
-            discovery: CustomDiscovery::new(enr, key, discv5_config).unwrap(),
+            discovery: CustomDiscovery::new(enr, key, discv5_config).await.unwrap(),
             identify: CustomIdentity::new(identity_public_key, log_for_identity),
         };
 
@@ -77,8 +77,17 @@ pub async fn setup_swarm(
 
     slog::debug!(log, "Swarm Info"; "network_info" => ?swarm.network_info());
 
-    swarm_events(&mut swarm, log.clone()).await;
+    let swarm = Arc::new(Mutex::new(swarm));
 
-    // CODE DOES NOT REACH HERE, FIX THIS
+    let log_clone = log.clone();
+    let swarm_clone = swarm.clone();
+    tokio::spawn(async move {
+        slog::info!(log_clone, "Starting swarm events");
+        let mut locked_swarm = swarm_clone.lock().await;
+        swarm_events(&mut *locked_swarm, log_clone).await;
+    });
+
+    slog::error!(log, "test error"; "swarm" => ?swarm.lock().await.network_info());
+
     Ok(swarm)
 }
