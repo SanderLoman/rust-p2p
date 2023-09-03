@@ -9,7 +9,7 @@ use crate::libp2p::behaviour::gossip::Gossipsub as CustomGossipsub;
 use crate::libp2p::behaviour::identify::Identity as CustomIdentity;
 use crate::libp2p::behaviour::CustomBehavior as Behaviour;
 use crate::libp2p::behaviour::CustomBehavior;
-use crate::libp2p::transport::transport::setup_transport;
+use crate::libp2p::transport::setup_transport;
 
 use discv5::Discv5ConfigBuilder;
 use libp2p::{
