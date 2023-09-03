@@ -66,7 +66,7 @@ impl NetworkBehaviour for Discovery {
         local_addr: &libp2p::Multiaddr,
         remote_addr: &libp2p::Multiaddr,
     ) -> Result<libp2p::swarm::THandler<Self>, libp2p::swarm::ConnectionDenied> {
-        Ok(libp2p::swarm::dummy::ConnectionHandler)
+        Ok(ConnectionHandler)
     }
 
     fn handle_established_outbound_connection(
@@ -76,7 +76,7 @@ impl NetworkBehaviour for Discovery {
         addr: &libp2p::Multiaddr,
         role_override: libp2p::core::Endpoint,
     ) -> Result<libp2p::swarm::THandler<Self>, libp2p::swarm::ConnectionDenied> {
-        Ok(libp2p::swarm::dummy::ConnectionHandler)
+        Ok(ConnectionHandler)
     }
 
     fn handle_pending_inbound_connection(
