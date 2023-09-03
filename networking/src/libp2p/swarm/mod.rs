@@ -49,10 +49,10 @@ pub async fn setup_swarm(
         });
 
         let discv5_listen_config = if has_ipv4 {
-            slog::info!(log, "Using IPv4 for Discv5");
+            slog::info!(log, "Listening on IPv4");
             discv5::ListenConfig::from_ip(IpAddr::V4(Ipv4Addr::UNSPECIFIED), listen_port)
         } else if has_ipv6 {
-            slog::info!(log, "Using IPv6 for Discv5");
+            slog::info!(log, "Listening on IPv6");
             discv5::ListenConfig::from_ip(IpAddr::V6(Ipv6Addr::UNSPECIFIED), listen_port)
         } else {
             return Err(Box::new(std::io::Error::new(
