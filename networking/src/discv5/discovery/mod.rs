@@ -26,7 +26,7 @@ use void::Void;
 pub struct Discovery {
     cached_enrs: LruCache<PeerId, Enr>,
     discv5: Discv5,
-    event_stream: ,
+    // event_stream: tokio::sync::mpsc::Receiver<Discv5Event>,
 }
 
 impl Discovery {
@@ -37,12 +37,12 @@ impl Discovery {
     ) -> Result<Self, Box<dyn Error>> {
         let discv5 = Discv5::new(enr, enr_key, config)?;
         let cached_enrs = LruCache::new(NonZeroUsize::new(1000).unwrap());
-        let event_stream = discv5.event_stream().await.unwrap();
+        // let event_stream: tokio::sync::mpsc::Receiver<Discv5Event> = discv5.event_stream().await.unwrap();
 
         Ok(Discovery {
             cached_enrs,
             discv5,
-            event_stream
+            // event_stream
         })
     }
 }

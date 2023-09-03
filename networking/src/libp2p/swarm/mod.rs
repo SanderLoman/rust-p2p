@@ -12,13 +12,14 @@ use crate::libp2p::behaviour::CustomBehavior;
 use crate::libp2p::transport::setup_transport;
 
 use discv5::Discv5ConfigBuilder;
+use get_if_addrs::get_if_addrs;
 use libp2p::{
     futures::StreamExt,
     identity::{Keypair, PublicKey},
     swarm::{NetworkBehaviour, SwarmBuilder, SwarmEvent},
     Swarm,
 };
-use std::net::Ipv4Addr;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::time::Duration;
 use std::{error::Error, sync::Arc};
 use tokio::{runtime::Handle, sync::Mutex};
@@ -37,8 +38,28 @@ pub async fn setup_swarm(
 
         let listen_port = enr.udp4().unwrap();
 
-        let discv5_listen_config =
-            discv5::ListenConfig::from_ip(Ipv4Addr::UNSPECIFIED.into(), listen_port);
+        let has_ipv4 = get_if_addrs()?.iter().any(|iface| match iface.addr.ip() {
+            IpAddr::V4(_) => true,
+            IpAddr::V6(_) => false,
+        });
+
+        let has_ipv6 = get_if_addrs()?.iter().any(|iface| match iface.addr.ip() {
+            IpAddr::V4(_) => false,
+            IpAddr::V6(_) => true,
+        });
+
+        let discv5_listen_config = if has_ipv4 {
+            slog::info!(log, "Using IPv4 for Discv5");
+            discv5::ListenConfig::from_ip(IpAddr::V4(Ipv4Addr::UNSPECIFIED), listen_port)
+        } else if has_ipv6 {
+            slog::info!(log, "Using IPv6 for Discv5");
+            discv5::ListenConfig::from_ip(IpAddr::V6(Ipv6Addr::UNSPECIFIED), listen_port)
+        } else {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "No valid IP addresses found",
+            )));
+        };
 
         let discv5_config = Discv5ConfigBuilder::new(discv5_listen_config)
             .ban_duration(Some(Duration::from_secs(60)))
@@ -86,8 +107,6 @@ pub async fn setup_swarm(
         let mut locked_swarm = swarm_clone.lock().await;
         swarm_events(&mut *locked_swarm, log_clone).await;
     });
-
-    slog::error!(log, "test error"; "swarm" => ?swarm.lock().await.network_info());
 
     Ok(swarm)
 }
