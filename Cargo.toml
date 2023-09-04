@@ -2,6 +2,7 @@
 members = [
     "mev",
     "networking",
+    "db"
 ]
 
 [package]
