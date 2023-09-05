@@ -8,7 +8,7 @@
 /// This file will be used in the main.rs file (the main entry point for the entire application), where other components come together aswell.
 // use crate::discv5::discovery::start_discv5;
 use crate::libp2p::behaviour::CustomBehavior;
-use crate::libp2p::swarm::setup_swarm;
+use crate::libp2p::swarm::CustomSwarm;
 use eyre::Result;
 use libp2p::core::identity::Keypair;
 use libp2p::swarm::Swarm;
@@ -29,9 +29,7 @@ impl P2PNetwork {
         let local_transport_key: Keypair = Keypair::generate_secp256k1();
         let local_swarm_peer_id: PeerId = PeerId::from(local_transport_key.public());
 
-        let swarm = setup_swarm(local_swarm_peer_id, local_transport_key, log)
-            .await
-            .unwrap();
+        let swarm = CustomSwarm::new(local_swarm_peer_id, local_transport_key, log2);
 
         Ok(P2PNetwork { swarm })
     }
