@@ -23,13 +23,13 @@ pub struct P2PNetwork {
 }
 
 impl P2PNetwork {
-    pub fn new(log: Logger) -> Result<Self> {
+    pub async fn new(log: Logger) -> Result<Self> {
         let log_for_swarm_events = log.clone();
         let log2 = log.clone();
         let local_transport_key: Keypair = Keypair::generate_secp256k1();
         let local_swarm_peer_id: PeerId = PeerId::from(local_transport_key.public());
 
-        let swarm = CustomSwarm::new(local_swarm_peer_id, local_transport_key, log2);
+        let swarm = CustomSwarm::new(local_swarm_peer_id, local_transport_key, log2).await.unwrap();
 
         Ok(P2PNetwork { swarm })
     }

@@ -113,7 +113,6 @@ use tokio::{runtime::Handle, sync::Mutex};
 
 pub struct CustomSwarm {
     swarm: Arc<Mutex<Swarm<CustomBehavior>>>,
-    log: slog::Logger,
 }
 
 impl CustomSwarm {
@@ -121,7 +120,7 @@ impl CustomSwarm {
         swarm_peer_id: libp2p::PeerId,
         transport_key: Keypair,
         log: slog::Logger,
-    ) -> Result<Self, Box<dyn Error>> {
+    ) -> Result<Arc<Mutex<Swarm<CustomBehavior>>>, Box<dyn Error>> {
         let transport = setup_transport(transport_key.clone()).await.unwrap();
         let log_for_gossip = log.clone();
         let log_for_identity = log.clone();
@@ -199,7 +198,7 @@ impl CustomSwarm {
             swarm_events(&mut *locked_swarm, log_clone).await;
         });
 
-        Ok(Self { swarm, log })
+        Ok(swarm)
     }
 
     // You can add other methods to interact with the swarm here

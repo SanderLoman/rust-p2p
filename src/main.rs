@@ -14,7 +14,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
 
     // networking::p2p::start_p2p_networking(log).await?;
-    P2PNetwork::new(log);
+    P2PNetwork::new(log).await?;
 
     // let geth_rpc_endpoint: &str = "/home/sander/.ethereum/goerli/geth.ipc";
 
