@@ -45,10 +45,10 @@ pub async fn start_p2p_networking(log: slog::Logger) -> Result<(), Box<dyn Error
     let local_transport_key: Keypair = Keypair::generate_secp256k1();
     let local_swarm_peer_id: PeerId = PeerId::from(local_transport_key.public());
 
-    let swarm = setup_swarm(local_swarm_peer_id, local_transport_key, log);
+    // let swarm = setup_swarm(local_swarm_peer_id, local_transport_key, log);
     // let discv5 = start_discv5();
 
-    tokio::try_join!(swarm)?;
+    // tokio::try_join!(swarm)?;
 
     Ok(())
 }
