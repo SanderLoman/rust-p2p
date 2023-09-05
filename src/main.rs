@@ -6,13 +6,15 @@ use std::error::Error;
 use slog::Logger;
 
 use networking::create_logger;
+use networking::p2p::P2PNetwork;
 
 #[tokio::main()]
 async fn main() -> Result<(), Box<dyn Error>> {
     let log: Logger = create_logger();
     dotenv().ok();
 
-    networking::p2p::start_p2p_networking(log).await?;
+    // networking::p2p::start_p2p_networking(log).await?;
+    P2PNetwork::new(log);
 
     // let geth_rpc_endpoint: &str = "/home/sander/.ethereum/goerli/geth.ipc";
 

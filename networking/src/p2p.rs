@@ -23,7 +23,7 @@ pub struct P2PNetwork {
 }
 
 impl P2PNetwork {
-    pub async fn new(log: Logger) -> Result<Self> {
+    pub fn new(log: Logger) -> Result<Self> {
         let log_for_swarm_events = log.clone();
         let log2 = log.clone();
         let local_transport_key: Keypair = Keypair::generate_secp256k1();
