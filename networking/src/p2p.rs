@@ -8,6 +8,7 @@
 /// This file will be used in the main.rs file (the main entry point for the entire application), where other components come together aswell.
 // use crate::discv5::discovery::start_discv5;
 use crate::libp2p::behaviour::CustomBehavior;
+use crate::libp2p::swarm::events::swarm_events;
 use crate::libp2p::swarm::swarm_setup;
 use eyre::Result;
 use libp2p::core::identity::Keypair;
@@ -33,7 +34,12 @@ impl P2PNetwork {
             .await
             .unwrap();
 
-        Ok(P2PNetwork { swarm })
+        let swarm_clone = swarm.clone();
+
+        let mut locked_swarm = swarm.lock().await;
+        swarm_events(&mut *locked_swarm, log_for_swarm_events).await;
+
+        Ok(P2PNetwork { swarm: swarm_clone })
     }
 
     pub async fn start() -> Result<()> {

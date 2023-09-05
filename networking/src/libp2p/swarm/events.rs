@@ -6,6 +6,7 @@ use libp2p::{swarm::SwarmEvent, Swarm};
 use slog::Logger;
 
 pub async fn swarm_events(swarm: &mut Swarm<CustomBehavior>, log: Logger) {
+    slog::info!(log, "Starting swarm events");
     loop {
         match swarm.select_next_some().await {
             SwarmEvent::Behaviour(event) => {

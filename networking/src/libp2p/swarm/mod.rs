@@ -100,11 +100,11 @@ pub async fn swarm_setup(
 
     let log_clone = log.clone();
     let swarm_clone = swarm.clone();
-    tokio::spawn(async move {
-        slog::info!(log_clone, "Starting swarm events");
-        let mut locked_swarm = swarm_clone.lock().await;
-        swarm_events(&mut *locked_swarm, log_clone).await;
-    });
+    // tokio::spawn(async move {
+    //     slog::info!(log_clone, "Starting swarm events");
+    //     let mut locked_swarm = swarm_clone.lock().await;
+    //     swarm_events(&mut *locked_swarm, log_clone).await;
+    // });
 
     Ok(swarm)
 }
