@@ -35,9 +35,12 @@ impl Discovery {
         enr_key: CombinedKey,
         config: Discv5Config,
     ) -> Result<Self, Box<dyn Error>> {
-        let discv5 = Discv5::new(enr, enr_key, config)?;
+        let mut discv5 = Discv5::new(enr, enr_key, config)?;
         let cached_enrs = LruCache::new(NonZeroUsize::new(1000).unwrap());
         // let event_stream: tokio::sync::mpsc::Receiver<Discv5Event> = discv5.event_stream().await.unwrap();
+
+        // !!! uncomment this line to start discv5 on port 7777 !!!
+        // discv5.start().await.unwrap();
 
         Ok(Discovery {
             cached_enrs,
