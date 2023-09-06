@@ -45,9 +45,16 @@ impl P2PNetwork {
     }
 
     pub async fn start(&mut self) -> Result<(), Box<dyn Error>> {
-        let log = self.log.clone(); // Assuming log is part of your struct
+        let log = self.log.clone();
+        let log_for_discv5_events = log.clone();
         let swarm_clone = self.swarm.clone();
-        let discv5_clone = self.discv5.start();
+
+        // Clone the Arc from the Discovery instance
+        let discv5_clone = Arc::clone(&self.discv5.discv5);
+
+        // Start the discv5 instance and handle any errors
+        self.discv5.discv5.lock().await.start().await.unwrap();
+        slog::info!(self.log, "Discv5 started");
 
         // Spawn tasks for swarm and discv5 events
         let swarm_task = task::spawn(async move {
@@ -56,7 +63,8 @@ impl P2PNetwork {
         });
 
         let discv5_task = task::spawn(async move {
-            discv5_events(&mut discv5_clone, log.clone()).await;
+            let mut locked_discv5 = discv5_clone.lock().await;
+            discv5_events(&mut *locked_discv5, log_for_discv5_events.clone()).await;
         });
 
         // Wait for both tasks to complete
