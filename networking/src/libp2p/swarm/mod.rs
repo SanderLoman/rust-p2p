@@ -19,6 +19,7 @@ use libp2p::{
     swarm::{NetworkBehaviour, SwarmBuilder, SwarmEvent},
     Swarm,
 };
+use slog::Logger;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::time::Duration;
 use std::{error::Error, sync::Arc};
@@ -27,11 +28,12 @@ use tokio::{runtime::Handle, sync::Mutex};
 pub async fn swarm_setup(
     swarm_peer_id: libp2p::PeerId,
     transport_key: Keypair,
-    log: slog::Logger,
+    log: Logger,
 ) -> Result<Arc<Mutex<Swarm<CustomBehavior>>>, Box<dyn Error>> {
     let transport = setup_transport(transport_key.clone()).await.unwrap();
     let log_for_gossip = log.clone();
     let log_for_identity = log.clone();
+    let log_for_discv5 = log.clone();
 
     let mut swarm = {
         let (lh_enr, enr, key) = generate_enr().await?;
@@ -61,21 +63,23 @@ pub async fn swarm_setup(
             )));
         };
 
-        let discv5_config = Discv5ConfigBuilder::new(discv5_listen_config)
-            .ban_duration(Some(Duration::from_secs(60)))
-            .query_timeout(Duration::from_secs(10))
-            .request_retries(1)
-            .request_timeout(Duration::from_secs(1))
-            .query_parallelism(3)
-            .query_peer_timeout(Duration::from_secs(3))
-            .ping_interval(Duration::from_secs(300))
-            .build();
+        // let discv5_config = Discv5ConfigBuilder::new(discv5_listen_config)
+        //     .ban_duration(Some(Duration::from_secs(60)))
+        //     .query_timeout(Duration::from_secs(10))
+        //     .request_retries(1)
+        //     .request_timeout(Duration::from_secs(1))
+        //     .query_parallelism(3)
+        //     .query_peer_timeout(Duration::from_secs(3))
+        //     .ping_interval(Duration::from_secs(300))
+        //     .build();
 
         let identity_public_key = PublicKey::from(transport_key.public());
 
         let behaviour = Behaviour {
             gossipsub: CustomGossipsub::new(swarm_peer_id, transport_key, log_for_gossip),
-            discovery: CustomDiscovery::new(enr, key, discv5_config).await.unwrap(),
+            discovery: CustomDiscovery::new()
+                .await
+                .unwrap(),
             identify: CustomIdentity::new(identity_public_key, log_for_identity),
         };
 
@@ -98,8 +102,8 @@ pub async fn swarm_setup(
 
     let swarm = Arc::new(Mutex::new(swarm));
 
-    let log_clone = log.clone();
-    let swarm_clone = swarm.clone();
+    // let log_clone = log.clone();
+    // let swarm_clone = swarm.clone();
     // tokio::spawn(async move {
     //     slog::info!(log_clone, "Starting swarm events");
     //     let mut locked_swarm = swarm_clone.lock().await;

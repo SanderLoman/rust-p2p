@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+use crate::discv5::discovery::events::discv5_events;
+use crate::discv5::discovery::Discovery as CustomDiscovery;
 /// This file is the main entry point for the p2p networking module.
 /// It is responsible for setting up the libp2p swarm and the discv5 discovery protocol.
 /// It also sets up the gossipsub protocol and the eth2 rpc protocol.
@@ -18,9 +20,12 @@ use slog::Logger;
 use std::error::Error;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use tokio::task;
 
 pub struct P2PNetwork {
     pub swarm: Arc<Mutex<Swarm<CustomBehavior>>>,
+    pub discv5: CustomDiscovery,
+    log: Logger,
 }
 
 impl P2PNetwork {
@@ -34,20 +39,34 @@ impl P2PNetwork {
             .await
             .unwrap();
 
-        let swarm_clone = swarm.clone();
+        let discv5 = CustomDiscovery::new().await.unwrap();
 
-        let mut locked_swarm = swarm.lock().await;
-        swarm_events(&mut *locked_swarm, log_for_swarm_events).await;
-
-        Ok(P2PNetwork { swarm: swarm_clone })
+        Ok(P2PNetwork { swarm, discv5, log })
     }
 
-    pub async fn start() -> Result<()> {
+    pub async fn start(&mut self) -> Result<(), Box<dyn Error>> {
+        let log = self.log.clone(); // Assuming log is part of your struct
+        let swarm_clone = self.swarm.clone();
+        let discv5_clone = self.discv5.start();
+
+        // Spawn tasks for swarm and discv5 events
+        let swarm_task = task::spawn(async move {
+            let mut locked_swarm = swarm_clone.lock().await;
+            swarm_events(&mut *locked_swarm, log.clone()).await;
+        });
+
+        let discv5_task = task::spawn(async move {
+            discv5_events(&mut discv5_clone, log.clone()).await;
+        });
+
+        // Wait for both tasks to complete
+        tokio::try_join!(swarm_task, discv5_task)?;
+
         Ok(())
     }
 }
 
-pub async fn start_p2p_networking(log: slog::Logger) -> Result<(), Box<dyn Error>> {
+pub async fn start_p2p_networking(log: Logger) -> Result<(), Box<dyn Error>> {
     slog::info!(log, "Starting p2p networking");
 
     let local_transport_key: Keypair = Keypair::generate_secp256k1();
