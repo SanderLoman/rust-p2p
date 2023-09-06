@@ -21,16 +21,12 @@ use std::error::Error;
 use std::net::Ipv4Addr;
 use std::num::NonZeroUsize;
 use std::pin::Pin;
-use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::Mutex;
 use void::Void;
 
-// https://github.com/sigp/lighthouse/blob/stable/beacon_node/lighthouse_network/src/discovery/mod.rs#L191C27-L191C27
-
 pub struct Discovery {
-    pub discv5: Arc<Mutex<Discv5>>,
     cached_enrs: LruCache<PeerId, Enr>,
+    discv5: Discv5,
     log: Logger,
 }
 
@@ -58,20 +54,17 @@ impl Discovery {
         slog::debug!(log, "discv5_config"; "config" => ?discv5_config);
 
         let discv5: Discv5 = Discv5::new(enr, enr_key, discv5_config)?;
-        let discv5 = Arc::new(Mutex::new(discv5));
-
         let cached_enrs = LruCache::new(NonZeroUsize::new(1000).unwrap());
 
         Ok(Discovery {
-            discv5,
             cached_enrs,
+            discv5,
             log,
         })
     }
 
     pub async fn start(&mut self) -> Result<(), Box<dyn Error>> {
-        // Lock the Mutex and then call start on the Discv5 instance
-        self.discv5.lock().await.start().await.unwrap();
+        self.discv5.start().await.unwrap();
         slog::info!(self.log, "Discv5 started");
         Ok(())
     }
