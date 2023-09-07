@@ -1,17 +1,39 @@
 #![deny(unsafe_code)]
 
+use clap::{App, Arg};
 use dotenv::dotenv;
 use eyre::Result;
-use std::error::Error;
 use slog::Logger;
+use std::error::Error;
 
-use networking::create_logger;
+use wagmi::create_logger;
 use networking::p2p::P2PNetwork;
 
 #[tokio::main()]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let log: Logger = create_logger();
     dotenv().ok();
+
+    // Use clap for command-line argument parsing
+    let matches = App::new("MyApp")
+        .version("1.0")
+        .arg(
+            Arg::with_name("v")
+                .short("v")
+                .multiple(true)
+                .help("Sets the level of verbosity"),
+        )
+        .get_matches();
+
+    // Get verbosity level
+    let verbosity = matches.occurrences_of("v");
+
+    // Initialize the logger
+    let log = create_logger(verbosity);
+
+    slog::info!(log, "This is an info log");
+    slog::debug!(log, "This is a debug log");
+    slog::warn!(log, "This is a warning log");
+    slog::error!(log, "This is an error log");
 
     // networking::p2p::start_p2p_networking(log).await?;
     P2PNetwork::new(log).await?;

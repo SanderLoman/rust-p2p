@@ -4,6 +4,7 @@ pub mod enr;
 pub mod events;
 
 use super::discovery::enr::*;
+use super::discovery::events::discv5_events;
 use crate::create_logger;
 
 use discv5::*;
@@ -65,6 +66,9 @@ impl Discovery {
 
     pub async fn start(&mut self) -> Result<(), Box<dyn Error>> {
         self.discv5.start().await.unwrap();
+
+        discv5_events(&mut self.discv5, self.log.clone()).await;
+
         slog::info!(self.log, "Discv5 started");
         Ok(())
     }

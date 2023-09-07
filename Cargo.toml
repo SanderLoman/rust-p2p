@@ -13,12 +13,14 @@ edition = "2021"
 [dependencies]
 mev = { path = "mev" }
 networking = { path = "networking" }
+db = { path = "db" }
 tokio = { version = "1.29.1", features = ["full"] }
 slog = "2.7.0"
 slog-term = "2.9.0"
 slog-async = "2.7.0"
 dotenv = "0.15.0"
 eyre = "0.6.5"
+clap = "2.33.3"
 # tokio-uds = "0.2.7"
 # ethers = { version = "2.0.2", features = ["ws"] }
 # ethers-flashbots = "0.13.0"

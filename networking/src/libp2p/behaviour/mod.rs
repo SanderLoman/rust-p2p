@@ -10,8 +10,6 @@ use void::Void;
 
 // use crate::discv5::discovery::Discovery;
 
-use crate::create_logger;
-
 use crate::discv5::discovery::Discovery as CustomDiscovery;
 use crate::libp2p::behaviour::gossip::Gossipsub as CustomGossipsub;
 use crate::libp2p::behaviour::identify::Identity as CustomIdentity;

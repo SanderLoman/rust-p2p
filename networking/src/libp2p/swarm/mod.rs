@@ -112,5 +112,3 @@ pub async fn swarm_setup(
 
     Ok(swarm)
 }
-
-// You can add other methods to interact with the swarm here
