@@ -50,7 +50,7 @@ impl Discovery {
         let verbosity = matches.occurrences_of("v");
         
         let log = create_logger(verbosity);
-        
+
         let (local_enr, enr, enr_key) = generate_enr().await?;
 
         let listen_port = enr.udp4().unwrap();
@@ -58,6 +58,9 @@ impl Discovery {
         let discv5_listen_config =
             discv5::ListenConfig::from_ip(Ipv4Addr::UNSPECIFIED.into(), listen_port);
         slog::debug!(log, "discv5_listen_config"; "config" => ?discv5_listen_config);
+        slog::error!(log, "discv5_listen_config"; "config" => ?discv5_listen_config);
+        slog::warn!(log, "discv5_listen_config"; "config" => ?discv5_listen_config);
+        slog::info!(log, "discv5_listen_config"; "config" => ?discv5_listen_config);
 
         let discv5_config = Discv5ConfigBuilder::new(discv5_listen_config)
             .ban_duration(Some(Duration::from_secs(60)))

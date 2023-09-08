@@ -3,7 +3,6 @@
 use clap::{App, Arg};
 use dotenv::dotenv;
 use eyre::Result;
-use slog::Logger;
 use std::error::Error;
 
 use networking::p2p::P2PNetwork;
