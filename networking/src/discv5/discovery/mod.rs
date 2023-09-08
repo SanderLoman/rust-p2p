@@ -5,8 +5,10 @@ pub mod events;
 
 use super::discovery::enr::*;
 use super::discovery::events::discv5_events;
+
 use crate::create_logger;
 
+use clap::{App, Arg};
 use discv5::*;
 use discv5::{
     enr as discv5_enr, enr::CombinedKey, handler, kbucket, metrics, packet, permit_ban, rpc,
@@ -33,7 +35,22 @@ pub struct Discovery {
 
 impl Discovery {
     pub async fn new() -> Result<Self, Box<dyn Error>> {
-        let log = create_logger();
+        // Use clap for command-line argument parsing
+        let matches = App::new("MyApp")
+            .version("1.0")
+            .arg(
+                Arg::with_name("v")
+                    .short("v")
+                    .multiple(true)
+                    .help("Sets the level of verbosity"),
+            )
+            .get_matches();
+
+        // Get verbosity level
+        let verbosity = matches.occurrences_of("v");
+        
+        let log = create_logger(verbosity);
+        
         let (local_enr, enr, enr_key) = generate_enr().await?;
 
         let listen_port = enr.udp4().unwrap();

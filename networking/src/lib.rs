@@ -2,15 +2,25 @@ pub mod discv5;
 pub mod libp2p;
 pub mod p2p;
 
-use slog::{o, Drain, Logger};
+use slog::Drain;
+use slog::{o, Level, LevelFilter, Logger};
 use slog_async::Async;
-use slog_term::CompactFormat;
-use slog_term::TermDecorator;
+use slog_term::{FullFormat, PlainSyncDecorator};
 
-pub fn create_logger() -> Logger {
-    let decorator = TermDecorator::new().build();
-    let drain = CompactFormat::new(decorator).build().fuse();
+pub fn create_logger(verbosity: u64) -> Logger {
+    let decorator = PlainSyncDecorator::new(std::io::stdout());
+    let drain = FullFormat::new(decorator).build().fuse();
     let drain = Async::new(drain).build().fuse();
 
-    Logger::root(drain, o!())
+    let level = match verbosity {
+        0 => Level::Info,
+        1 => Level::Warning,
+        2 => Level::Error,
+        3 => Level::Debug,
+        _ => Level::Trace,
+    };
+
+    let drain = LevelFilter::new(drain, level);
+
+    Logger::root(drain.fuse(), o!())
 }

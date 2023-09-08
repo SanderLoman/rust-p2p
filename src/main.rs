@@ -6,15 +6,15 @@ use eyre::Result;
 use slog::Logger;
 use std::error::Error;
 
-use wagmi::create_logger;
 use networking::p2p::P2PNetwork;
+use wagmi::create_logger;
 
 #[tokio::main()]
 async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
 
     // Use clap for command-line argument parsing
-    let matches = App::new("MyApp")
+    let matches = App::new("wagmi")
         .version("1.0")
         .arg(
             Arg::with_name("v")
@@ -29,11 +29,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // Initialize the logger
     let log = create_logger(verbosity);
-
-    slog::info!(log, "This is an info log");
-    slog::debug!(log, "This is a debug log");
-    slog::warn!(log, "This is a warning log");
-    slog::error!(log, "This is an error log");
 
     // networking::p2p::start_p2p_networking(log).await?;
     P2PNetwork::new(log).await?;
