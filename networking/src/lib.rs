@@ -6,9 +6,10 @@ use slog::Drain;
 use slog::{o, Level, LevelFilter, Logger};
 use slog_async::Async;
 use slog_term::{FullFormat, PlainSyncDecorator};
+use slog_term::TermDecorator;
 
 pub fn create_logger(verbosity: u64) -> Logger {
-    let decorator = PlainSyncDecorator::new(std::io::stdout());
+    let decorator = TermDecorator::new().build();
     let drain = FullFormat::new(decorator).build().fuse();
     let drain = Async::new(drain).build().fuse();
 
