@@ -1,7 +1,5 @@
 #![deny(unsafe_code)]
 
-use crate::create_logger;
-use clap::{App, Arg};
 use discv5::enr::{CombinedKey, Enr, EnrBuilder};
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
@@ -12,21 +10,6 @@ use std::str::FromStr;
 
 pub async fn generate_enr(
 ) -> Result<(Enr<CombinedKey>, Enr<CombinedKey>, CombinedKey), Box<dyn Error>> {
-    let matches = App::new("MyApp")
-        .version("1.0")
-        .arg(
-            Arg::with_name("v")
-                .short("v")
-                .multiple(true)
-                .help("Sets the level of verbosity"),
-        )
-        .get_matches();
-
-    // Get verbosity level
-    let verbosity = matches.occurrences_of("v");
-
-    let log = create_logger(verbosity);
-
     let enr_combined_key: CombinedKey = CombinedKey::generate_secp256k1();
     let (local_enr, attnets, eth2, syncnets, ip4) = get_local_enr().await?;
 
@@ -50,21 +33,6 @@ pub async fn generate_enr(
 }
 
 async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>> {
-    let matches = App::new("MyApp")
-        .version("1.0")
-        .arg(
-            Arg::with_name("v")
-                .short("v")
-                .multiple(true)
-                .help("Sets the level of verbosity"),
-        )
-        .get_matches();
-
-    // Get verbosity level
-    let verbosity = matches.occurrences_of("v");
-
-    let log = create_logger(verbosity);
-
     let client = Client::new();
 
     let mut headers = HeaderMap::new();

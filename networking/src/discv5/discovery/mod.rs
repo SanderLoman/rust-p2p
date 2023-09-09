@@ -6,8 +6,6 @@ pub mod events;
 use super::discovery::enr::*;
 use super::discovery::events::discv5_events;
 
-use crate::create_logger;
-
 use clap::{App, Arg};
 use discv5::*;
 use discv5::{
@@ -30,30 +28,10 @@ use void::Void;
 pub struct Discovery {
     cached_enrs: LruCache<PeerId, Enr>,
     discv5: Discv5,
-    log: Logger,
 }
 
 impl Discovery {
     pub async fn new() -> Result<Self, Box<dyn Error>> {
-        // Use clap for command-line argument parsing
-        let matches = App::new("Wagmi")
-            .version("1.0")
-            .author("Sander Loman, sanderfeitsma13@gmail.com")
-            .setting(clap::AppSettings::ColoredHelp)
-            .about("Wagmi, u know it")
-            .arg(
-                Arg::with_name("v")
-                    .short("v")
-                    .multiple(true)
-                    .help("Sets the level of verbosity"),
-            )
-            .get_matches();
-
-        // Get verbosity level
-        let verbosity = matches.occurrences_of("v");
-        
-        let log = create_logger(verbosity);
-
         let (local_enr, enr, enr_key) = generate_enr().await?;
 
         let listen_port = enr.udp4().unwrap();
@@ -77,14 +55,11 @@ impl Discovery {
         Ok(Discovery {
             cached_enrs,
             discv5,
-            log,
         })
     }
 
     pub async fn start(&mut self) -> Result<(), Box<dyn Error>> {
         self.discv5.start().await.unwrap();
-
-        discv5_events(&mut self.discv5, self.log.clone()).await;
 
         Ok(())
     }

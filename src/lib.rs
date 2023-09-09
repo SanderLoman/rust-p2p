@@ -1,15 +1,12 @@
 #![deny(unsafe_code)]
 
-use slog::Drain;
-use slog::{o, Level, LevelFilter, Logger};
-use slog_async::Async;
-use slog_term::FullFormat;
-use slog_term::TermDecorator;
+use clap::{App, Arg};
+use slog::{o, Drain, Level, LevelFilter, Logger};
 
 pub fn create_logger(verbosity: u64) -> Logger {
-    let decorator = TermDecorator::new().build();
-    let drain = FullFormat::new(decorator).build().fuse();
-    let drain = Async::new(drain).build().fuse();
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
 
     let level = match verbosity {
         0 => Level::Info,
@@ -20,7 +17,22 @@ pub fn create_logger(verbosity: u64) -> Logger {
         _ => Level::Trace,
     };
 
-    let drain = LevelFilter::new(drain, level);
+    let drain = LevelFilter::new(drain, level).fuse();
+    Logger::root(drain, o!())
+}
 
-    Logger::root(drain.fuse(), o!())
+pub fn parse_verbosity() -> u64 {
+    let matches = App::new("wagmi")
+        .version("1.0")
+        .author("Sander Feitsma")
+        .about("Wagmi, brah")
+        .arg(
+            Arg::with_name("verbosity")
+                .short("v")
+                .multiple(true)
+                .help("Sets the level of verbosity"),
+        )
+        .get_matches();
+
+    matches.occurrences_of("verbosity")
 }
