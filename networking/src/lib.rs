@@ -5,7 +5,7 @@ pub mod p2p;
 use slog::Drain;
 use slog::{o, Level, LevelFilter, Logger};
 use slog_async::Async;
-use slog_term::{FullFormat, PlainSyncDecorator};
+use slog_term::FullFormat;
 use slog_term::TermDecorator;
 
 pub fn create_logger(verbosity: u64) -> Logger {

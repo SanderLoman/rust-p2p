@@ -3,7 +3,7 @@
 use slog::Drain;
 use slog::{o, Level, LevelFilter, Logger};
 use slog_async::Async;
-use slog_term::{FullFormat, PlainSyncDecorator};
+use slog_term::FullFormat;
 use slog_term::TermDecorator;
 
 pub fn create_logger(verbosity: u64) -> Logger {
@@ -15,7 +15,8 @@ pub fn create_logger(verbosity: u64) -> Logger {
         0 => Level::Info,
         1 => Level::Warning,
         2 => Level::Error,
-        3 => Level::Debug,
+        3 => Level::Critical,
+        4 => Level::Debug,
         _ => Level::Trace,
     };
 

@@ -36,8 +36,11 @@ pub struct Discovery {
 impl Discovery {
     pub async fn new() -> Result<Self, Box<dyn Error>> {
         // Use clap for command-line argument parsing
-        let matches = App::new("MyApp")
+        let matches = App::new("Wagmi")
             .version("1.0")
+            .author("Sander Loman, sanderfeitsma13@gmail.com")
+            .setting(clap::AppSettings::ColoredHelp)
+            .about("Wagmi, u know it")
             .arg(
                 Arg::with_name("v")
                     .short("v")
@@ -57,10 +60,6 @@ impl Discovery {
 
         let discv5_listen_config =
             discv5::ListenConfig::from_ip(Ipv4Addr::UNSPECIFIED.into(), listen_port);
-        slog::debug!(log, "discv5_listen_config"; "config" => ?discv5_listen_config);
-        slog::error!(log, "discv5_listen_config"; "config" => ?discv5_listen_config);
-        slog::warn!(log, "discv5_listen_config"; "config" => ?discv5_listen_config);
-        slog::info!(log, "discv5_listen_config"; "config" => ?discv5_listen_config);
 
         let discv5_config = Discv5ConfigBuilder::new(discv5_listen_config)
             .ban_duration(Some(Duration::from_secs(60)))
@@ -71,8 +70,6 @@ impl Discovery {
             .query_peer_timeout(Duration::from_secs(3))
             .ping_interval(Duration::from_secs(300))
             .build();
-
-        slog::debug!(log, "discv5_config"; "config" => ?discv5_config);
 
         let discv5: Discv5 = Discv5::new(enr, enr_key, discv5_config)?;
         let cached_enrs = LruCache::new(NonZeroUsize::new(1000).unwrap());
@@ -89,7 +86,6 @@ impl Discovery {
 
         discv5_events(&mut self.discv5, self.log.clone()).await;
 
-        slog::info!(self.log, "Discv5 started");
         Ok(())
     }
 }

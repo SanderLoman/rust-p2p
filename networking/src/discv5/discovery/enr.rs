@@ -44,9 +44,6 @@ pub async fn generate_enr(
     // Decode the ENR
     let decoded_generated_enr: Enr<CombinedKey> = Enr::from_str(&enr.to_base64()).unwrap();
 
-    slog::info!(log, "Generated ENR"; "enr" => %enr);
-    slog::debug!(log, "Decoded Generated ENR"; "decoded_generated_enr" => ?decoded_generated_enr);
-
     let local_enr = Enr::from_str(&local_enr)?;
 
     Ok((local_enr, enr, enr_combined_key))
@@ -93,9 +90,6 @@ async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr)
     let ip4 = decoded_enr
         .ip4()
         .unwrap_or_else(|| Ipv4Addr::new(83, 128, 37, 242));
-
-    slog::info!(log, "Local ENR"; "enr" => %enr);
-    slog::debug!(log, "Local Decoded ENR"; "decoded_enr" => ?decoded_enr);
 
     Ok((enr, attnets.to_vec(), eth2.to_vec(), syncnets.to_vec(), ip4))
 }
