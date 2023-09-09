@@ -1,4 +1,3 @@
-// Deny the use of unsafe code in this module
 #![deny(unsafe_code)]
 
 use clap::{App, Arg};
@@ -31,7 +30,7 @@ where
 
 // Parse the verbosity level from command line arguments and return a vector of allowed log levels.
 pub fn parse_verbosity() -> Vec<Level> {
-    let matches = App::new("wagmi")
+    let matches = App::new("Wagmi")
         .version("1.0")
         .author("Sander Feitsma")
         .about("Wagmi, brah")
@@ -72,6 +71,7 @@ pub fn parse_verbosity() -> Vec<Level> {
 
 // Create and return a Logger configured with the given log levels.
 pub fn create_logger(levels: Vec<Level>) -> Logger {
+    // Create a Drain for stdout
     let decorator = slog_term::TermDecorator::new().build();
     let drain = slog_term::FullFormat::new(decorator).build().fuse();
     let drain = slog_async::Async::new(drain).build().fuse();
