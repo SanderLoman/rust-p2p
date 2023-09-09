@@ -26,7 +26,7 @@ pub async fn generate_enr(
 
     // Decode the ENR
     let decoded_generated_enr: Enr<CombinedKey> = Enr::from_str(&enr.to_base64()).unwrap();
-
+    
     let local_enr = Enr::from_str(&local_enr)?;
 
     Ok((local_enr, enr, enr_combined_key))
