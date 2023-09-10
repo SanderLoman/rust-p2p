@@ -4,7 +4,7 @@ use crate::discv5::discovery::events::discv5_events;
 use crate::discv5::discovery::Discovery as CustomDiscovery;
 use crate::libp2p::behaviour::CustomBehavior;
 use crate::libp2p::swarm::events::swarm_events;
-use crate::libp2p::swarm::swarm_setup;
+use crate::libp2p::swarm::CustomSwarm;
 use eyre::Result;
 use libp2p::core::identity::Keypair;
 use libp2p::swarm::Swarm;
@@ -26,11 +26,9 @@ impl P2PNetwork {
         let local_transport_key: Keypair = Keypair::generate_secp256k1();
         let local_swarm_peer_id: PeerId = PeerId::from(local_transport_key.public());
 
-        let swarm = swarm_setup(local_swarm_peer_id, local_transport_key, log.clone())
-            .await
-            .unwrap();
+        let swarm = CustomSwarm::new(local_swarm_peer_id, local_transport_key, log.clone()).await.unwrap();
 
-        let discv5 = CustomDiscovery::new().await.unwrap();
+        let discv5 = CustomDiscovery::new(log.clone()).await.unwrap();
 
         slog::info!(log, "Starting discv5 events INFO");
         slog::warn!(log, "Starting discv5 events WARN");
@@ -48,18 +46,4 @@ impl P2PNetwork {
 
         Ok(())
     }
-}
-
-pub async fn start_p2p_networking(log: Logger) -> Result<(), Box<dyn Error>> {
-    slog::info!(log, "Starting p2p networking");
-
-    let local_transport_key: Keypair = Keypair::generate_secp256k1();
-    let local_swarm_peer_id: PeerId = PeerId::from(local_transport_key.public());
-
-    // let swarm = setup_swarm(local_swarm_peer_id, local_transport_key, log);
-    // let discv5 = start_discv5();
-
-    // tokio::try_join!(swarm)?;
-
-    Ok(())
 }

@@ -27,12 +27,15 @@ use void::Void;
 
 pub struct Discovery {
     cached_enrs: LruCache<PeerId, Enr>,
+    enr: Enr,
     discv5: Discv5,
+    log: Logger,
 }
 
 impl Discovery {
-    pub async fn new() -> Result<Self, Box<dyn Error>> {
-        let (local_enr, enr, enr_key) = generate_enr().await?;
+    pub async fn new(log: slog::Logger) -> Result<Self, Box<dyn Error>> {
+        let log_clone = log.clone();
+        let (local_enr, enr, enr_key) = generate_enr(log_clone).await?;
 
         let listen_port = enr.udp4().unwrap();
 
@@ -49,13 +52,19 @@ impl Discovery {
             .ping_interval(Duration::from_secs(300))
             .build();
 
-        let discv5: Discv5 = Discv5::new(enr, enr_key, discv5_config)?;
+        let discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
         let cached_enrs = LruCache::new(NonZeroUsize::new(1000).unwrap());
 
         Ok(Discovery {
             cached_enrs,
+            enr,
             discv5,
+            log,
         })
+    }
+
+    pub fn get_enr(&self) -> Enr {
+        self.enr.clone()
     }
 
     pub async fn start(&mut self) -> Result<(), Box<dyn Error>> {

@@ -9,6 +9,7 @@ use std::net::Ipv4Addr;
 use std::str::FromStr;
 
 pub async fn generate_enr(
+    log: slog::Logger,
 ) -> Result<(Enr<CombinedKey>, Enr<CombinedKey>, CombinedKey), Box<dyn Error>> {
     let enr_combined_key: CombinedKey = CombinedKey::generate_secp256k1();
     let (local_enr, attnets, eth2, syncnets, ip4) = get_local_enr().await?;
@@ -24,13 +25,18 @@ pub async fn generate_enr(
         .add_value("syncnets", &syncnets)
         .build(&enr_combined_key)?;
 
+    slog::info!(log, "ENR generated"; "enr" => ?enr.to_base64());
+
     // Decode the ENR
     let decoded_generated_enr: Enr<CombinedKey> = Enr::from_str(&enr.to_base64()).unwrap();
-    
+
+    slog::debug!(log, "ENR decoded"; "enr" => ?decoded_generated_enr);
+
     let local_enr = Enr::from_str(&local_enr)?;
 
     Ok((local_enr, enr, enr_combined_key))
 }
+
 
 async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>> {
     let client = Client::new();
