@@ -4,9 +4,9 @@ pub mod events;
 
 use super::swarm::events::swarm_events;
 use crate::discv5::discovery::enr::generate_enr;
-use crate::discv5::discovery::Discovery as CustomDiscovery;
-use crate::libp2p::behaviour::gossip::Gossipsub as CustomGossipsub;
-use crate::libp2p::behaviour::identify::Identity as CustomIdentity;
+use crate::discv5::discovery::Discovery;
+use crate::libp2p::behaviour::gossip::Gossipsub;
+use crate::libp2p::behaviour::identify::Identity;
 use crate::libp2p::behaviour::CustomBehavior as Behaviour;
 use crate::libp2p::behaviour::CustomBehavior;
 use crate::libp2p::transport::setup_transport;
@@ -17,7 +17,7 @@ use libp2p::{
     futures::StreamExt,
     identity::{Keypair, PublicKey},
     swarm::{NetworkBehaviour, SwarmBuilder, SwarmEvent},
-    Swarm,
+    PeerId, Swarm,
 };
 use slog::Logger;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
@@ -27,21 +27,26 @@ use tokio::{runtime::Handle, sync::Mutex};
 
 pub struct CustomSwarm {
     pub swarm: Arc<Mutex<Swarm<CustomBehavior>>>,
-    pub discv5: CustomDiscovery,
+    pub discv5: Discovery,
     pub log: Logger,
 }
+
+type BoxedTransport =
+    libp2p::core::transport::Boxed<(libp2p::PeerId, libp2p::core::muxing::StreamMuxerBox)>;
 
 impl CustomSwarm {
     pub async fn new(
         swarm_peer_id: libp2p::PeerId,
         transport_key: Keypair,
+        discovery: Discovery,
+        transport: BoxedTransport,
         log: Logger,
-    ) -> Result<Arc<Mutex<Swarm<CustomBehavior>>>, Box<dyn Error>> {
+    ) -> Result<Self, Box<dyn Error>> {
         let log_clone = log.clone();
         let transport = setup_transport(transport_key.clone()).await.unwrap();
 
         let mut swarm = {
-            let (lh_enr, enr, key) = generate_enr(log_clone).await?;
+            let enr = discovery.get_enr();
 
             let listen_port = enr.udp4().unwrap();
 
@@ -67,9 +72,9 @@ impl CustomSwarm {
             let identity_public_key = PublicKey::from(transport_key.public());
 
             let behaviour = Behaviour {
-                gossipsub: CustomGossipsub::new(swarm_peer_id, transport_key, log.clone()),
-                discovery: CustomDiscovery::new(log.clone()).await.unwrap(),
-                identify: CustomIdentity::new(identity_public_key, log.clone()),
+                gossipsub: Gossipsub::new(swarm_peer_id, transport_key, log.clone()),
+                discovery: Discovery::new(log.clone()).await.unwrap(),
+                identify: Identity::new(identity_public_key, log.clone()),
             };
 
             let executor = {
@@ -87,6 +92,30 @@ impl CustomSwarm {
         swarm.listen_on(listen_addr.parse().unwrap()).unwrap();
 
         let swarm = Arc::new(Mutex::new(swarm));
+
+        Ok(CustomSwarm {
+            swarm,
+            discv5: discovery,
+            log,
+        })
+    }
+
+    pub async fn default() -> Result<Self, Box<dyn Error>> {
+        let log = Logger::root(slog::Discard, slog::o!());
+        let local_transport_key: Keypair = Keypair::generate_secp256k1();
+        let local_swarm_peer_id: PeerId = PeerId::from(local_transport_key.public());
+
+        let discv5 = Discovery::new(log.clone()).await.unwrap();
+        let transport = setup_transport(local_transport_key.clone()).await.unwrap();
+        let swarm = CustomSwarm::new(
+            local_swarm_peer_id,
+            local_transport_key,
+            discv5,
+            transport,
+            log.clone(),
+        )
+        .await
+        .unwrap();
 
         Ok(swarm)
     }

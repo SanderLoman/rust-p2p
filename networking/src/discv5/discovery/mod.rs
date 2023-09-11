@@ -12,59 +12,24 @@ use discv5::{
     enr as discv5_enr, enr::CombinedKey, handler, kbucket, metrics, packet, permit_ban, rpc,
     service, socket, Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Event, Enr, ListenConfig,
 };
-use eyre::Result;
 use futures::Future;
-use libp2p::identity::{secp256k1, KeyType, Keypair};
-use libp2p::multiaddr::Protocol;
 use libp2p::swarm::dummy::ConnectionHandler;
-use libp2p::swarm::{DialError, DialFailure, FromSwarm, NetworkBehaviour, PollParameters, ToSwarm};
-use libp2p::{Multiaddr, PeerId};
+use libp2p::swarm::NetworkBehaviour;
+use libp2p::PeerId;
 use lru::LruCache;
-use slog::{Logger, *};
+use slog::Logger;
 use std::error::Error;
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::Ipv4Addr;
 use std::num::NonZeroUsize;
 use std::pin::Pin;
-use std::task::{Context, Poll};
 use std::time::Duration;
-use tokio::sync::mpsc;
 use void::Void;
 
 pub struct Discovery {
-    /// A collection of seen live ENRs for quick lookup and to map peer-id's to ENRs.
     cached_enrs: LruCache<PeerId, Enr>,
-
-    /// The directory where the ENR is stored.
     enr: Enr,
-
-    /// The handle for the underlying discv5 Server.
-    ///
-    /// This is behind a Reference counter to allow for futures to be spawned and polled with a
-    /// static lifetime.
     discv5: Discv5,
-
-    /// The discv5 event stream.
-    event_stream: EventStream,
-
-    /// Logger for the discovery behaviour.
-    log: slog::Logger,
-}
-
-enum EventStream {
-    /// Awaiting an event stream to be generated. This is required due to the poll nature of
-    /// `Discovery`
-    Awaiting(
-        Pin<
-            Box<
-                dyn Future<Output = Result<mpsc::Receiver<Discv5Event>, discv5::Discv5Error>>
-                    + Send,
-            >,
-        >,
-    ),
-    /// The future has completed.
-    Present(mpsc::Receiver<Discv5Event>),
-    // The future has failed or discv5 has been disabled. There are no events from discv5.
-    InActive,
+    log: Logger,
 }
 
 impl Discovery {
@@ -94,13 +59,12 @@ impl Discovery {
             cached_enrs,
             enr,
             discv5,
-            event_stream: EventStream::InActive,
             log,
         })
     }
 
     pub fn get_enr(&self) -> Enr {
-        self.discv5.local_enr()
+        self.enr.clone()
     }
 
     pub async fn start(&mut self) -> Result<(), Box<dyn Error>> {
@@ -169,86 +133,14 @@ impl NetworkBehaviour for Discovery {
     ) {
     }
 
+    fn on_swarm_event(&mut self, event: libp2p::swarm::FromSwarm<Self::ConnectionHandler>) {}
+
     fn poll(
         &mut self,
-        cx: &mut Context,
-        params: &mut impl PollParameters,
+        cx: &mut std::task::Context<'_>,
+        params: &mut impl libp2p::swarm::PollParameters,
     ) -> std::task::Poll<libp2p::swarm::ToSwarm<Self::OutEvent, libp2p::swarm::THandlerInEvent<Self>>>
     {
-        match self.event_stream {
-            EventStream::Awaiting(ref mut fut) => match fut.as_mut().poll(cx) {
-                Poll::Ready(Ok(event_stream)) => {
-                    info!(self.log, "Discv5 event stream started");
-                    self.event_stream = EventStream::Present(event_stream);
-                }
-                Poll::Ready(Err(e)) => {
-                    warn!(self.log, "Discv5 event stream failed"; "error" => format!("{:?}", e));
-                    self.event_stream = EventStream::InActive;
-                }
-                Poll::Pending => return Poll::Pending,
-            },
-            EventStream::InActive => {} // ignore checking the event stream
-            EventStream::Present(ref mut stream) => {
-                while let Poll::Ready(Some(event)) = stream.poll_recv(cx) {
-                    match event {
-                        Discv5Event::Discovered(enr) => {
-                            slog::debug!(self.log, "Discovered peer"; "peer_id" => enr.to_string());
-                        }
-                        Discv5Event::SocketUpdated(socket_addr) => {
-                            slog::debug!(self.log, "Socket updated"; "socket_addr" => format!("{:?}", socket_addr));
-                        }
-                        Discv5Event::EnrAdded { enr, replaced } => {
-                            slog::debug!(self.log, "ENR added"; "peer_id" => enr.to_string());
-                            println!("Replaced: {:?}", replaced);
-                        }
-                        Discv5Event::TalkRequest(TalkRequest) => {}
-                        Discv5Event::NodeInserted { node_id, replaced } => {}
-                        Discv5Event::SessionEstablished(enr, socketaddr) => {}
-                    }
-                }
-            }
-        }
-        Poll::Pending
-    }
-
-    fn on_swarm_event(&mut self, event: libp2p::swarm::FromSwarm<Self::ConnectionHandler>) {
-        match event {
-            FromSwarm::DialFailure(DialFailure { peer_id, error, .. }) => {
-                self.on_dial_failure(peer_id, error)
-            }
-            FromSwarm::ConnectionEstablished(_)
-            | FromSwarm::ConnectionClosed(_)
-            | FromSwarm::AddressChange(_)
-            | FromSwarm::ListenFailure(_)
-            | FromSwarm::NewListener(_)
-            | FromSwarm::NewListenAddr(_)
-            | FromSwarm::ExpiredListenAddr(_)
-            | FromSwarm::ListenerError(_)
-            | FromSwarm::ListenerClosed(_)
-            | FromSwarm::NewExternalAddr(_)
-            | FromSwarm::ExpiredExternalAddr(_) => {}
-        }
-    }
-}
-
-impl Discovery {
-    fn on_dial_failure(&mut self, peer_id: Option<PeerId>, error: &DialError) {
-        if let Some(peer_id) = peer_id {
-            match error {
-                DialError::LocalPeerId { .. }
-                | DialError::Denied { .. }
-                | DialError::NoAddresses
-                | DialError::Transport(_)
-                | DialError::WrongPeerId { .. } => {
-                    slog::debug!(self.log, "Dial failure"; "peer_id" => peer_id.to_string(), "error" => format!("{:?}", error));
-                }
-                DialError::DialPeerConditionFalse(_) | DialError::Aborted => {}
-                #[allow(deprecated)]
-                DialError::ConnectionLimit(_) => {}
-                DialError::InvalidPeerId(_) => {}
-                #[allow(deprecated)]
-                DialError::Banned => {}
-            }
-        }
+        std::task::Poll::Pending
     }
 }
