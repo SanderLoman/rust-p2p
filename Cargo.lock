@@ -3391,6 +3391,7 @@ dependencies = [
  "slog-async",
  "slog-term",
  "sloggers",
+ "tiny-keccak",
  "tokio",
  "void",
 ]

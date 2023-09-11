@@ -39,9 +39,6 @@ impl CustomSwarm {
     ) -> Result<Arc<Mutex<Swarm<CustomBehavior>>>, Box<dyn Error>> {
         let log_clone = log.clone();
         let transport = setup_transport(transport_key.clone()).await.unwrap();
-        // let log_for_gossip = log.clone();
-        // let log_for_identity = log.clone();
-        // let log_for_discv5 = log.clone();
 
         let mut swarm = {
             let (lh_enr, enr, key) = generate_enr(log_clone).await?;
@@ -63,10 +60,8 @@ impl CustomSwarm {
             } else if has_ipv6 {
                 discv5::ListenConfig::from_ip(IpAddr::V6(Ipv6Addr::UNSPECIFIED), listen_port)
             } else {
-                return Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "No valid IP addresses found",
-                )));
+                slog::error!(log, "No valid IP addresses found");
+                return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "")));
             };
 
             let identity_public_key = PublicKey::from(transport_key.public());

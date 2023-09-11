@@ -1,6 +1,5 @@
 #![deny(unsafe_code)]
 
-use clap::{App, Arg};
 use dotenv::dotenv;
 use eyre::Result;
 use std::error::Error;
