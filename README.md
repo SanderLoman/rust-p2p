@@ -1,5 +1,6 @@
-<h1 style="border-bottom: 0px solid black;">Rome Wasn't Built in a Day,</h1>
-<h2 style="border-bottom: 0px solid black;">Nor in a Week, Where Foundations Lay,</h2>
+# Rome Wasn't Built in a Day,
+
+## Nor in a Week, Where Foundations Lay,
 
 ### Nor in a Month, Where Pillars Rise,
 
