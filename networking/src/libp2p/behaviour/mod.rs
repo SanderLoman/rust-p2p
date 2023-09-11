@@ -10,9 +10,9 @@ use void::Void;
 
 // use crate::discv5::discovery::Discovery;
 
-use crate::discv5::discovery::Discovery as CustomDiscovery;
-use crate::libp2p::behaviour::gossip::Gossipsub as CustomGossipsub;
-use crate::libp2p::behaviour::identify::Identity as CustomIdentity;
+// use crate::discv5::discovery::Discovery as CustomDiscovery;
+// use crate::libp2p::behaviour::gossip::Gossipsub as CustomGossipsub;
+// use crate::libp2p::behaviour::identify::Identity as CustomIdentity;
 
 use discv5::Enr;
 use futures::StreamExt;
@@ -24,12 +24,12 @@ use libp2p::swarm::{NetworkBehaviour, PollParameters, ToSwarm};
 use libp2p::{Multiaddr, PeerId};
 use slog::{debug, Logger};
 
-#[derive(NetworkBehaviour)]
-pub struct CustomBehavior {
-    /// The routing pub-sub mechanism for eth2.
-    pub gossipsub: CustomGossipsub,
-    /// Discv5 Discovery protocol.
-    pub discovery: CustomDiscovery,
-    /// Provides IP addresses and peer information.
-    pub identify: CustomIdentity,
-}
+// #[derive(NetworkBehaviour)]
+// pub struct CustomBehavior {
+//     /// The routing pub-sub mechanism for eth2.
+//     pub gossipsub: CustomGossipsub,
+//     /// Discv5 Discovery protocol.
+//     pub discovery: CustomDiscovery,
+//     /// Provides IP addresses and peer information.
+//     pub identify: CustomIdentity,
+// }
