@@ -3373,30 +3373,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "networking"
-version = "0.1.0"
-dependencies = [
- "clap",
- "discv5",
- "ethereum_ssz",
- "ethereum_ssz_derive",
- "eyre",
- "futures",
- "get_if_addrs",
- "libp2p",
- "lru 0.11.0",
- "reqwest",
- "serde_json",
- "slog",
- "slog-async",
- "slog-term",
- "sloggers",
- "tiny-keccak",
- "tokio",
- "void",
-]
-
-[[package]]
 name = "nix"
 version = "0.24.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5559,12 +5535,36 @@ dependencies = [
  "dotenv",
  "eyre",
  "mev",
- "networking",
  "slog",
  "slog-async",
  "slog-term",
  "sloggers",
  "tokio",
+ "wagmi_network",
+]
+
+[[package]]
+name = "wagmi_network"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "discv5",
+ "ethereum_ssz",
+ "ethereum_ssz_derive",
+ "eyre",
+ "futures",
+ "get_if_addrs",
+ "libp2p",
+ "lru 0.11.0",
+ "reqwest",
+ "serde_json",
+ "slog",
+ "slog-async",
+ "slog-term",
+ "sloggers",
+ "tiny-keccak",
+ "tokio",
+ "void",
 ]
 
 [[package]]
