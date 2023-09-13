@@ -4,9 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-
 eyre = "0.6.5"
-libp2p = { version = "0.51.3", features = ["secp256k1", "ed25519", "tcp", "dns", "async-std", "noise", "mplex", "yamux", "websocket", "ping", "macros", "kad", "mdns", "macros", "tokio", "websocket", "gossipsub", "autonat", "floodsub", "identify", "quic"] }
 discv5 = { version = "0.3.0", features = ["libp2p"] }
 reqwest = "0.11.18"
 serde_json = "1.0.103"
@@ -23,3 +21,35 @@ lru = "0.11.0"
 get_if_addrs = "0.5.3"
 clap = "2.33.3"
 tiny-keccak = "2.0.2"
+unsigned-varint = { version = "0.6.0", features = ["codec"] }
+ssz_types = "0.5.3"
+serde = { version = "1.0.116", features = ["derive"] }
+serde_derive = "1.0.116"
+tree_hash = "0.5.0"
+tree_hash_derive = "0.5.0"
+error-chain = "0.12.4"
+dirs = "3.0.1"
+fnv = "1.0.7"
+lazy_static = "1.4.0"
+smallvec = "1.6.1"
+tokio-io-timeout = "1.1.1"
+parking_lot = "0.12.0"
+sha2 = "0.10"
+snap = "1.0.1"
+hex = "0.4.2"
+tokio-util = { version = "0.6.2", features = ["codec", "compat", "time"] }
+rand = "0.8.5"
+regex = "1.5.5"
+strum = { version = "0.24.0", features = ["derive"] }
+superstruct = "0.5.0"
+prometheus-client = "0.21.0"
+delay_map = "0.3.0"
+libp2p-mplex = "0.40.0"
+
+[dependencies.libp2p]
+version = "0.52"
+default-features = false
+features = ["websocket", "identify", "yamux", "noise", "gossipsub", "dns", "tcp", "tokio", "plaintext", "secp256k1", "macros", "ecdsa"]
+
+[features]
+libp2p-websocket = []
