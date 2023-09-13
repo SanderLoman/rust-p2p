@@ -37,7 +37,6 @@ pub async fn generate_enr(
     Ok((local_enr, enr, enr_combined_key))
 }
 
-
 async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>> {
     let client = Client::new();
 

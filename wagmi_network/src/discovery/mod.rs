@@ -1,7 +1,6 @@
-// #![deny(unsafe_code)]
+#![deny(unsafe_code)]
 
 pub(crate) mod enr;
-pub mod events;
 
 // pub mod enr;
 // pub mod events;
