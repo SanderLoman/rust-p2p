@@ -1,4 +1,4 @@
-mod config;
+pub mod config;
 pub mod discovery;
 pub mod listen_addr;
 pub mod peer_manager;
