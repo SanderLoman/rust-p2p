@@ -1,6 +1,17 @@
 #![deny(unsafe_code)]
 
+use std::{collections::HashMap, time::Instant};
+
+use libp2p::PeerId;
+
 pub(crate) mod enr;
+
+use enr::generate_enr;
+
+#[derive(Debug)]
+pub struct DiscoveredPeers {
+    pub peers: HashMap<PeerId, Option<Instant>>,
+}
 
 // pub mod enr;
 // pub mod events;

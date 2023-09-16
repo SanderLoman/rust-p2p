@@ -5,3 +5,5 @@ node_modules
 /node_modules
 Cargo.lock
 ./Cargo.lock
+/lh_code
+.vscode
