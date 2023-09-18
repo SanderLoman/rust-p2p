@@ -5,5 +5,6 @@ node_modules
 /node_modules
 Cargo.lock
 ./Cargo.lock
-/lh_code
+./lighthouse_network
+/lighthouse_network
 .vscode

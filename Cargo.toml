@@ -2,7 +2,7 @@
 members = [
     "mev",
     "wagmi_network",
-    "db"
+    "db",
 ]
 
 [package]

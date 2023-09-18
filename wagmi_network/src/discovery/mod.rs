@@ -4,9 +4,7 @@ use std::{collections::HashMap, time::Instant};
 
 use libp2p::PeerId;
 
-pub(crate) mod enr;
-
-use enr::generate_enr;
+pub mod enr;
 
 #[derive(Debug)]
 pub struct DiscoveredPeers {
