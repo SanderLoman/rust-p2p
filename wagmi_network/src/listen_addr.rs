@@ -57,23 +57,3 @@ impl ListenAddress {
         v4_multiaddr.into_iter().chain(v6_multiaddr)
     }
 }
-
-impl slog::KV for ListenAddress {
-    fn serialize(
-        &self,
-        _record: &slog::Record,
-        serializer: &mut dyn slog::Serializer,
-    ) -> slog::Result {
-        if let Some(v4_addr) = self.v4() {
-            serializer.emit_arguments("ip4_address", &format_args!("{}", v4_addr.addr))?;
-            serializer.emit_u16("udp4_port", v4_addr.udp_port)?;
-            serializer.emit_u16("tcp4_port", v4_addr.tcp_port)?;
-        }
-        if let Some(v6_addr) = self.v6() {
-            serializer.emit_arguments("ip6_address", &format_args!("{}", v6_addr.addr))?;
-            serializer.emit_u16("udp6_port", v6_addr.udp_port)?;
-            serializer.emit_u16("tcp6_port", v6_addr.tcp_port)?;
-        }
-        slog::Result::Ok(())
-    }
-}

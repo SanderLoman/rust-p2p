@@ -42,7 +42,7 @@ pub async fn generate_enr(
         e
     })?;
 
-    slog::debug!(log, "ENR decoded"; "enr" => ?decoded_generated_enr);
+    slog::debug!(log, "ENR generated (decoded)"; "enr" => ?decoded_generated_enr);
 
     let lh_enr = Enr::from_str(&lh_enr)?;
 

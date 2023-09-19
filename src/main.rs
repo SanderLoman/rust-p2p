@@ -18,7 +18,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     generate_enr(log.clone()).await?;
 
-
     info!(log, "Starting wagmi");
     warn!(log, "This is a warning");
     error!(log, "This is an error");
