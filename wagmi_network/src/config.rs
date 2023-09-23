@@ -24,18 +24,21 @@ pub struct Config {
     pub discv5_config: Discv5Config,
 
     pub boot_nodes_enr: Vec<Enr>,
-    // Unsure if we need this
+
     pub boot_nodes_multiaddr: Vec<Multiaddr>,
-    // Unsure if we need this
+
     pub libp2p_nodes: Vec<Multiaddr>,
-    // Optional
+
     pub outbound_rate_limiter_config: Option<OutboundRateLimiterConfig>,
-    // Optional
+
     pub inbound_rate_limiter_config: Option<InboundRateLimiterConfig>,
 }
 
 impl Config {
     fn default() -> Self {
-        Config {}
+        let mut listen_addresses = ListenAddress::default();
+        Config {
+            
+        }
     }
 }

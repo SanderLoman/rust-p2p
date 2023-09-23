@@ -3,6 +3,7 @@ members = [
     "mev",
     "wagmi_network",
     "db",
+    "network",
 ]
 
 [package]
@@ -11,6 +12,7 @@ version = "69.69.69"
 edition = "2021"
 
 [dependencies]
+network = { path = "network" }
 mev = { path = "mev" }
 wagmi_network = { path = "wagmi_network" }
 db = { path = "db" }
