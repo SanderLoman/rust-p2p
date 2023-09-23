@@ -5764,6 +5764,7 @@ dependencies = [
  "ethereum_ssz",
  "ethereum_ssz_derive",
  "eyre",
+ "fixed-hash",
  "fnv",
  "futures",
  "get_if_addrs",

@@ -1,3 +1,4 @@
+use crate::rpc::config::{InboundRateLimiterConfig, OutboundRateLimiterConfig};
 use discv5::{Discv5Config, Enr};
 use libp2p::{gossipsub, Multiaddr};
 
@@ -37,8 +38,6 @@ pub struct Config {
 impl Config {
     fn default() -> Self {
         let mut listen_addresses = ListenAddress::default();
-        Config {
-            
-        }
+        Config {}
     }
 }
