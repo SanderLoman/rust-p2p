@@ -5,7 +5,8 @@ use crate::rpc::{
     codec::base::OutboundCodec,
     protocol::{Encoding, ProtocolId, RPCError, SupportedProtocol},
 };
-use crate::rpc::{InboundRequest, OutboundRequest, RPCCodedResponse, RPCResponse};
+use crate::rpc::protocol::{InboundRequest, RPCCodedResponse, RPCResponse};
+use crate::rpc::outbound::OutboundRequest;
 use libp2p::bytes::BytesMut;
 use snap::read::FrameDecoder;
 use snap::write::FrameEncoder;

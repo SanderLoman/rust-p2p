@@ -99,11 +99,11 @@ pub struct Ping {
     variant_attributes(derive(Clone, Debug, PartialEq, Serialize),)
 )]
 #[derive(Clone, Debug, PartialEq)]
-pub struct MetadataRequest<T: EthSpec> {
-    _phantom_data: PhantomData<T>,
+pub struct MetadataRequest {
+    _phantom_data: PhantomData,
 }
 
-impl<T: EthSpec> MetadataRequest<T> {
+impl MetadataRequest {
     pub fn new_v1() -> Self {
         Self::V1(MetadataRequestV1 {
             _phantom_data: PhantomData,
@@ -118,45 +118,26 @@ impl<T: EthSpec> MetadataRequest<T> {
 }
 
 /// The METADATA response structure.
-#[superstruct(
-    variants(V1, V2),
-    variant_attributes(
-        derive(Encode, Decode, Clone, Debug, PartialEq, Serialize),
-        serde(bound = "T: EthSpec", deny_unknown_fields),
-    )
-)]
-#[derive(Clone, Debug, PartialEq, Serialize)]
-#[serde(bound = "T: EthSpec")]
-pub struct MetaData<T: EthSpec> {
+pub struct MetaData {
     /// A sequential counter indicating when data gets modified.
     pub seq_number: u64,
     /// The persistent attestation subnet bitfield.
-    pub attnets: EnrAttestationBitfield<T>,
+    pub attnets: EnrAttestationBitfield,
     /// The persistent sync committee bitfield.
-    #[superstruct(only(V2))]
-    pub syncnets: EnrSyncCommitteeBitfield<T>,
+    pub syncnets: EnrSyncCommitteeBitfield,
 }
 
-impl<T: EthSpec> MetaData<T> {
+impl MetaData {
     /// Returns a V1 MetaData response from self.
     pub fn metadata_v1(&self) -> Self {
         match self {
             md @ MetaData::V1(_) => md.clone(),
-            MetaData::V2(metadata) => MetaData::V1(MetaDataV1 {
-                seq_number: metadata.seq_number,
-                attnets: metadata.attnets.clone(),
-            }),
         }
     }
 
     /// Returns a V2 MetaData response from self by filling unavailable fields with default.
     pub fn metadata_v2(&self) -> Self {
         match self {
-            MetaData::V1(metadata) => MetaData::V2(MetaDataV2 {
-                seq_number: metadata.seq_number,
-                attnets: metadata.attnets.clone(),
-                syncnets: Default::default(),
-            }),
             md @ MetaData::V2(_) => md.clone(),
         }
     }
