@@ -1,4 +1,6 @@
 use crate::rpc::methods::*;
+use crate::rpc::protocol::ForkContext;
+use crate::rpc::protocol::ForkName;
 use crate::rpc::{
     codec::base::OutboundCodec,
     protocol::{Encoding, ProtocolId, RPCError, SupportedProtocol},
@@ -21,17 +23,17 @@ const CONTEXT_BYTES_LEN: usize = 4;
 
 /* Inbound Codec */
 
-pub struct SSZSnappyInboundCodec<TSpec: EthSpec> {
+pub struct SSZSnappyInboundCodec {
     protocol: ProtocolId,
     inner: Uvi<usize>,
     len: Option<usize>,
     /// Maximum bytes that can be sent in one req/resp chunked responses.
     max_packet_size: usize,
     fork_context: Arc<ForkContext>,
-    phantom: PhantomData<TSpec>,
+    phantom: PhantomData<()>,
 }
 
-impl<T: EthSpec> SSZSnappyInboundCodec<T> {
+impl SSZSnappyInboundCodec {
     pub fn new(
         protocol: ProtocolId,
         max_packet_size: usize,
@@ -53,14 +55,10 @@ impl<T: EthSpec> SSZSnappyInboundCodec<T> {
 }
 
 // Encoder for inbound streams: Encodes RPC Responses sent to peers.
-impl<TSpec: EthSpec> Encoder<RPCCodedResponse<TSpec>> for SSZSnappyInboundCodec<TSpec> {
+impl Encoder<RPCCodedResponse> for SSZSnappyInboundCodec {
     type Error = RPCError;
 
-    fn encode(
-        &mut self,
-        item: RPCCodedResponse<TSpec>,
-        dst: &mut BytesMut,
-    ) -> Result<(), Self::Error> {
+    fn encode(&mut self, item: RPCCodedResponse, dst: &mut BytesMut) -> Result<(), Self::Error> {
         let bytes = match &item {
             RPCCodedResponse::Success(resp) => match &resp {
                 RPCResponse::Status(res) => res.as_ssz_bytes(),
