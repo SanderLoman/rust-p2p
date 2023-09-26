@@ -64,8 +64,6 @@ pub enum SupportedProtocol {
     BlocksByRootV1,
     BlocksByRootV2,
     PingV1,
-    MetaDataV1,
-    MetaDataV2,
     LightClientBootstrapV1,
 }
 
@@ -79,8 +77,6 @@ impl SupportedProtocol {
             SupportedProtocol::BlocksByRootV1 => "1",
             SupportedProtocol::BlocksByRootV2 => "2",
             SupportedProtocol::PingV1 => "1",
-            SupportedProtocol::MetaDataV1 => "1",
-            SupportedProtocol::MetaDataV2 => "2",
             SupportedProtocol::LightClientBootstrapV1 => "1",
         }
     }
@@ -94,8 +90,6 @@ impl SupportedProtocol {
             SupportedProtocol::BlocksByRootV1 => Protocol::BlocksByRoot,
             SupportedProtocol::BlocksByRootV2 => Protocol::BlocksByRoot,
             SupportedProtocol::PingV1 => Protocol::Ping,
-            SupportedProtocol::MetaDataV1 => Protocol::MetaData,
-            SupportedProtocol::MetaDataV2 => Protocol::MetaData,
             SupportedProtocol::LightClientBootstrapV1 => Protocol::LightClientBootstrap,
         }
     }
@@ -110,8 +104,6 @@ impl SupportedProtocol {
             ProtocolId::new(Self::BlocksByRootV2, Encoding::SSZSnappy),
             ProtocolId::new(Self::BlocksByRootV1, Encoding::SSZSnappy),
             ProtocolId::new(Self::PingV1, Encoding::SSZSnappy),
-            ProtocolId::new(Self::MetaDataV2, Encoding::SSZSnappy),
-            ProtocolId::new(Self::MetaDataV1, Encoding::SSZSnappy),
         ]
     }
 }
@@ -228,10 +220,7 @@ impl ProtocolId {
                 <Ping as Encode>::ssz_fixed_len(),
                 <Ping as Encode>::ssz_fixed_len(),
             ),
-            Protocol::MetaData => RpcLimits::new(
-                <MetaDataV1 as Encode>::ssz_fixed_len(),
-                <MetaDataV2 as Encode>::ssz_fixed_len(),
-            ),
+
             Protocol::LightClientBootstrap => RpcLimits::new(
                 <LightClientBootstrapRequest as Encode>::ssz_fixed_len(),
                 <LightClientBootstrapRequest as Encode>::ssz_fixed_len(),
@@ -250,8 +239,6 @@ impl ProtocolId {
             | SupportedProtocol::BlocksByRootV1
             | SupportedProtocol::BlocksByRangeV1
             | SupportedProtocol::PingV1
-            | SupportedProtocol::MetaDataV1
-            | SupportedProtocol::MetaDataV2
             | SupportedProtocol::GoodbyeV1 => false,
         }
     }

@@ -1,6 +1,5 @@
 //! Available RPC methods types and ids.
 
-use crate::types::{EnrAttestationBitfield, EnrSyncCommitteeBitfield};
 use fixed_hash::construct_fixed_hash;
 use regex::bytes::Regex;
 use serde::Serialize;
@@ -114,39 +113,6 @@ impl MetadataRequest {
         Self::V2(MetadataRequestV2 {
             _phantom_data: PhantomData,
         })
-    }
-}
-
-/// The METADATA response structure.
-pub struct MetaData {
-    /// A sequential counter indicating when data gets modified.
-    pub seq_number: u64,
-    /// The persistent attestation subnet bitfield.
-    pub attnets: EnrAttestationBitfield,
-    /// The persistent sync committee bitfield.
-    pub syncnets: EnrSyncCommitteeBitfield,
-}
-
-impl MetaData {
-    /// Returns a V1 MetaData response from self.
-    pub fn metadata_v1(&self) -> Self {
-        match self {
-            md @ MetaData::V1(_) => md.clone(),
-        }
-    }
-
-    /// Returns a V2 MetaData response from self by filling unavailable fields with default.
-    pub fn metadata_v2(&self) -> Self {
-        match self {
-            md @ MetaData::V2(_) => md.clone(),
-        }
-    }
-
-    pub fn as_ssz_bytes(&self) -> Vec<u8> {
-        match self {
-            MetaData::V1(md) => md.as_ssz_bytes(),
-            MetaData::V2(md) => md.as_ssz_bytes(),
-        }
     }
 }
 
@@ -333,19 +299,19 @@ pub enum RPCResponse {
 
     /// A response to a get BLOCKS_BY_RANGE request. A None response signifies the end of the
     /// batch.
-    BlocksByRange(Arc<SignedBeaconBlock>),
+    BlocksByRange(Arc<_>),
 
     /// A response to a get BLOCKS_BY_ROOT request.
-    BlocksByRoot(Arc<SignedBeaconBlock>),
+    BlocksByRoot(Arc<_>),
 
     /// A response to a get LIGHTCLIENT_BOOTSTRAP request.
-    LightClientBootstrap(LightClientBootstrap),
+    LightClientBootstrap(_),
 
     /// A PONG response to a PING request.
     Pong(Ping),
 
     /// A response to a META_DATA request.
-    MetaData(MetaData),
+    MetaData(_),
 }
 
 /// Indicates which response is being terminated by a stream termination response.
