@@ -3473,10 +3473,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "network"
-version = "0.1.0"
-
-[[package]]
 name = "nix"
 version = "0.24.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5779,7 +5775,6 @@ dependencies = [
  "clap",
  "dotenv",
  "eyre",
- "network",
  "p2p-network",
  "slog",
  "slog-async",
