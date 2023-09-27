@@ -1118,10 +1118,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "db"
-version = "0.1.0"
-
-[[package]]
 name = "delay_map"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3240,13 +3236,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mev"
-version = "0.1.0"
-dependencies = [
- "eyre",
-]
-
-[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3678,6 +3667,55 @@ dependencies = [
  "ecdsa 0.14.8",
  "elliptic-curve 0.12.3",
  "sha2 0.10.7",
+]
+
+[[package]]
+name = "p2p-network"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "delay_map",
+ "dirs",
+ "discv5",
+ "error-chain",
+ "ethereum_ssz",
+ "ethereum_ssz_derive",
+ "eyre",
+ "fixed-hash",
+ "fnv",
+ "futures",
+ "get_if_addrs",
+ "hex",
+ "lazy_static",
+ "libp2p",
+ "libp2p-mplex 0.40.0",
+ "lru 0.11.1",
+ "parking_lot 0.12.1",
+ "prometheus-client 0.21.2",
+ "rand 0.8.5",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sha2 0.10.7",
+ "slog",
+ "slog-async",
+ "slog-term",
+ "sloggers",
+ "smallvec 1.11.0",
+ "snap",
+ "ssz_types",
+ "strum",
+ "superstruct",
+ "tiny-keccak",
+ "tokio",
+ "tokio-io-timeout",
+ "tokio-util 0.6.10",
+ "tree_hash",
+ "tree_hash_derive",
+ "unsigned-varint 0.6.0",
+ "void",
 ]
 
 [[package]]
@@ -5739,66 +5777,15 @@ name = "wagmi"
 version = "69.69.69"
 dependencies = [
  "clap",
- "db",
  "dotenv",
  "eyre",
- "mev",
  "network",
+ "p2p-network",
  "slog",
  "slog-async",
  "slog-term",
  "sloggers",
  "tokio",
- "wagmi_network",
-]
-
-[[package]]
-name = "wagmi_network"
-version = "0.1.0"
-dependencies = [
- "clap",
- "delay_map",
- "dirs",
- "discv5",
- "error-chain",
- "ethereum_ssz",
- "ethereum_ssz_derive",
- "eyre",
- "fixed-hash",
- "fnv",
- "futures",
- "get_if_addrs",
- "hex",
- "lazy_static",
- "libp2p",
- "libp2p-mplex 0.40.0",
- "lru 0.11.1",
- "parking_lot 0.12.1",
- "prometheus-client 0.21.2",
- "rand 0.8.5",
- "regex",
- "reqwest",
- "serde",
- "serde_derive",
- "serde_json",
- "sha2 0.10.7",
- "slog",
- "slog-async",
- "slog-term",
- "sloggers",
- "smallvec 1.11.0",
- "snap",
- "ssz_types",
- "strum",
- "superstruct",
- "tiny-keccak",
- "tokio",
- "tokio-io-timeout",
- "tokio-util 0.6.10",
- "tree_hash",
- "tree_hash_derive",
- "unsigned-varint 0.6.0",
- "void",
 ]
 
 [[package]]
