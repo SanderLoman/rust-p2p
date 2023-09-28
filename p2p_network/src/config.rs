@@ -80,8 +80,8 @@ impl Config {
             .enr_peer_update_min(10)
             .query_parallelism(5)
             .disable_report_discovered_peers()
-            .ip_limit() // limits /24 IP's in buckets.
-            .incoming_bucket_limit(8) // half the bucket size
+            // .ip_limit() // limits /24 IP's in buckets. (Probably want to remove this since we want as many peers as possible)
+            // .incoming_bucket_limit(8) // half the bucket size. (Probably want to remove this since we want as many peers as possible)
             .filter_rate_limiter(filter_rate_limiter)
             .filter_max_bans_per_ip(Some(5))
             .filter_max_nodes_per_ip(Some(10))
