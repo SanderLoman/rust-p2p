@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "p2p-network",
+    "p2p_network",
 ]
 
 [package]
@@ -9,7 +9,7 @@ version = "69.69.69"
 edition = "2021"
 
 [dependencies]
-p2p-network = { path = "p2p-network" }
+p2p_network = { path = "p2p_network" }
 tokio = { version = "1.29.1", features = ["full"] }
 slog = { version = "2.5.2", features = ["max_level_trace"] }
 sloggers = { version = "2.1.1", features = ["json"] }

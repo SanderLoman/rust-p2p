@@ -3666,7 +3666,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "p2p-network"
+name = "p2p_network"
 version = "0.1.0"
 dependencies = [
  "clap",
@@ -5775,7 +5775,7 @@ dependencies = [
  "clap",
  "dotenv",
  "eyre",
- "p2p-network",
+ "p2p_network",
  "slog",
  "slog-async",
  "slog-term",

@@ -8,7 +8,7 @@ use slog::{crit, debug, error, info, trace, warn};
 
 use wagmi::{create_logger, parse_verbosity};
 
-use wagmi_network::discovery::enr::generate_enr;
+use p2p_network::discovery::enr::generate_enr;
 
 #[tokio::main()]
 async fn main() -> Result<(), Box<dyn Error>> {
