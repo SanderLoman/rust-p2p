@@ -8,7 +8,7 @@ This project aims to create a custom Ethereum beacon node using Rust. The node i
 
 1. **Network Participation**: The node should be able to send and receive data from other peers in the network.
 2. **Peer Discovery**: The node should find ALL available peers on the network.
-3. **Block Request**: Each time a new block is received, the node will already start requesting the latest head block from all peers to find the lastest again.
+3. **Block Request**: Each time a new block is received, the node will already start requesting the latest head block from all peers to find the lastest or newest block again.
 
 ## How It Works
 
