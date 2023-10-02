@@ -1,10 +1,11 @@
 use crate::rpc::methods::*;
-use crate::rpc::protocol::ForkContext;
-use crate::rpc::protocol::ForkName;
 use crate::rpc::{
     codec::base::OutboundCodec,
     protocol::{Encoding, ProtocolId, RPCError, SupportedProtocol},
 };
+
+use crate::ForkName;
+use crate::ForkContext;
 use crate::rpc::protocol::{InboundRequest, RPCCodedResponse, RPCResponse};
 use crate::rpc::outbound::OutboundRequest;
 use libp2p::bytes::BytesMut;
