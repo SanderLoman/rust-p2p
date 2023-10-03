@@ -2,7 +2,7 @@ use std::{net::Ipv4Addr, time::Duration};
 
 use crate::{
     listen_addr::ListenAddr,
-    rpc::config::{InboundRateLimiterConfig, OutboundRateLimiterConfig},
+    // rpc::config::{InboundRateLimiterConfig, OutboundRateLimiterConfig},
 };
 use discv5::{Discv5Config, Discv5ConfigBuilder, Enr};
 use libp2p::{gossipsub, Multiaddr};
@@ -35,9 +35,9 @@ pub struct Config {
 
     pub libp2p_nodes: Vec<Multiaddr>,
 
-    pub outbound_rate_limiter_config: Option<OutboundRateLimiterConfig>,
+    // pub outbound_rate_limiter_config: Option<OutboundRateLimiterConfig>,
 
-    pub inbound_rate_limiter_config: Option<InboundRateLimiterConfig>,
+    // pub inbound_rate_limiter_config: Option<InboundRateLimiterConfig>,
 
     pub topics: Vec<String>,
 }
@@ -99,8 +99,8 @@ impl Config {
             boot_nodes_multiaddr: vec![],
             libp2p_nodes: vec![],
             topics: Vec::new(),
-            outbound_rate_limiter_config: None,
-            inbound_rate_limiter_config: None,
+            // outbound_rate_limiter_config: None,
+            // inbound_rate_limiter_config: None,
         }
     }
 }

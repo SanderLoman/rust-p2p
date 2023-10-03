@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "p2p_network",
+    "types",
 ]
 
 [package]
@@ -9,6 +10,7 @@ version = "69.69.69"
 edition = "2021"
 
 [dependencies]
+types = { path = "types" }
 p2p_network = { path = "p2p_network" }
 tokio = { version = "1.29.1", features = ["full"] }
 slog = { version = "2.5.2", features = ["max_level_trace"] }
