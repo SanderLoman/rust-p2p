@@ -1,13 +1,13 @@
-use std::sync::Arc;
-use std::{net::Ipv4Addr, time::Duration};
-
 use crate::{
     listen_addr::ListenAddr,
-    rpc::config::{InboundRateLimiterConfig, OutboundRateLimiterConfig},
+    // rpc::config::{InboundRateLimiterConfig, OutboundRateLimiterConfig},
 };
 use discv5::{Discv5Config, Discv5ConfigBuilder, Enr};
 use libp2p::{gossipsub, Multiaddr};
-use sha2::Sha256;
+use project_types::fork_context::{ForkContext, ForkName};
+use sha2::{Digest, Sha256};
+use std::sync::Arc;
+use std::{net::Ipv4Addr, time::Duration};
 
 use crate::listen_addr::ListenAddress;
 
@@ -119,35 +119,25 @@ pub fn gossipsub_config(
     fn prefix(
         prefix: [u8; 4],
         message: &gossipsub::Message,
-        fork_context: Arc<ForkContext>,
+        // fork_context: Arc<ForkContext>, 
     ) -> Vec<u8> {
         let topic_bytes = message.topic.as_str().as_bytes();
-        match fork_context.current_fork() {
-            ForkName::Altair | ForkName::Merge | ForkName::Capella => {
-                let topic_len_bytes = topic_bytes.len().to_le_bytes();
-                let mut vec = Vec::with_capacity(
-                    prefix.len() + topic_len_bytes.len() + topic_bytes.len() + message.data.len(),
-                );
-                vec.extend_from_slice(&prefix);
-                vec.extend_from_slice(&topic_len_bytes);
-                vec.extend_from_slice(topic_bytes);
-                vec.extend_from_slice(&message.data);
-                vec
-            }
-            ForkName::Base => {
-                let mut vec = Vec::with_capacity(prefix.len() + message.data.len());
-                vec.extend_from_slice(&prefix);
-                vec.extend_from_slice(&message.data);
-                vec
-            }
-        }
+        let topic_len_bytes = topic_bytes.len().to_le_bytes();
+        let mut vec = Vec::with_capacity(
+            prefix.len() + topic_len_bytes.len() + topic_bytes.len() + message.data.len(),
+        );
+        vec.extend_from_slice(&prefix);
+        vec.extend_from_slice(&topic_len_bytes);
+        vec.extend_from_slice(topic_bytes);
+        vec.extend_from_slice(&message.data);
+        vec
     }
     let message_domain_valid_snappy = gossipsub_config_params.message_domain_valid_snappy;
     let is_merge_enabled = fork_context.fork_exists(ForkName::Merge);
     let gossip_message_id = move |message: &gossipsub::Message| {
         gossipsub::MessageId::from(
             &Sha256::digest(
-                prefix(message_domain_valid_snappy, message, fork_context.clone()).as_slice(),
+                prefix(message_domain_valid_snappy, message).as_slice(),
             )[..20],
         )
     };
