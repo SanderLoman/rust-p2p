@@ -4046,8 +4046,11 @@ version = "0.1.0"
 dependencies = [
  "arbitrary",
  "bytes",
+ "derivative",
  "ethereum-types",
  "ethereum_serde_utils",
+ "ethereum_ssz",
+ "ethereum_ssz_derive",
  "parking_lot 0.12.1",
  "serde",
  "serde_derive",

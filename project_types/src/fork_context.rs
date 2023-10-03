@@ -1,10 +1,65 @@
 use crate::chain_spec::ChainSpec;
-use crate::Hash256;
+use crate::{Epoch, Hash256};
 use parking_lot::RwLock;
+use serde_derive::{Deserialize, Serialize};
+use ssz_derive::{Decode, Encode};
 use std::collections::HashMap;
+use tree_hash_derive::TreeHash;
 
 pub type Slot = u64;
 
+#[derive(
+    arbitrary::Arbitrary,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Default,
+    Serialize,
+    Deserialize,
+    Encode,
+    Decode,
+    TreeHash,
+)]
+pub struct Fork {
+    #[serde(with = "serde_utils::bytes_4_hex")]
+    pub previous_version: [u8; 4],
+    #[serde(with = "serde_utils::bytes_4_hex")]
+    pub current_version: [u8; 4],
+    pub epoch: Epoch,
+}
+
+/// Specifies a fork of the `BeaconChain`, to prevent replay attacks.
+///
+/// Spec v0.12.1
+#[derive(
+    arbitrary::Arbitrary,
+    Debug,
+    Clone,
+    PartialEq,
+    Default,
+    Serialize,
+    Deserialize,
+    Encode,
+    Decode,
+    TreeHash,
+)]
+pub struct ForkData {
+    #[serde(with = "serde_utils::bytes_4_hex")]
+    pub current_version: [u8; 4],
+    pub genesis_validators_root: Hash256,
+}
+
+impl Fork {
+    /// Return the fork version of the given ``epoch``.
+    pub fn get_fork_version(&self, epoch: Epoch) -> [u8; 4] {
+        if epoch < self.epoch {
+            return self.previous_version;
+        }
+        self.current_version
+    }
+}
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Eq, Hash)]
 pub enum ForkName {
     Base,
     Altair,
@@ -12,8 +67,80 @@ pub enum ForkName {
     Capella,
 }
 
+// impl ForkName {
+//     pub fn list_all() -> Vec<ForkName> {
+//         vec![
+//             ForkName::Base,
+//             ForkName::Altair,
+//             ForkName::Merge,
+//             ForkName::Capella,
+//         ]
+//     }
+
+//     // pub fn latest() -> ForkName {
+//     //     // This unwrap is safe as long as we have 1+ forks. It is tested below.
+//     //     *ForkName::list_all().last().unwrap()
+//     // }
+
+//     /// Set the activation slots in the given `ChainSpec` so that the fork named by `self`
+//     /// is the only fork in effect from genesis.
+//     // pub fn make_genesis_spec(&self, mut spec: ChainSpec) -> ChainSpec {
+//     //     // Assumes GENESIS_EPOCH = 0, which is safe because it's a constant.
+//     //     match self {
+//     //         ForkName::Base => {
+//     //             spec.altair_fork_epoch = None;
+//     //             spec.bellatrix_fork_epoch = None;
+//     //             spec.capella_fork_epoch = None;
+//     //             spec
+//     //         }
+//     //         ForkName::Altair => {
+//     //             spec.altair_fork_epoch = Some(0u64);
+//     //             spec.bellatrix_fork_epoch = None;
+//     //             spec.capella_fork_epoch = None;
+//     //             spec
+//     //         }
+//     //         ForkName::Merge => {
+//     //             spec.altair_fork_epoch = Some(0u64);
+//     //             spec.bellatrix_fork_epoch = Some(0u64);
+//     //             spec.capella_fork_epoch = None;
+//     //             spec
+//     //         }
+//     //         ForkName::Capella => {
+//     //             spec.altair_fork_epoch = Some(0u64);
+//     //             spec.bellatrix_fork_epoch = Some(0u64);
+//     //             spec.capella_fork_epoch = Some(0u64);
+//     //             spec
+//     //         }
+//     //     }
+//     // }
+
+//     /// Return the name of the fork immediately prior to the current one.
+//     ///
+//     /// If `self` is `ForkName::Base` then `Base` is returned.
+//     pub fn previous_fork(self) -> Option<ForkName> {
+//         match self {
+//             ForkName::Base => None,
+//             ForkName::Altair => Some(ForkName::Base),
+//             ForkName::Merge => Some(ForkName::Altair),
+//             ForkName::Capella => Some(ForkName::Merge),
+//         }
+//     }
+
+//     /// Return the name of the fork immediately after the current one.
+//     ///
+//     /// If `self` is the last known fork and has no successor, `None` is returned.
+//     pub fn next_fork(self) -> Option<ForkName> {
+//         match self {
+//             ForkName::Base => Some(ForkName::Altair),
+//             ForkName::Altair => Some(ForkName::Merge),
+//             ForkName::Merge => Some(ForkName::Capella),
+//             ForkName::Capella => None,
+//         }
+//     }
+// }
+
 /// Provides fork specific info like the current fork name and the fork digests corresponding to every valid fork.
-#[derive(Debug)]
+// #[derive(Debug)]
 pub struct ForkContext {
     current_fork: RwLock<ForkName>,
     fork_to_digest: HashMap<ForkName, [u8; 4]>,
@@ -25,43 +152,11 @@ impl ForkContext {
     /// fork digest.
     ///
     /// A fork is disabled in the `ChainSpec` if the activation slot corresponding to that fork is `None`.
-    pub fn new(
-        current_slot: Slot,
-        genesis_validators_root: Hash256,
-        spec: &ChainSpec,
-    ) -> Self {
-        let mut fork_to_digest = vec![(
-            ForkName::Base,
-            ChainSpec::compute_fork_digest(spec.genesis_fork_version, genesis_validators_root),
+    pub fn new(genesis_validators_root: Hash256, spec: &ChainSpec) -> Self {
+        let fork_to_digest = vec![(
+            ForkName::Capella,
+            ChainSpec::compute_fork_digest(spec.capella_fork_version, genesis_validators_root),
         )];
-
-        // Only add Altair to list of forks if it's enabled
-        // Note: `altair_fork_epoch == None` implies altair hasn't been activated yet on the config.
-        if spec.altair_fork_epoch.is_some() {
-            fork_to_digest.push((
-                ForkName::Altair,
-                ChainSpec::compute_fork_digest(spec.altair_fork_version, genesis_validators_root),
-            ));
-        }
-
-        // Only add Merge to list of forks if it's enabled
-        // Note: `bellatrix_fork_epoch == None` implies merge hasn't been activated yet on the config.
-        if spec.bellatrix_fork_epoch.is_some() {
-            fork_to_digest.push((
-                ForkName::Merge,
-                ChainSpec::compute_fork_digest(
-                    spec.bellatrix_fork_version,
-                    genesis_validators_root,
-                ),
-            ));
-        }
-
-        if spec.capella_fork_epoch.is_some() {
-            fork_to_digest.push((
-                ForkName::Capella,
-                ChainSpec::compute_fork_digest(spec.capella_fork_version, genesis_validators_root),
-            ));
-        }
 
         let fork_to_digest: HashMap<ForkName, [u8; 4]> = fork_to_digest.into_iter().collect();
 
@@ -72,7 +167,7 @@ impl ForkContext {
             .collect();
 
         Self {
-            current_fork: RwLock::new(spec.fork_name_at_slot(current_slot)),
+            current_fork: RwLock::new(ForkName::Capella),
             fork_to_digest,
             digest_to_fork,
         }
@@ -83,10 +178,10 @@ impl ForkContext {
         self.fork_to_digest.contains_key(&fork_name)
     }
 
-    /// Returns the `current_fork`.
-    pub fn current_fork(&self) -> ForkName {
-        *self.current_fork.read()
-    }
+    // /// Returns the `current_fork`.
+    // pub fn current_fork(&self) -> ForkName {
+    //     *self.current_fork.read()
+    // }
 
     /// Updates the `current_fork` field to a new fork.
     pub fn update_current_fork(&self, new_fork: ForkName) {
