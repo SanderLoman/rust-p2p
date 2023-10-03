@@ -1,11 +1,14 @@
+use std::sync::Arc;
 use std::{net::Ipv4Addr, time::Duration};
 
+use crate::rpc::protocol::{ForkContext, ForkName};
 use crate::{
     listen_addr::ListenAddr,
     // rpc::config::{InboundRateLimiterConfig, OutboundRateLimiterConfig},
 };
 use discv5::{Discv5Config, Discv5ConfigBuilder, Enr};
 use libp2p::{gossipsub, Multiaddr};
+use sha2::Sha256;
 
 use crate::listen_addr::ListenAddress;
 
@@ -61,13 +64,13 @@ impl Config {
         );
         let listen_addresses = ListenAddress::V4(ListenAddr {
             addr: Ipv4Addr::UNSPECIFIED,
-            disc_port: 9000,
-            quic_port: 9001,
-            tcp_port: 9000,
+            disc_port: 1111,
+            quic_port: 2222,
+            tcp_port: 1111,
         });
 
         let discv5_listen_config =
-            discv5::ListenConfig::from_ip(Ipv4Addr::UNSPECIFIED.into(), 9000);
+            discv5::ListenConfig::from_ip(Ipv4Addr::UNSPECIFIED.into(), 8888);
 
         // discv5 configuration
         let discv5_config = Discv5ConfigBuilder::new(discv5_listen_config)
@@ -85,7 +88,6 @@ impl Config {
             .filter_rate_limiter(filter_rate_limiter)
             .filter_max_bans_per_ip(Some(5))
             .filter_max_nodes_per_ip(Some(10))
-            .table_filter(|enr| enr.ip4().map_or(false, |ip| is_global_ipv4(&ip))) // Filter non-global IPs
             .ban_duration(Some(Duration::from_secs(3600)))
             .ping_interval(Duration::from_secs(300))
             .build();
@@ -105,24 +107,65 @@ impl Config {
     }
 }
 
-fn is_global_ipv4(addr: &Ipv4Addr) -> bool {
-    // check if this address is 192.0.0.9 or 192.0.0.10. These addresses are the only two
-    // globally routable addresses in the 192.0.0.0/24 range.
-    if u32::from_be_bytes(addr.octets()) == 0xc0000009
-        || u32::from_be_bytes(addr.octets()) == 0xc000000a
-    {
-        return true;
+pub fn gossipsub_config(
+    network_load: u8,
+    fork_context: Arc<ForkContext>,
+    gossipsub_config_params: GossipsubConfigParams,
+) -> gossipsub::Config {
+    // The function used to generate a gossipsub message id
+    // We use the first 8 bytes of SHA256(topic, data) for content addressing
+    let fast_gossip_message_id = |message: &gossipsub::RawMessage| {
+        let data = [message.topic.as_str().as_bytes(), &message.data].concat();
+        gossipsub::FastMessageId::from(&Sha256::digest(&data)[..8])
+    };
+    fn prefix(
+        prefix: [u8; 4],
+        message: &gossipsub::Message,
+        fork_context: Arc<ForkContext>,
+    ) -> Vec<u8> {
+        let topic_bytes = message.topic.as_str().as_bytes();
+        match fork_context.current_fork() {
+            ForkName::Altair | ForkName::Merge | ForkName::Capella => {
+                let topic_len_bytes = topic_bytes.len().to_le_bytes();
+                let mut vec = Vec::with_capacity(
+                    prefix.len() + topic_len_bytes.len() + topic_bytes.len() + message.data.len(),
+                );
+                vec.extend_from_slice(&prefix);
+                vec.extend_from_slice(&topic_len_bytes);
+                vec.extend_from_slice(topic_bytes);
+                vec.extend_from_slice(&message.data);
+                vec
+            }
+            ForkName::Base => {
+                let mut vec = Vec::with_capacity(prefix.len() + message.data.len());
+                vec.extend_from_slice(&prefix);
+                vec.extend_from_slice(&message.data);
+                vec
+            }
+        }
     }
-    !addr.is_private()
-            && !addr.is_loopback()
-            && !addr.is_link_local()
-            && !addr.is_broadcast()
-            && !addr.is_documentation()
-            // shared
-            && !(addr.octets()[0] == 100 && (addr.octets()[1] & 0b1100_0000 == 0b0100_0000)) &&!(addr.octets()[0] & 240 == 240 && !addr.is_broadcast())
-            // addresses reserved for future protocols (`192.0.0.0/24`)
-            // reserved
-            && !(addr.octets()[0] == 192 && addr.octets()[1] == 0 && addr.octets()[2] == 0)
-            // Make sure the address is not in 0.0.0.0/8
-            && addr.octets()[0] != 0
+    let message_domain_valid_snappy = gossipsub_config_params.message_domain_valid_snappy;
+    let is_merge_enabled = fork_context.fork_exists(ForkName::Merge);
+    let gossip_message_id = move |message: &gossipsub::Message| {
+        gossipsub::MessageId::from(
+            &Sha256::digest(
+                prefix(message_domain_valid_snappy, message, fork_context.clone()).as_slice(),
+            )[..20],
+        )
+    };
+
+    gossipsub::ConfigBuilder::default()
+        .max_transmit_size(gossip_max_size(
+            is_merge_enabled,
+            gossipsub_config_params.gossip_max_size,
+        ))
+        .max_messages_per_rpc(Some(500)) // Responses to IWANT can be quite large
+        .validate_messages()
+        .validation_mode(gossipsub::ValidationMode::Anonymous)
+        .duplicate_cache_time(Duration::from_secs(60))
+        .message_id_fn(gossip_message_id)
+        .fast_message_id_fn(fast_gossip_message_id)
+        .allow_self_origin(true)
+        .build()
+        .expect("valid gossipsub configuration")
 }
