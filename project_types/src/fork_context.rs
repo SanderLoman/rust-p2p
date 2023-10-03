@@ -178,10 +178,10 @@ impl ForkContext {
         self.fork_to_digest.contains_key(&fork_name)
     }
 
-    // /// Returns the `current_fork`.
-    // pub fn current_fork(&self) -> ForkName {
-    //     *self.current_fork.read()
-    // }
+    /// Returns the `current_fork`.
+    pub fn current_fork(&self) -> ForkName {
+        self.current_fork.read().clone()
+    }
 
     /// Updates the `current_fork` field to a new fork.
     pub fn update_current_fork(&self, new_fork: ForkName) {
