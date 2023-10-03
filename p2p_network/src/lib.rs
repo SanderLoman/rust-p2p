@@ -9,10 +9,10 @@ pub mod types;
 
 // use config::Config;
 
-pub use crate::types::{
-    error, Enr, EnrSyncCommitteeBitfield, GossipTopic, NetworkGlobals, PubsubMessage, Subnet,
-    SubnetDiscovery,
-};
+// pub use crate::types::{
+//     error, Enr, EnrSyncCommitteeBitfield, GossipTopic, NetworkGlobals, PubsubMessage, Subnet,
+//     SubnetDiscovery,
+// };
 
 use std::collections::HashMap;
 use std::sync::RwLock;
