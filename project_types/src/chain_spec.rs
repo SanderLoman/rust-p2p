@@ -6,8 +6,6 @@ use ethereum_types::Address;
 use serde::{Deserializer, Serialize, Serializer};
 use serde_derive::Deserialize;
 use serde_utils::quoted_u64::MaybeQuoted;
-use std::fs::File;
-use std::path::Path;
 use std::time::Duration;
 use tree_hash::TreeHash;
 

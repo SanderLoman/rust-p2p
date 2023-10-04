@@ -1,4 +1,5 @@
 use crate::listen_addr::ListenAddr;
+use crate::rpc::config::{InboundRateLimiterConfig, OutboundRateLimiterConfig};
 use discv5::{Discv5Config, Discv5ConfigBuilder, Enr};
 use libp2p::{gossipsub, Multiaddr};
 use project_types::fork_context::{ForkContext, ForkName};
@@ -22,7 +23,7 @@ pub struct GossipsubConfigParams {
 }
 
 pub struct Config {
-    listen_addresses: ListenAddress,
+    pub listen_addresses: ListenAddress,
 
     pub gs_config: gossipsub::Config,
 
@@ -34,9 +35,9 @@ pub struct Config {
 
     pub libp2p_nodes: Vec<Multiaddr>,
 
-    // pub outbound_rate_limiter_config: Option<OutboundRateLimiterConfig>,
+    pub outbound_rate_limiter_config: Option<OutboundRateLimiterConfig>,
 
-    // pub inbound_rate_limiter_config: Option<InboundRateLimiterConfig>,
+    pub inbound_rate_limiter_config: Option<InboundRateLimiterConfig>,
     pub topics: Vec<String>,
 }
 
@@ -96,14 +97,13 @@ impl Config {
             boot_nodes_multiaddr: vec![],
             libp2p_nodes: vec![],
             topics: Vec::new(),
-            // outbound_rate_limiter_config: None,
-            // inbound_rate_limiter_config: None,
+            outbound_rate_limiter_config: None,
+            inbound_rate_limiter_config: None,
         }
     }
 }
 
 pub fn gossipsub_config(
-    network_load: u8,
     fork_context: Arc<ForkContext>,
     gossipsub_config_params: GossipsubConfigParams,
 ) -> gossipsub::Config {
@@ -156,10 +156,11 @@ pub fn gossipsub_config(
             is_merge_enabled,
             gossipsub_config_params.gossip_max_size,
         ))
+        .fanout_ttl(Duration::from_secs(60))
+        .history_length(12)
         .max_messages_per_rpc(Some(500)) // Responses to IWANT can be quite large
-        .validate_messages()
+        .validate_messages() // require validation before propagation
         .validation_mode(gossipsub::ValidationMode::Anonymous)
-        .duplicate_cache_time(Duration::from_secs(60))
         .message_id_fn(gossip_message_id)
         .fast_message_id_fn(fast_gossip_message_id)
         .allow_self_origin(true)
