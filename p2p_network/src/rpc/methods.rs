@@ -1,6 +1,7 @@
 //! Available RPC methods types and ids.
 
 use crate::types::{EnrAttestationBitfield, EnrSyncCommitteeBitfield};
+use project_types::{Epoch, EthSpec, Hash256, Slot};
 use regex::bytes::Regex;
 use serde::Serialize;
 use ssz::Encode;
@@ -14,9 +15,20 @@ use std::ops::Deref;
 use std::sync::Arc;
 use strum::IntoStaticStr;
 use superstruct::superstruct;
-use types::{
-    light_client_bootstrap::LightClientBootstrap, Epoch, EthSpec, Hash256, SignedBeaconBlock, Slot,
-};
+
+// might implement a call to the local beacon node and get the block data that way
+// pub struct BeaconBlock<T: EthSpec, Payload: AbstractExecPayload<T> = FullPayload<T>> {
+//     pub slot: Slot,
+//     pub proposer_index: u64,
+//     pub parent_root: Hash256,
+//     pub state_root: Hash256,
+//     pub body: BeaconBlockBodyCapella<T, Payload>,
+// }
+
+// pub struct SignedBeaconBlock<E: EthSpec, Payload: AbstractExecPayload<E> = FullPayload<E>> {
+//     pub message: BeaconBlock<E, Payload>,
+//     pub signature: Signature,
+// }
 
 /// Maximum number of blocks in a single request.
 pub type MaxRequestBlocks = U1024;
@@ -346,13 +358,10 @@ pub enum RPCResponse<T: EthSpec> {
 
     /// A response to a get BLOCKS_BY_RANGE request. A None response signifies the end of the
     /// batch.
-    BlocksByRange(Arc<SignedBeaconBlock<T>>),
+    BlocksByRange(Arc<()>),
 
     /// A response to a get BLOCKS_BY_ROOT request.
-    BlocksByRoot(Arc<SignedBeaconBlock<T>>),
-
-    /// A response to a get LIGHTCLIENT_BOOTSTRAP request.
-    LightClientBootstrap(LightClientBootstrap<T>),
+    BlocksByRoot(Arc<()>),
 
     /// A PONG response to a PING request.
     Pong(Ping),
@@ -438,7 +447,6 @@ impl<T: EthSpec> RPCCodedResponse<T> {
                 RPCResponse::BlocksByRoot(_) => true,
                 RPCResponse::Pong(_) => false,
                 RPCResponse::MetaData(_) => false,
-                RPCResponse::LightClientBootstrap(_) => false,
             },
             RPCCodedResponse::Error(_, _) => true,
             // Stream terminations are part of responses that have chunks
@@ -464,7 +472,7 @@ impl RPCResponseErrorCode {
     }
 }
 
-use super::Protocol;
+use super::protocol::Protocol;
 impl<T: EthSpec> RPCResponse<T> {
     pub fn protocol(&self) -> Protocol {
         match self {
@@ -473,7 +481,6 @@ impl<T: EthSpec> RPCResponse<T> {
             RPCResponse::BlocksByRoot(_) => Protocol::BlocksByRoot,
             RPCResponse::Pong(_) => Protocol::Ping,
             RPCResponse::MetaData(_) => Protocol::MetaData,
-            RPCResponse::LightClientBootstrap(_) => Protocol::LightClientBootstrap,
         }
     }
 }
@@ -509,9 +516,6 @@ impl<T: EthSpec> std::fmt::Display for RPCResponse<T> {
             }
             RPCResponse::Pong(ping) => write!(f, "Pong: {}", ping.data),
             RPCResponse::MetaData(metadata) => write!(f, "Metadata: {}", metadata.seq_number()),
-            RPCResponse::LightClientBootstrap(bootstrap) => {
-                write!(f, "LightClientBootstrap Slot: {}", bootstrap.header.slot)
-            }
         }
     }
 }

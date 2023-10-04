@@ -1,7 +1,7 @@
 // use crate::application_domain::{ApplicationDomain, APPLICATION_DOMAIN_BUILDER};
 use crate::execution_block_hash::ExecutionBlockHash;
-use crate::fork_context::{ForkData, Slot};
-use crate::{Epoch, Hash256, Uint256};
+use crate::fork_context::ForkData;
+use crate::{Epoch, Hash256, Slot, Uint256};
 use ethereum_types::Address;
 use serde::{Deserializer, Serialize, Serializer};
 use serde_derive::Deserialize;
