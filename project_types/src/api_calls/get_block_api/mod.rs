@@ -1,14 +1,15 @@
 #![deny(unsafe_code)]
 
+pub mod eth1_data;
 pub mod graffiti;
 
+use eth1_data::Eth1Data;
 use graffiti::Graffiti;
 
 pub type Signature = String;
 
-use crate::{Epoch, Hash256, Slot, Uint256};
+use crate::{Epoch, Hash256, Slot};
 
-// randao_reveal eth1_data graffiti proposer_slashings attester_slashings attestations deposits voluntary_exits sync_aggregate execution_payload
 pub struct BeaconBlockBody {
     pub randao_reveal: String,
     pub eth1_data: Eth1Data,
@@ -20,12 +21,6 @@ pub struct BeaconBlockBody {
     pub voluntary_exits: Vec<u8>,
     pub sync_aggregate: SyncAggregate,
     pub execution_payload: ExecutionPayload,
-}
-
-pub struct Eth1Data {
-    pub deposit_root: Hash256,
-    pub deposit_count: Uint256,
-    pub block_hash: Hash256,
 }
 
 pub struct Checkpoint {
