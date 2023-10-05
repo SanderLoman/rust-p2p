@@ -16,17 +16,19 @@ use std::sync::Arc;
 use strum::IntoStaticStr;
 use superstruct::superstruct;
 
+// !!!
 // might implement a call to the local beacon node and get the block data that way
-// pub struct BeaconBlock<T: EthSpec, Payload: AbstractExecPayload<T> = FullPayload<T>> {
+// !!!
+// pub struct BeaconBlock {
 //     pub slot: Slot,
 //     pub proposer_index: u64,
 //     pub parent_root: Hash256,
 //     pub state_root: Hash256,
-//     pub body: BeaconBlockBodyCapella<T, Payload>,
+//     pub body: ,
 // }
 
-// pub struct SignedBeaconBlock<E: EthSpec, Payload: AbstractExecPayload<E> = FullPayload<E>> {
-//     pub message: BeaconBlock<E, Payload>,
+// pub struct SignedBeaconBlock {
+//     pub message: BeaconBlock,
 //     pub signature: Signature,
 // }
 

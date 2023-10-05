@@ -1,5 +1,5 @@
 use crate::chain_spec::ChainSpec;
-use crate::{Epoch, Hash256, Slot};
+use crate::{Epoch, Hash256};
 use parking_lot::RwLock;
 use serde_derive::{Deserialize, Serialize};
 use ssz_derive::{Decode, Encode};
