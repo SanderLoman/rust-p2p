@@ -16,22 +16,6 @@ use std::sync::Arc;
 use strum::IntoStaticStr;
 use superstruct::superstruct;
 
-// !!!
-// might implement a call to the local beacon node and get the block data that way
-// !!!
-// pub struct BeaconBlock {
-//     pub slot: Slot,
-//     pub proposer_index: u64,
-//     pub parent_root: Hash256,
-//     pub state_root: Hash256,
-//     pub body: ,
-// }
-
-// pub struct SignedBeaconBlock {
-//     pub message: BeaconBlock,
-//     pub signature: Signature,
-// }
-
 /// Maximum number of blocks in a single request.
 pub type MaxRequestBlocks = U1024;
 pub const MAX_REQUEST_BLOCKS: u64 = 1024;
@@ -511,10 +495,12 @@ impl<T: EthSpec> std::fmt::Display for RPCResponse<T> {
         match self {
             RPCResponse::Status(status) => write!(f, "{}", status),
             RPCResponse::BlocksByRange(block) => {
-                write!(f, "BlocksByRange: Block slot: {}", block.slot())
+                // write!(f, "BlocksByRange: Block slot: {}", block.slot())
+                Ok(())
             }
             RPCResponse::BlocksByRoot(block) => {
-                write!(f, "BlocksByRoot: Block slot: {}", block.slot())
+                // write!(f, "BlocksByRoot: Block slot: {}", block.slot())
+                Ok(())
             }
             RPCResponse::Pong(ping) => write!(f, "Pong: {}", ping.data),
             RPCResponse::MetaData(metadata) => write!(f, "Metadata: {}", metadata.seq_number()),

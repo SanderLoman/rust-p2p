@@ -166,6 +166,7 @@ impl FromStr for RateLimiterConfig {
                 Protocol::BlocksByRange => blocks_by_range_quota = blocks_by_range_quota.or(quota),
                 Protocol::BlocksByRoot => blocks_by_root_quota = blocks_by_root_quota.or(quota),
                 Protocol::Ping => ping_quota = ping_quota.or(quota),
+                Protocol::MetaData => meta_data_quota = meta_data_quota.or(quota),
                 Protocol::LightClientBootstrap => {
                     light_client_bootstrap_quota = light_client_bootstrap_quota.or(quota)
                 }
@@ -185,3 +186,4 @@ impl FromStr for RateLimiterConfig {
         })
     }
 }
+

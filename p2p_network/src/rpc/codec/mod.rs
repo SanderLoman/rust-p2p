@@ -1,62 +1,65 @@
 pub(crate) mod base;
 pub(crate) mod ssz_snappy;
 
-// use self::base::{BaseInboundCodec, BaseOutboundCodec};
-// use self::ssz_snappy::{SSZSnappyInboundCodec, SSZSnappyOutboundCodec};
-// use crate::rpc::protocol::RPCError;
-// use crate::rpc::outbound::OutboundRequest;
-// use crate::rpc::outbound::RPCCodedResponse;
-// use crate::rpc::protocol::InboundRequest;
-// use libp2p::bytes::BytesMut;
-// use tokio_util::codec::{Decoder, Encoder};
+use self::base::{BaseInboundCodec, BaseOutboundCodec};
+use self::ssz_snappy::{SSZSnappyInboundCodec, SSZSnappyOutboundCodec};
+use crate::rpc::protocol::RPCError;
+use crate::rpc::{InboundRequest, OutboundRequest, RPCCodedResponse};
+use libp2p::bytes::BytesMut;
+use tokio_util::codec::{Decoder, Encoder};
+use project_types::EthSpec;
 
-// // Known types of codecs
-// pub enum InboundCodec {
-//     SSZSnappy(BaseInboundCodec<SSZSnappyInboundCodec>),
-// }
+// Known types of codecs
+pub enum InboundCodec<TSpec: EthSpec> {
+    SSZSnappy(BaseInboundCodec<SSZSnappyInboundCodec<TSpec>, TSpec>),
+}
 
-// pub enum OutboundCodec {
-//     SSZSnappy(BaseOutboundCodec<SSZSnappyOutboundCodec>),
-// }
+pub enum OutboundCodec<TSpec: EthSpec> {
+    SSZSnappy(BaseOutboundCodec<SSZSnappyOutboundCodec<TSpec>, TSpec>),
+}
 
-// impl Encoder<RPCCodedResponse> for InboundCodec {
-//     type Error = RPCError;
+impl<T: EthSpec> Encoder<RPCCodedResponse<T>> for InboundCodec<T> {
+    type Error = RPCError;
 
-//     fn encode(&mut self, item: RPCCodedResponse, dst: &mut BytesMut) -> Result<(), Self::Error> {
-//         match self {
-//             InboundCodec::SSZSnappy(codec) => codec.encode(item, dst),
-//         }
-//     }
-// }
+    fn encode(&mut self, item: RPCCodedResponse<T>, dst: &mut BytesMut) -> Result<(), Self::Error> {
+        match self {
+            InboundCodec::SSZSnappy(codec) => codec.encode(item, dst),
+        }
+    }
+}
 
-// impl Decoder for InboundCodec {
-//     type Item = InboundRequest;
-//     type Error = RPCError;
+impl<TSpec: EthSpec> Decoder for InboundCodec<TSpec> {
+    type Item = InboundRequest<TSpec>;
+    type Error = RPCError;
 
-//     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
-//         match self {
-//             InboundCodec::SSZSnappy(codec) => codec.decode(src),
-//         }
-//     }
-// }
+    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
+        match self {
+            InboundCodec::SSZSnappy(codec) => codec.decode(src),
+        }
+    }
+}
 
-// impl Encoder<OutboundRequest> for OutboundCodec {
-//     type Error = RPCError;
+impl<TSpec: EthSpec> Encoder<OutboundRequest<TSpec>> for OutboundCodec<TSpec> {
+    type Error = RPCError;
 
-//     fn encode(&mut self, item: OutboundRequest, dst: &mut BytesMut) -> Result<(), Self::Error> {
-//         match self {
-//             OutboundCodec::SSZSnappy(codec) => codec.encode(item, dst),
-//         }
-//     }
-// }
+    fn encode(
+        &mut self,
+        item: OutboundRequest<TSpec>,
+        dst: &mut BytesMut,
+    ) -> Result<(), Self::Error> {
+        match self {
+            OutboundCodec::SSZSnappy(codec) => codec.encode(item, dst),
+        }
+    }
+}
 
-// impl Decoder for OutboundCodec {
-//     type Item = RPCCodedResponse;
-//     type Error = RPCError;
+impl<T: EthSpec> Decoder for OutboundCodec<T> {
+    type Item = RPCCodedResponse<T>;
+    type Error = RPCError;
 
-//     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
-//         match self {
-//             OutboundCodec::SSZSnappy(codec) => codec.decode(src),
-//         }
-//     }
-// }
+    fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
+        match self {
+            OutboundCodec::SSZSnappy(codec) => codec.decode(src),
+        }
+    }
+}
