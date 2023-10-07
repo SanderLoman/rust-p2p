@@ -5,10 +5,16 @@ pub mod graffiti;
 
 use eth1_data::Eth1Data;
 use graffiti::Graffiti;
+use reqwest::{
+    header::{HeaderMap, ACCEPT},
+    Client,
+};
+use serde::de::Error;
+use ssz::{Decode, DecodeError};
 
 pub type Signature = String;
 
-use crate::{Epoch, Hash256, Slot};
+use crate::{chain_spec::ChainSpec, Epoch, Hash256, Slot, fork_context::{ForkName, Fork}};
 
 pub struct BeaconBlockBody {
     pub randao_reveal: String,
@@ -21,6 +27,14 @@ pub struct BeaconBlockBody {
     pub voluntary_exits: Vec<u8>,
     pub sync_aggregate: SyncAggregate,
     pub execution_payload: ExecutionPayload,
+}
+
+pub struct BeaconBlock {
+    pub slot: Slot,
+    pub proposer_index: u64,
+    pub parent_root: Hash256,
+    pub state_root: Hash256,
+    pub body: BeaconBlockBody,
 }
 
 pub struct Checkpoint {
@@ -52,13 +66,6 @@ pub struct ExecutionPayload {
     pub fee_recipient: String,
 }
 
-pub struct BeaconBlock {
-    pub slot: Slot,
-    pub proposer_index: u64,
-    pub parent_root: Hash256,
-    pub state_root: Hash256,
-    pub body: BeaconBlockBody,
-}
 
 pub struct SignedBeaconBlock {
     pub message: BeaconBlock,
