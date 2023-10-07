@@ -7,8 +7,8 @@ use crate::rpc::methods::{MetaData, MetaDataV2};
 // use crate::EnrExt;
 use crate::types::{Enr, GossipTopic, Multiaddr, PeerId};
 use parking_lot::RwLock;
-use std::collections::HashSet;
 use project_types::EthSpec;
+use std::collections::HashSet;
 
 pub struct NetworkGlobals<TSpec: EthSpec> {
     /// The current local ENR.
@@ -40,8 +40,6 @@ impl<TSpec: EthSpec> NetworkGlobals<TSpec> {
             local_metadata: RwLock::new(local_metadata),
             peers: RwLock::new(PeerDB::new(trusted_peers, disable_peer_scoring, log)),
             gossipsub_subscriptions: RwLock::new(HashSet::new()),
-            sync_state: RwLock::new(SyncState::Stalled),
-            backfill_state: RwLock::new(BackFillState::NotRequired),
         }
     }
 
@@ -76,10 +74,10 @@ impl<TSpec: EthSpec> NetworkGlobals<TSpec> {
         self.peers.read().connected_or_dialing_peers().count()
     }
 
-    /// Returns in the node is syncing.
-    pub fn is_syncing(&self) -> bool {
-        self.sync_state.read().is_syncing()
-    }
+    // /// Returns in the node is syncing.
+    // pub fn is_syncing(&self) -> bool {
+    //     self.sync_state.read().is_syncing()
+    // }
 
     // /// Returns the current sync state of the peer.
     // pub fn sync_state(&self) -> SyncState {

@@ -1,16 +1,15 @@
 //! Implementation of Lighthouse's peer management system.
 
-use crate::discovery::enr_ext::EnrExt;
 use crate::rpc::{GoodbyeReason, MetaData, Protocol, RPCError, RPCResponseErrorCode};
 use crate::service::TARGET_SUBNET_PEERS;
-use crate::{error, metrics, Gossipsub};
+use crate::Gossipsub;
 use crate::{NetworkGlobals, PeerId};
 use crate::{Subnet, SubnetDiscovery};
 use delay_map::HashSetDelay;
 use discv5::Enr;
 use libp2p::identify::Info as IdentifyInfo;
-use lru_cache::LRUTimeCache;
-use peerdb::{client::ClientKind, BanOperation, BanResult, ScoreUpdateResult};
+use peerdb::{BanOperation, BanResult, ScoreUpdateResult};
+use project_types::EthSpec;
 use rand::seq::SliceRandom;
 use slog::{debug, error, trace, warn};
 use smallvec::SmallVec;
@@ -19,7 +18,6 @@ use std::{
     time::{Duration, Instant},
 };
 use strum::IntoEnumIterator;
-use types::{EthSpec, SyncSubnetId};
 
 pub use libp2p::core::Multiaddr;
 pub use libp2p::identity::Keypair;
@@ -92,18 +90,18 @@ pub struct PeerManager<TSpec: EthSpec> {
     // frequent polling to unban peers. Instead, this cache piggy-backs the PeerManager heartbeat
     // to update and clear the cache. Therefore the PEER_RECONNECTION_TIMEOUT only has a resolution
     // of the HEARTBEAT_INTERVAL.
-    temporary_banned_peers: LRUTimeCache<PeerId>,
+    // temporary_banned_peers: LRUTimeCache<PeerId>,
     /// A collection of sync committee subnets that we need to stay subscribed to.
     /// Sync committee subnets are longer term (256 epochs). Hence, we need to re-run
     /// discovery queries for subnet peers if we disconnect from existing sync
     /// committee subnet peers.
-    sync_committee_subnets: HashMap<SyncSubnetId, Instant>,
+    // sync_committee_subnets: HashMap<SyncSubnetId, Instant>,
     /// The heartbeat interval to perform routine maintenance.
     heartbeat: tokio::time::Interval,
     /// Keeps track of whether the discovery service is enabled or not.
-    discovery_enabled: bool,
+    // discovery_enabled: bool,
     /// Keeps track if the current instance is reporting metrics or not.
-    metrics_enabled: bool,
+    // metrics_enabled: bool,
     /// The logger associated with the `PeerManager`.
     log: slog::Logger,
 }
@@ -141,10 +139,10 @@ impl<TSpec: EthSpec> PeerManager<TSpec> {
         cfg: config::Config,
         network_globals: Arc<NetworkGlobals<TSpec>>,
         log: &slog::Logger,
-    ) -> error::Result<Self> {
+    ) -> Result<Self> {
         let config::Config {
-            discovery_enabled,
-            metrics_enabled,
+            // discovery_enabled,
+            // metrics_enabled,
             target_peer_count,
             status_interval,
             ping_interval_inbound,
@@ -162,11 +160,11 @@ impl<TSpec: EthSpec> PeerManager<TSpec> {
             outbound_ping_peers: HashSetDelay::new(Duration::from_secs(ping_interval_outbound)),
             status_peers: HashSetDelay::new(Duration::from_secs(status_interval)),
             target_peers: target_peer_count,
-            temporary_banned_peers: LRUTimeCache::new(PEER_RECONNECTION_TIMEOUT),
-            sync_committee_subnets: Default::default(),
+            // temporary_banned_peers: LRUTimeCache::new(PEER_RECONNECTION_TIMEOUT),
+            // sync_committee_subnets: Default::default(),
             heartbeat,
-            discovery_enabled,
-            metrics_enabled,
+            // discovery_enabled,
+            // metrics_enabled,
             log: log.clone(),
         })
     }
@@ -352,20 +350,20 @@ impl<TSpec: EthSpec> PeerManager<TSpec> {
         self.status_peers.insert(*peer_id);
     }
 
-    /// Insert the sync subnet into list of long lived sync committee subnets that we need to
-    /// maintain adequate number of peers for.
-    pub fn add_sync_subnet(&mut self, subnet_id: SyncSubnetId, min_ttl: Instant) {
-        match self.sync_committee_subnets.entry(subnet_id) {
-            Entry::Vacant(_) => {
-                self.sync_committee_subnets.insert(subnet_id, min_ttl);
-            }
-            Entry::Occupied(old) => {
-                if *old.get() < min_ttl {
-                    self.sync_committee_subnets.insert(subnet_id, min_ttl);
-                }
-            }
-        }
-    }
+    // /// Insert the sync subnet into list of long lived sync committee subnets that we need to
+    // /// maintain adequate number of peers for.
+    // pub fn add_sync_subnet(&mut self, subnet_id: SyncSubnetId, min_ttl: Instant) {
+    //     match self.sync_committee_subnets.entry(subnet_id) {
+    //         Entry::Vacant(_) => {
+    //             self.sync_committee_subnets.insert(subnet_id, min_ttl);
+    //         }
+    //         Entry::Occupied(old) => {
+    //             if *old.get() < min_ttl {
+    //                 self.sync_committee_subnets.insert(subnet_id, min_ttl);
+    //             }
+    //         }
+    //     }
+    // }
 
     /// The maximum number of peers we allow to connect to us. This is `target_peers` * (1 +
     /// PEER_EXCESS_FACTOR)

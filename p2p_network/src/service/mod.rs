@@ -17,8 +17,6 @@ use crate::types::{
     fork_core_topics, subnet_from_topic_hash, GossipEncoding, GossipKind, GossipTopic,
     SnappyTransform, Subnet, SubnetDiscovery,
 };
-use crate::EnrExt;
-use crate::Eth2Enr;
 use crate::{error, metrics, Enr, NetworkGlobals, PubsubMessage, TopicHash};
 use api_types::{PeerRequestId, Request, RequestId, Response};
 use futures::stream::StreamExt;
@@ -31,16 +29,15 @@ use libp2p::identify;
 use libp2p::multiaddr::{Multiaddr, Protocol as MProtocol};
 use libp2p::swarm::{Swarm, SwarmBuilder, SwarmEvent};
 use libp2p::PeerId;
+use project_types::fork_context::ForkContext;
+use project_types::fork_context::ForkName;
+use project_types::{EthSpec, Slot};
 use slog::{crit, debug, info, o, trace, warn};
 use std::path::PathBuf;
 use std::pin::Pin;
 use std::{
     sync::Arc,
     task::{Context, Poll},
-};
-use types::ForkName;
-use types::{
-    consts::altair::SYNC_COMMITTEE_SUBNET_COUNT, EnrForkId, EthSpec, ForkContext, Slot, SubnetId,
 };
 use utils::{build_transport, strip_peer_id, Context as ServiceContext, MAX_CONNECTIONS_PER_PEER};
 
@@ -221,11 +218,6 @@ impl<AppReqId: ReqId, TSpec: EthSpec> Network<AppReqId, TSpec> {
 
             let possible_fork_digests = ctx.fork_context.all_fork_digests();
             let filter = gossipsub::MaxCountSubscriptionFilter {
-                filter: utils::create_whitelist_filter(
-                    possible_fork_digests,
-                    ctx.chain_spec.attestation_subnet_count,
-                    SYNC_COMMITTEE_SUBNET_COUNT,
-                ),
                 max_subscribed_topics: 200,
                 max_subscriptions_per_request: 150, // 148 in theory = (64 attestation + 4 sync committee + 6 core topics) * 2
             };
@@ -234,11 +226,7 @@ impl<AppReqId: ReqId, TSpec: EthSpec> Network<AppReqId, TSpec> {
                 message_domain_valid_snappy: ctx.chain_spec.message_domain_valid_snappy,
                 gossip_max_size: ctx.chain_spec.gossip_max_size as usize,
             };
-            config.gs_config = gossipsub_config(
-                config.network_load,
-                ctx.fork_context.clone(),
-                gossipsub_config_params,
-            );
+            config.gs_config = gossipsub_config(ctx.fork_context.clone(), gossipsub_config_params);
 
             // If metrics are enabled for gossipsub build the configuration
             let gossipsub_metrics = ctx
