@@ -15,9 +15,9 @@ pub const DEFAULT_TARGET_PEERS: usize = 50;
 pub struct Config {
     /* Peer count related configurations */
     /// Whether discovery is enabled.
-    pub discovery_enabled: bool,
+    // pub discovery_enabled: bool,
     /// Whether metrics are enabled.
-    pub metrics_enabled: bool,
+    // pub metrics_enabled: bool,
     /// Target number of peers to connect to.
     pub target_peer_count: usize,
 
@@ -35,8 +35,8 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            discovery_enabled: true,
-            metrics_enabled: false,
+            // discovery_enabled: true,
+            // metrics_enabled: false,
             target_peer_count: DEFAULT_TARGET_PEERS,
             status_interval: DEFAULT_STATUS_INTERVAL,
             ping_interval_inbound: DEFAULT_PING_INTERVAL_INBOUND,

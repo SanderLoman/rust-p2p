@@ -1,9 +1,13 @@
 use crate::types::{GossipEncoding, GossipKind, GossipTopic};
-use libp2p::gossipsub::{Config as GossipsubConfig, PeerScoreThresholds, TopicScoreParams};
+use crate::{error, TopicHash};
+use libp2p::gossipsub::{
+    Config as GossipsubConfig, IdentTopic as Topic, PeerScoreParams, PeerScoreThresholds,
+    TopicScoreParams,
+};
 use project_types::chain_spec::ChainSpec;
 use project_types::{EthSpec, Slot};
 use std::cmp::max;
-// use std::collections::HashMap;
+use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::time::Duration;
 
@@ -32,7 +36,7 @@ pub fn lighthouse_gossip_thresholds() -> PeerScoreThresholds {
     }
 }
 
-pub struct PeerScoreSettings<TSpec: EthSpec> {
+pub struct PeerScoreSettings {
     slot: Duration,
     epoch: Duration,
 
@@ -47,7 +51,7 @@ pub struct PeerScoreSettings<TSpec: EthSpec> {
     target_committee_size: usize,
     target_aggregators_per_committee: usize,
     attestation_subnet_count: u64,
-    phantom: PhantomData<TSpec>,
+    phantom: PhantomData<()>,
 }
 
 impl<TSpec: EthSpec> PeerScoreSettings<TSpec> {
@@ -78,101 +82,95 @@ impl<TSpec: EthSpec> PeerScoreSettings<TSpec> {
         }
     }
 
-    // pub fn get_peer_score_params(
-    //     &self,
-    //     active_validators: usize,
-    //     thresholds: &PeerScoreThresholds,
-    //     enr_fork_id: &EnrForkId,
-    //     current_slot: Slot,
-    // ) -> error::Result<PeerScoreParams> {
-    //     let mut params = PeerScoreParams {
-    //         decay_interval: self.decay_interval,
-    //         decay_to_zero: self.decay_to_zero,
-    //         retain_score: self.epoch * 100,
-    //         app_specific_weight: 1.0,
-    //         ip_colocation_factor_threshold: 8.0, // Allow up to 8 nodes per IP
-    //         behaviour_penalty_threshold: 6.0,
-    //         behaviour_penalty_decay: self.score_parameter_decay(self.epoch * 10),
-    //         ..Default::default()
-    //     };
+    pub fn get_peer_score_params(
+        &self,
+        active_validators: usize,
+        thresholds: &PeerScoreThresholds,
+        // enr_fork_id: &EnrForkId,
+        current_slot: Slot,
+    ) -> error::Result<PeerScoreParams> {
+        let mut params = PeerScoreParams {
+            decay_interval: self.decay_interval,
+            decay_to_zero: self.decay_to_zero,
+            retain_score: self.epoch * 100,
+            app_specific_weight: 1.0,
+            ip_colocation_factor_threshold: 8.0, // Allow up to 8 nodes per IP
+            behaviour_penalty_threshold: 6.0,
+            behaviour_penalty_decay: self.score_parameter_decay(self.epoch * 10),
+            ..Default::default()
+        };
 
-    //     let target_value = Self::decay_convergence(
-    //         params.behaviour_penalty_decay,
-    //         10.0 / TSpec::slots_per_epoch() as f64,
-    //     ) - params.behaviour_penalty_threshold;
-    //     params.behaviour_penalty_weight = thresholds.gossip_threshold / target_value.powi(2);
+        let target_value = Self::decay_convergence(
+            params.behaviour_penalty_decay,
+            10.0 / TSpec::slots_per_epoch() as f64,
+        ) - params.behaviour_penalty_threshold;
+        params.behaviour_penalty_weight = thresholds.gossip_threshold / target_value.powi(2);
 
-    //     params.topic_score_cap = self.max_positive_score * 0.5;
-    //     params.ip_colocation_factor_weight = -params.topic_score_cap;
+        params.topic_score_cap = self.max_positive_score * 0.5;
+        params.ip_colocation_factor_weight = -params.topic_score_cap;
 
-    //     params.topics = HashMap::new();
+        params.topics = HashMap::new();
 
-    //     let get_hash = |kind: GossipKind| -> TopicHash {
-    //         let topic: Topic =
-    //             GossipTopic::new(kind, GossipEncoding::default(), enr_fork_id.fork_digest).into();
-    //         topic.hash()
-    //     };
+        
+        let get_hash = |kind: GossipKind| -> TopicHash {
+            let topic: Topic =
+                GossipTopic::new(kind, GossipEncoding::default(), ).into();
+            topic.hash()
+        };
 
-    //     //first all fixed topics
-    //     params.topics.insert(
-    //         get_hash(GossipKind::VoluntaryExit),
-    //         Self::get_topic_params(
-    //             self,
-    //             VOLUNTARY_EXIT_WEIGHT,
-    //             4.0 / TSpec::slots_per_epoch() as f64,
-    //             self.epoch * 100,
-    //             None,
-    //         ),
-    //     );
-    //     params.topics.insert(
-    //         get_hash(GossipKind::AttesterSlashing),
-    //         Self::get_topic_params(
-    //             self,
-    //             ATTESTER_SLASHING_WEIGHT,
-    //             1.0 / 5.0 / TSpec::slots_per_epoch() as f64,
-    //             self.epoch * 100,
-    //             None,
-    //         ),
-    //     );
-    //     params.topics.insert(
-    //         get_hash(GossipKind::ProposerSlashing),
-    //         Self::get_topic_params(
-    //             self,
-    //             PROPOSER_SLASHING_WEIGHT,
-    //             1.0 / 5.0 / TSpec::slots_per_epoch() as f64,
-    //             self.epoch * 100,
-    //             None,
-    //         ),
-    //     );
+        //first all fixed topics
+        params.topics.insert(
+            get_hash(GossipKind::VoluntaryExit),
+            Self::get_topic_params(
+                self,
+                VOLUNTARY_EXIT_WEIGHT,
+                4.0 / TSpec::slots_per_epoch() as f64,
+                self.epoch * 100,
+                None,
+            ),
+        );
+        params.topics.insert(
+            get_hash(GossipKind::AttesterSlashing),
+            Self::get_topic_params(
+                self,
+                ATTESTER_SLASHING_WEIGHT,
+                1.0 / 5.0 / TSpec::slots_per_epoch() as f64,
+                self.epoch * 100,
+                None,
+            ),
+        );
+        params.topics.insert(
+            get_hash(GossipKind::ProposerSlashing),
+            Self::get_topic_params(
+                self,
+                PROPOSER_SLASHING_WEIGHT,
+                1.0 / 5.0 / TSpec::slots_per_epoch() as f64,
+                self.epoch * 100,
+                None,
+            ),
+        );
 
-    //     //dynamic topics
-    //     let (beacon_block_params, beacon_aggregate_proof_params, beacon_attestation_subnet_params) =
-    //         self.get_dynamic_topic_params(active_validators, current_slot)?;
+        //dynamic topics
+        let (beacon_block_params, beacon_aggregate_proof_params, beacon_attestation_subnet_params) =
+            self.get_dynamic_topic_params(active_validators, current_slot)?;
 
-    //     params
-    //         .topics
-    //         .insert(get_hash(GossipKind::BeaconBlock), beacon_block_params);
+        params
+            .topics
+            .insert(get_hash(GossipKind::BeaconBlock), beacon_block_params);
 
-    //     params.topics.insert(
-    //         get_hash(GossipKind::BeaconAggregateAndProof),
-    //         beacon_aggregate_proof_params,
-    //     );
+        params.topics.insert(
+            get_hash(GossipKind::BeaconAggregateAndProof),
+            beacon_aggregate_proof_params,
+        );
 
-    //     for i in 0..self.attestation_subnet_count {
-    //         params.topics.insert(
-    //             get_hash(GossipKind::Attestation(SubnetId::new(i))),
-    //             beacon_attestation_subnet_params.clone(),
-    //         );
-    //     }
-
-    //     Ok(params)
-    // }
+        Ok(params)
+    }
 
     pub fn get_dynamic_topic_params(
         &self,
         active_validators: usize,
         current_slot: Slot,
-    ) -> Result<(TopicScoreParams, TopicScoreParams, TopicScoreParams)> {
+    ) -> error::Result<(TopicScoreParams, TopicScoreParams, TopicScoreParams)> {
         let (aggregators_per_slot, committees_per_slot) =
             self.expected_aggregator_count_per_slot(active_validators)?;
         let multiple_bursts_per_subnet_per_epoch = committees_per_slot as u64
@@ -250,7 +248,10 @@ impl<TSpec: EthSpec> PeerScoreSettings<TSpec> {
         Self::decay_convergence(decay, rate) * decay
     }
 
-    fn expected_aggregator_count_per_slot(&self, active_validators: usize) -> Result<(f64, usize)> {
+    fn expected_aggregator_count_per_slot(
+        &self,
+        active_validators: usize,
+    ) -> error::Result<(f64, usize)> {
         let committees_per_slot = TSpec::get_committee_count_per_slot_with(
             active_validators,
             self.max_committees_per_slot,

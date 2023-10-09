@@ -43,10 +43,10 @@ const MAX_INBOUND_SUBSTREAMS: usize = 32;
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
 pub struct SubstreamId(usize);
 
-type InboundSubstream<TSpec> = InboundFramed<Stream, TSpec>;
+type InboundSubstream<TSpec> = InboundFramed<Stream>;
 
 /// Events the handler emits to the behaviour.
-pub type HandlerEvent<Id, T> = Result<RPCReceived<Id, T>, HandlerErr<Id>>;
+pub type HandlerEvent<Id> = Result<RPCReceived<Id>, HandlerErr<Id>>;
 
 /// An error encountered by the handler.
 #[derive(Debug)]
@@ -75,18 +75,15 @@ pub enum HandlerErr<Id> {
 }
 
 /// Implementation of `ConnectionHandler` for the RPC protocol.
-pub struct RPCHandler<Id, TSpec>
-where
-    TSpec: EthSpec,
-{
+pub struct RPCHandler<Id> {
     /// The upgrade for inbound substreams.
-    listen_protocol: SubstreamProtocol<RPCProtocol<TSpec>, ()>,
+    listen_protocol: SubstreamProtocol<RPCProtocol, ()>,
 
     /// Queue of events to produce in `poll()`.
-    events_out: SmallVec<[HandlerEvent<Id, TSpec>; 4]>,
+    events_out: SmallVec<[HandlerEvent<Id>; 4]>,
 
     /// Queue of outbound substreams to open.
-    dial_queue: SmallVec<[(Id, OutboundRequest<TSpec>); 4]>,
+    dial_queue: SmallVec<[(Id, OutboundRequest); 4]>,
 
     /// Current number of concurrent outbound substreams being opened.
     dial_negotiated: u32,

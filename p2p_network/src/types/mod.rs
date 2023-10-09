@@ -5,10 +5,10 @@ mod subnet;
 mod sync_state;
 mod topics;
 
-use project_types::{BitVector, EthSpec};
+use project_types::BitVector;
 
-pub type EnrAttestationBitfield<T> = BitVector<<T as EthSpec>::SubnetBitfieldLength>;
-pub type EnrSyncCommitteeBitfield<T> = BitVector<<T as EthSpec>::SyncCommitteeSubnetCount>;
+pub type EnrAttestationBitfield = BitVector<()>;
+pub type EnrSyncCommitteeBitfield = BitVector<()>;
 
 pub type Enr = discv5::enr::Enr<discv5::enr::CombinedKey>;
 

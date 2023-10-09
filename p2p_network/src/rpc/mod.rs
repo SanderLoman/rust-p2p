@@ -52,41 +52,41 @@ impl<T> ReqId for T where T: Send + 'static + std::fmt::Debug + Copy + Clone {}
 
 /// RPC events sent from Lighthouse.
 #[derive(Debug, Clone)]
-pub enum RPCSend<Id, TSpec: EthSpec> {
+pub enum RPCSend<Id> {
     /// A request sent from Lighthouse.
     ///
     /// The `Id` is given by the application making the request. These
     /// go over *outbound* connections.
-    Request(Id, OutboundRequest<TSpec>),
+    Request(Id, OutboundRequest),
     /// A response sent from Lighthouse.
     ///
     /// The `SubstreamId` must correspond to the RPC-given ID of the original request received from the
     /// peer. The second parameter is a single chunk of a response. These go over *inbound*
     /// connections.
-    Response(SubstreamId, RPCCodedResponse<TSpec>),
+    Response(SubstreamId, RPCCodedResponse),
     /// Lighthouse has requested to terminate the connection with a goodbye message.
     Shutdown(Id, GoodbyeReason),
 }
 
 /// RPC events received from outside Lighthouse.
 #[derive(Debug, Clone)]
-pub enum RPCReceived<Id, T: EthSpec> {
+pub enum RPCReceived<Id> {
     /// A request received from the outside.
     ///
     /// The `SubstreamId` is given by the `RPCHandler` as it identifies this request with the
     /// *inbound* substream over which it is managed.
-    Request(SubstreamId, InboundRequest<T>),
+    Request(SubstreamId, InboundRequest),
     /// A response received from the outside.
     ///
     /// The `Id` corresponds to the application given ID of the original request sent to the
     /// peer. The second parameter is a single chunk of a response. These go over *outbound*
     /// connections.
-    Response(Id, RPCResponse<T>),
+    Response(Id, RPCResponse),
     /// Marks a request as completed
     EndOfStream(Id, ResponseTermination),
 }
 
-impl<T: EthSpec, Id: std::fmt::Debug> std::fmt::Display for RPCSend<Id, T> {
+impl<Id: std::fmt::Debug> std::fmt::Display for RPCSend<Id> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             RPCSend::Request(id, req) => write!(f, "RPC Request(id: {:?}, {})", id, req),
@@ -98,16 +98,16 @@ impl<T: EthSpec, Id: std::fmt::Debug> std::fmt::Display for RPCSend<Id, T> {
 
 /// Messages sent to the user from the RPC protocol.
 #[derive(Debug)]
-pub struct RPCMessage<Id, TSpec: EthSpec> {
+pub struct RPCMessage<Id> {
     /// The peer that sent the message.
     pub peer_id: PeerId,
     /// Handler managing this message.
     pub conn_id: ConnectionId,
     /// The message that was sent.
-    pub event: HandlerEvent<Id, TSpec>,
+    pub event: HandlerEvent<Id>,
 }
 
-type BehaviourAction<Id, TSpec> = ToSwarm<RPCMessage<Id, TSpec>, RPCSend<Id, TSpec>>;
+type BehaviourAction<Id> = ToSwarm<RPCMessage<Id>, RPCSend<Id>>;
 
 pub struct NetworkParams {
     pub max_chunk_size: usize,
@@ -117,11 +117,11 @@ pub struct NetworkParams {
 
 /// Implements the libp2p `NetworkBehaviour` trait and therefore manages network-level
 /// logic.
-pub struct RPC<Id: ReqId, TSpec: EthSpec> {
+pub struct RPC {
     /// Rate limiter
     limiter: Option<RateLimiter>,
     /// Rate limiter for our own requests.
-    self_limiter: Option<SelfRateLimiter<Id, TSpec>>,
+    self_limiter: Option<SelfRateLimiter>,
     /// Queue of events to be processed.
     events: Vec<BehaviourAction<Id, TSpec>>,
     fork_context: Arc<ForkContext>,

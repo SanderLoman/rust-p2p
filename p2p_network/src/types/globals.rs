@@ -5,12 +5,14 @@ use crate::rpc::methods::{MetaData, MetaDataV2};
 // use crate::types::{BackFillState, SyncState};
 // use crate::Client;
 // use crate::EnrExt;
-use crate::types::{Enr, GossipTopic, Multiaddr, PeerId};
+use crate::types::{Enr, GossipTopic};
+use libp2p::core::Multiaddr;
+use libp2p::PeerId;
 use parking_lot::RwLock;
 use project_types::EthSpec;
 use std::collections::HashSet;
 
-pub struct NetworkGlobals<TSpec: EthSpec> {
+pub struct NetworkGlobals {
     /// The current local ENR.
     pub local_enr: RwLock<Enr>,
     /// The local peer_id.
@@ -20,15 +22,15 @@ pub struct NetworkGlobals<TSpec: EthSpec> {
     /// The collection of known peers.
     pub peers: RwLock<PeerDB>,
     // The local meta data of our node.
-    pub local_metadata: RwLock<MetaData<TSpec>>,
+    pub local_metadata: RwLock<MetaData>,
     /// The current gossipsub topic subscriptions.
     pub gossipsub_subscriptions: RwLock<HashSet<GossipTopic>>,
 }
 
-impl<TSpec: EthSpec> NetworkGlobals<TSpec> {
+impl NetworkGlobals {
     pub fn new(
         enr: Enr,
-        local_metadata: MetaData<TSpec>,
+        local_metadata: MetaData,
         trusted_peers: Vec<PeerId>,
         disable_peer_scoring: bool,
         log: &slog::Logger,

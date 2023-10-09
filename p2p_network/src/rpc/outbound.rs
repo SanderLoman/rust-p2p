@@ -24,23 +24,23 @@ use tokio_util::{
 // `OutboundUpgrade`
 
 #[derive(Debug, Clone)]
-pub struct OutboundRequestContainer<TSpec: EthSpec> {
-    pub req: OutboundRequest<TSpec>,
+pub struct OutboundRequestContainer {
+    pub req: OutboundRequest,
     pub fork_context: Arc<ForkContext>,
     pub max_rpc_size: usize,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum OutboundRequest<TSpec: EthSpec> {
+pub enum OutboundRequest {
     Status(StatusMessage),
     Goodbye(GoodbyeReason),
     BlocksByRange(OldBlocksByRangeRequest),
     BlocksByRoot(BlocksByRootRequest),
     Ping(Ping),
-    MetaData(MetadataRequest<TSpec>),
+    MetaData(MetadataRequest),
 }
 
-impl<TSpec: EthSpec> UpgradeInfo for OutboundRequestContainer<TSpec> {
+impl UpgradeInfo for OutboundRequestContainer {
     type Info = ProtocolId;
     type InfoIter = Vec<Self::Info>;
 
@@ -51,7 +51,7 @@ impl<TSpec: EthSpec> UpgradeInfo for OutboundRequestContainer<TSpec> {
 }
 
 /// Implements the encoding per supported protocol for `RPCRequest`.
-impl<TSpec: EthSpec> OutboundRequest<TSpec> {
+impl OutboundRequest {
     pub fn supported_protocols(&self) -> Vec<ProtocolId> {
         match self {
             // add more protocols when versions/encodings are supported
@@ -136,14 +136,13 @@ impl<TSpec: EthSpec> OutboundRequest<TSpec> {
 
 /* Outbound upgrades */
 
-pub type OutboundFramed<TSocket, TSpec> = Framed<Compat<TSocket>, OutboundCodec<TSpec>>;
+pub type OutboundFramed<TSocket> = Framed<Compat<TSocket>, OutboundCodec>;
 
-impl<TSocket, TSpec> OutboundUpgrade<TSocket> for OutboundRequestContainer<TSpec>
+impl<TSocket> OutboundUpgrade<TSocket> for OutboundRequestContainer
 where
-    TSpec: EthSpec + Send + 'static,
     TSocket: AsyncRead + AsyncWrite + Unpin + Send + 'static,
 {
-    type Output = OutboundFramed<TSocket, TSpec>;
+    type Output = OutboundFramed<TSocket>;
     type Error = RPCError;
     type Future = BoxFuture<'static, Result<Self::Output, Self::Error>>;
 
@@ -172,7 +171,7 @@ where
     }
 }
 
-impl<TSpec: EthSpec> std::fmt::Display for OutboundRequest<TSpec> {
+impl std::fmt::Display for OutboundRequest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             OutboundRequest::Status(status) => write!(f, "Status Message: {}", status),

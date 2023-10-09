@@ -56,13 +56,29 @@ impl BeaconBlock {
             proposer_index: 0,
             parent_root: Hash256::zero(),
             state_root: Hash256::zero(),
-            body: BeaconBlockBody::,
+            body: BeaconBlockBody::empty(spec),
         }
     }
 
     /// Custom SSZ decoder that takes a `ChainSpec` as context.
     pub fn from_ssz_bytes(bytes: &[u8], spec: &ChainSpec) -> Result<Self, ssz::DecodeError> {
-        Ok(())
+        let slot_len = <Slot as Decode>::ssz_fixed_len();
+        let slot_bytes = bytes
+            .get(0..slot_len)
+            .ok_or(DecodeError::InvalidByteLength {
+                len: bytes.len(),
+                expected: slot_len,
+            })?;
+
+        let slot = Slot::from_ssz_bytes(slot_bytes)?;
+
+        Ok(BeaconBlock {
+            slot,
+            proposer_index: 0,
+            parent_root: Hash256::zero(),
+            state_root: Hash256::zero(),
+            body: BeaconBlockBody::from_ssz_bytes(bytes, spec)?,
+        })
     }
 
     /// Try decoding each beacon block variant in sequence.

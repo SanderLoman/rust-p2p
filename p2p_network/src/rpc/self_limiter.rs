@@ -24,17 +24,17 @@ struct QueuedRequest<Id: ReqId, TSpec: EthSpec> {
     request_id: Id,
 }
 
-pub(crate) struct SelfRateLimiter<Id: ReqId, TSpec: EthSpec> {
+pub(crate) struct SelfRateLimiter {
     /// Requests queued for sending per peer. This requests are stored when the self rate
     /// limiter rejects them. Rate limiting is based on a Peer and Protocol basis, therefore
     /// are stored in the same way.
-    delayed_requests: HashMap<(PeerId, Protocol), VecDeque<QueuedRequest<Id, TSpec>>>,
+    // delayed_requests: HashMap<(PeerId, Protocol), VecDeque<QueuedRequest<Id, TSpec>>>,
     /// The delay required to allow a peer's outbound request per protocol.
-    next_peer_request: DelayQueue<(PeerId, Protocol)>,
+    // next_peer_request: DelayQueue<(PeerId, Protocol)>,
     /// Rate limiter for our own requests.
-    limiter: RateLimiter,
+    // limiter: RateLimiter,
     /// Requests that are ready to be sent.
-    ready_requests: SmallVec<[BehaviourAction<Id, TSpec>; 3]>,
+    // ready_requests: SmallVec<[BehaviourAction<Id, TSpec>; 3]>,
     /// Slog logger.
     log: Logger,
 }
@@ -48,17 +48,17 @@ pub enum Error {
     RateLimited,
 }
 
-impl<Id: ReqId, TSpec: EthSpec> SelfRateLimiter<Id, TSpec> {
+impl SelfRateLimiter {
     /// Creates a new [`SelfRateLimiter`] based on configration values.
     pub fn new(config: OutboundRateLimiterConfig, log: Logger) -> Result<Self, &'static str> {
         debug!(log, "Using self rate limiting params"; "config" => ?config);
         let limiter = RateLimiter::new_with_config(config.0)?;
 
         Ok(SelfRateLimiter {
-            delayed_requests: Default::default(),
-            next_peer_request: Default::default(),
-            limiter,
-            ready_requests: Default::default(),
+            // delayed_requests: Default::default(),
+            // next_peer_request: Default::default(),
+            // limiter,
+            // ready_requests: Default::default(),
             log,
         })
     }
@@ -69,9 +69,8 @@ impl<Id: ReqId, TSpec: EthSpec> SelfRateLimiter<Id, TSpec> {
     pub fn allows(
         &mut self,
         peer_id: PeerId,
-        request_id: Id,
-        req: OutboundRequest<TSpec>,
-    ) -> Result<BehaviourAction<Id, TSpec>, Error> {
+        req: OutboundRequest,
+    ) -> Result<BehaviourAction, Error> {
         let protocol = req.versioned_protocol().protocol();
         // First check that there are not already other requests waiting to be sent.
         if let Some(queued_requests) = self.delayed_requests.get_mut(&(peer_id, protocol)) {

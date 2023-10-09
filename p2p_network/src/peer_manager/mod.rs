@@ -1,8 +1,7 @@
 //! Implementation of Lighthouse's peer management system.
 
 use crate::rpc::{GoodbyeReason, MetaData, Protocol, RPCError, RPCResponseErrorCode};
-use crate::service::TARGET_SUBNET_PEERS;
-use crate::Gossipsub;
+
 use crate::{NetworkGlobals, PeerId};
 use crate::{Subnet, SubnetDiscovery};
 use delay_map::HashSetDelay;
@@ -10,14 +9,14 @@ use discv5::Enr;
 use libp2p::identify::Info as IdentifyInfo;
 use peerdb::{BanOperation, BanResult, ScoreUpdateResult};
 use project_types::EthSpec;
-use rand::seq::SliceRandom;
+
 use slog::{debug, error, trace, warn};
 use smallvec::SmallVec;
+use std::error::Error;
 use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use strum::IntoEnumIterator;
 
 pub use libp2p::core::Multiaddr;
 pub use libp2p::identity::Keypair;
@@ -30,8 +29,11 @@ pub use peerdb::peer_info::{
 };
 use peerdb::score::{PeerAction, ReportSource};
 pub use peerdb::sync_status::{SyncInfo, SyncStatus};
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::HashMap;
 use std::net::IpAddr;
+
+use config::Config;
+
 pub mod config;
 mod network_behaviour;
 
@@ -62,9 +64,9 @@ pub const MIN_OUTBOUND_ONLY_FACTOR: f32 = 0.2;
 pub const PRIORITY_PEER_EXCESS: f32 = 0.2;
 
 /// The main struct that handles peer's reputation and connection status.
-pub struct PeerManager<TSpec: EthSpec> {
+pub struct PeerManager {
     /// Storage of network globals to access the `PeerDB`.
-    network_globals: Arc<NetworkGlobals<TSpec>>,
+    network_globals: Arc<NetworkGlobals>,
     /// A queue of events that the `PeerManager` is waiting to produce.
     events: SmallVec<[PeerManagerEvent; 16]>,
     /// A collection of inbound-connected peers awaiting to be Ping'd.
@@ -133,14 +135,14 @@ pub enum PeerManagerEvent {
     DiscoverSubnetPeers(Vec<SubnetDiscovery>),
 }
 
-impl<TSpec: EthSpec> PeerManager<TSpec> {
+impl PeerManager {
     // NOTE: Must be run inside a tokio executor.
     pub fn new(
         cfg: config::Config,
-        network_globals: Arc<NetworkGlobals<TSpec>>,
+        network_globals: Arc<NetworkGlobals>,
         log: &slog::Logger,
-    ) -> Result<Self> {
-        let config::Config {
+    ) -> Result<Self, dyn Error> {
+        let Config {
             // discovery_enabled,
             // metrics_enabled,
             target_peer_count,
@@ -635,7 +637,7 @@ impl<TSpec: EthSpec> PeerManager<TSpec> {
     }
 
     /// Received a metadata response from a peer.
-    pub fn meta_data_response(&mut self, peer_id: &PeerId, meta_data: MetaData<TSpec>) {
+    pub fn meta_data_response(&mut self, peer_id: &PeerId, meta_data: MetaData) {
         if let Some(peer_info) = self.network_globals.peers.write().peer_info_mut(peer_id) {
             if let Some(known_meta_data) = &peer_info.meta_data() {
                 if *known_meta_data.seq_number() < *meta_data.seq_number() {
@@ -659,466 +661,412 @@ impl<TSpec: EthSpec> PeerManager<TSpec> {
         }
     }
 
-    /// Updates the gossipsub scores for all known peers in gossipsub.
-    pub(crate) fn update_gossipsub_scores(&mut self, gossipsub: &Gossipsub) {
-        let actions = self
-            .network_globals
-            .peers
-            .write()
-            .update_gossipsub_scores(self.target_peers, gossipsub);
+    // /// Updates the gossipsub scores for all known peers in gossipsub.
+    // pub(crate) fn update_gossipsub_scores(&mut self, gossipsub: &Gossipsub) {
+    //     let actions = self
+    //         .network_globals
+    //         .peers
+    //         .write()
+    //         .update_gossipsub_scores(self.target_peers, gossipsub);
 
-        for (peer_id, score_action) in actions {
-            self.handle_score_action(&peer_id, score_action, None);
-        }
-    }
+    //     for (peer_id, score_action) in actions {
+    //         self.handle_score_action(&peer_id, score_action, None);
+    //     }
+    // }
 
-    // This function updates metrics for all connected peers.
-    fn update_connected_peer_metrics(&self) {
-        // Do nothing if we don't have metrics enabled.
-        if !self.metrics_enabled {
-            return;
-        }
+    // // This function updates metrics for all connected peers.
+    // fn update_connected_peer_metrics(&self) {
+    //     // Do nothing if we don't have metrics enabled.
+    //     if !self.metrics_enabled {
+    //         return;
+    //     }
 
-        let mut connected_peer_count = 0;
-        let mut inbound_connected_peers = 0;
-        let mut outbound_connected_peers = 0;
-        let mut clients_per_peer = HashMap::new();
+    //     let mut connected_peer_count = 0;
+    //     let mut inbound_connected_peers = 0;
+    //     let mut outbound_connected_peers = 0;
+    //     let mut clients_per_peer = HashMap::new();
 
-        for (_peer, peer_info) in self.network_globals.peers.read().connected_peers() {
-            connected_peer_count += 1;
-            if let PeerConnectionStatus::Connected { n_in, .. } = peer_info.connection_status() {
-                if *n_in > 0 {
-                    inbound_connected_peers += 1;
-                } else {
-                    outbound_connected_peers += 1;
-                }
-            }
-            *clients_per_peer
-                .entry(peer_info.client().kind.to_string())
-                .or_default() += 1;
-        }
-    }
+    //     for (_peer, peer_info) in self.network_globals.peers.read().connected_peers() {
+    //         connected_peer_count += 1;
+    //         if let PeerConnectionStatus::Connected { n_in, .. } = peer_info.connection_status() {
+    //             if *n_in > 0 {
+    //                 inbound_connected_peers += 1;
+    //             } else {
+    //                 outbound_connected_peers += 1;
+    //             }
+    //         }
+    //         *clients_per_peer
+    //             .entry(peer_info.client().kind.to_string())
+    //             .or_default() += 1;
+    //     }
+    // }
 
-    /* Internal functions */
+    // /* Internal functions */
+    // /// Sets a peer as connected as long as their reputation allows it
+    // /// Informs if the peer was accepted
+    // fn inject_connect_ingoing(
+    //     &mut self,
+    //     peer_id: &PeerId,
+    //     multiaddr: Multiaddr,
+    //     enr: Option<Enr>,
+    // ) -> bool {
+    //     self.inject_peer_connection(peer_id, ConnectingType::IngoingConnected { multiaddr }, enr)
+    // }
 
-    /// Sets a peer as connected as long as their reputation allows it
-    /// Informs if the peer was accepted
-    fn inject_connect_ingoing(
-        &mut self,
-        peer_id: &PeerId,
-        multiaddr: Multiaddr,
-        enr: Option<Enr>,
-    ) -> bool {
-        self.inject_peer_connection(peer_id, ConnectingType::IngoingConnected { multiaddr }, enr)
-    }
+    // /// Sets a peer as connected as long as their reputation allows it
+    // /// Informs if the peer was accepted
+    // fn inject_connect_outgoing(
+    //     &mut self,
+    //     peer_id: &PeerId,
+    //     multiaddr: Multiaddr,
+    //     enr: Option<Enr>,
+    // ) -> bool {
+    //     self.inject_peer_connection(
+    //         peer_id,
+    //         ConnectingType::OutgoingConnected { multiaddr },
+    //         enr,
+    //     )
+    // }
 
-    /// Sets a peer as connected as long as their reputation allows it
-    /// Informs if the peer was accepted
-    fn inject_connect_outgoing(
-        &mut self,
-        peer_id: &PeerId,
-        multiaddr: Multiaddr,
-        enr: Option<Enr>,
-    ) -> bool {
-        self.inject_peer_connection(
-            peer_id,
-            ConnectingType::OutgoingConnected { multiaddr },
-            enr,
-        )
-    }
+    // /// Updates the state of the peer as disconnected.
+    // ///
+    // /// This is also called when dialing a peer fails.
+    // fn inject_disconnect(&mut self, peer_id: &PeerId) {
+    //     let (ban_operation, purged_peers) = self
+    //         .network_globals
+    //         .peers
+    //         .write()
+    //         .inject_disconnect(peer_id);
 
-    /// Updates the state of the peer as disconnected.
-    ///
-    /// This is also called when dialing a peer fails.
-    fn inject_disconnect(&mut self, peer_id: &PeerId) {
-        let (ban_operation, purged_peers) = self
-            .network_globals
-            .peers
-            .write()
-            .inject_disconnect(peer_id);
+    //     if let Some(ban_operation) = ban_operation {
+    //         // The peer was awaiting a ban, continue to ban the peer.
+    //         self.handle_ban_operation(peer_id, ban_operation, None);
+    //     }
 
-        if let Some(ban_operation) = ban_operation {
-            // The peer was awaiting a ban, continue to ban the peer.
-            self.handle_ban_operation(peer_id, ban_operation, None);
-        }
+    //     // Remove the ping and status timer for the peer
+    //     self.inbound_ping_peers.remove(peer_id);
+    //     self.outbound_ping_peers.remove(peer_id);
+    //     self.status_peers.remove(peer_id);
+    //     self.events.extend(
+    //         purged_peers
+    //             .into_iter()
+    //             .map(|(peer_id, unbanned_ips)| PeerManagerEvent::UnBanned(peer_id, unbanned_ips)),
+    //     );
+    // }
 
-        // Remove the ping and status timer for the peer
-        self.inbound_ping_peers.remove(peer_id);
-        self.outbound_ping_peers.remove(peer_id);
-        self.status_peers.remove(peer_id);
-        self.events.extend(
-            purged_peers
-                .into_iter()
-                .map(|(peer_id, unbanned_ips)| PeerManagerEvent::UnBanned(peer_id, unbanned_ips)),
-        );
-    }
+    // /// Registers a peer as connected. The `ingoing` parameter determines if the peer is being
+    // /// dialed or connecting to us.
+    // ///
+    // /// This is called by `connect_ingoing` and `connect_outgoing`.
+    // ///
+    // /// Informs if the peer was accepted in to the db or not.
+    // fn inject_peer_connection(
+    //     &mut self,
+    //     peer_id: &PeerId,
+    //     connection: ConnectingType,
+    //     enr: Option<Enr>,
+    // ) -> bool {
+    //     {
+    //         let mut peerdb = self.network_globals.peers.write();
+    //         if !matches!(peerdb.ban_status(peer_id), BanResult::NotBanned) {
+    //             // don't connect if the peer is banned
+    //             error!(self.log, "Connection has been allowed to a banned peer"; "peer_id" => %peer_id);
+    //         }
 
-    /// Registers a peer as connected. The `ingoing` parameter determines if the peer is being
-    /// dialed or connecting to us.
-    ///
-    /// This is called by `connect_ingoing` and `connect_outgoing`.
-    ///
-    /// Informs if the peer was accepted in to the db or not.
-    fn inject_peer_connection(
-        &mut self,
-        peer_id: &PeerId,
-        connection: ConnectingType,
-        enr: Option<Enr>,
-    ) -> bool {
-        {
-            let mut peerdb = self.network_globals.peers.write();
-            if !matches!(peerdb.ban_status(peer_id), BanResult::NotBanned) {
-                // don't connect if the peer is banned
-                error!(self.log, "Connection has been allowed to a banned peer"; "peer_id" => %peer_id);
-            }
+    //         match connection {
+    //             ConnectingType::Dialing => {
+    //                 peerdb.dialing_peer(peer_id, enr);
+    //                 return true;
+    //             }
+    //             ConnectingType::IngoingConnected { multiaddr } => {
+    //                 peerdb.connect_ingoing(peer_id, multiaddr, enr);
+    //                 // start a timer to ping inbound peers.
+    //                 self.inbound_ping_peers.insert(*peer_id);
+    //             }
+    //             ConnectingType::OutgoingConnected { multiaddr } => {
+    //                 peerdb.connect_outgoing(peer_id, multiaddr, enr);
+    //                 // start a timer for to ping outbound peers.
+    //                 self.outbound_ping_peers.insert(*peer_id);
+    //             }
+    //         }
+    //     }
 
-            match connection {
-                ConnectingType::Dialing => {
-                    peerdb.dialing_peer(peer_id, enr);
-                    return true;
-                }
-                ConnectingType::IngoingConnected { multiaddr } => {
-                    peerdb.connect_ingoing(peer_id, multiaddr, enr);
-                    // start a timer to ping inbound peers.
-                    self.inbound_ping_peers.insert(*peer_id);
-                }
-                ConnectingType::OutgoingConnected { multiaddr } => {
-                    peerdb.connect_outgoing(peer_id, multiaddr, enr);
-                    // start a timer for to ping outbound peers.
-                    self.outbound_ping_peers.insert(*peer_id);
-                }
-            }
-        }
+    //     // start a ping and status timer for the peer
+    //     self.status_peers.insert(*peer_id);
 
-        // start a ping and status timer for the peer
-        self.status_peers.insert(*peer_id);
+    //     let connected_peers = self.network_globals.connected_peers() as i64;
 
-        let connected_peers = self.network_globals.connected_peers() as i64;
+    //     true
+    // }
 
-        true
-    }
+    // // Gracefully disconnects a peer without banning them.
+    // fn disconnect_peer(&mut self, peer_id: PeerId, reason: GoodbyeReason) {
+    //     self.events
+    //         .push(PeerManagerEvent::DisconnectPeer(peer_id, reason));
+    //     self.network_globals
+    //         .peers
+    //         .write()
+    //         .notify_disconnecting(&peer_id, false);
+    // }
 
-    // Gracefully disconnects a peer without banning them.
-    fn disconnect_peer(&mut self, peer_id: PeerId, reason: GoodbyeReason) {
-        self.events
-            .push(PeerManagerEvent::DisconnectPeer(peer_id, reason));
-        self.network_globals
-            .peers
-            .write()
-            .notify_disconnecting(&peer_id, false);
-    }
+    // /// Run discovery query for additional sync committee peers if we fall below `TARGET_PEERS`.
+    // fn maintain_sync_committee_peers(&mut self) {
+    //     // Remove expired entries
+    //     self.sync_committee_subnets
+    //         .retain(|_, v| *v > Instant::now());
 
-    /// Run discovery query for additional sync committee peers if we fall below `TARGET_PEERS`.
-    fn maintain_sync_committee_peers(&mut self) {
-        // Remove expired entries
-        self.sync_committee_subnets
-            .retain(|_, v| *v > Instant::now());
+    //     let subnets_to_discover: Vec<SubnetDiscovery> = self
+    //         .sync_committee_subnets
+    //         .iter()
+    //         .filter_map(|(k, v)| {
+    //             if self
+    //                 .network_globals
+    //                 .peers
+    //                 .read()
+    //                 .good_peers_on_subnet(Subnet::SyncCommittee(*k))
+    //                 .count()
+    //                 < TARGET_SUBNET_PEERS
+    //             {
+    //                 Some(SubnetDiscovery {
+    //                     subnet: Subnet::SyncCommittee(*k),
+    //                     min_ttl: Some(*v),
+    //                 })
+    //             } else {
+    //                 None
+    //             }
+    //         })
+    //         .collect();
 
-        let subnets_to_discover: Vec<SubnetDiscovery> = self
-            .sync_committee_subnets
-            .iter()
-            .filter_map(|(k, v)| {
-                if self
-                    .network_globals
-                    .peers
-                    .read()
-                    .good_peers_on_subnet(Subnet::SyncCommittee(*k))
-                    .count()
-                    < TARGET_SUBNET_PEERS
-                {
-                    Some(SubnetDiscovery {
-                        subnet: Subnet::SyncCommittee(*k),
-                        min_ttl: Some(*v),
-                    })
-                } else {
-                    None
-                }
-            })
-            .collect();
+    //     // request the subnet query from discovery
+    //     if !subnets_to_discover.is_empty() {
+    //         debug!(
+    //             self.log,
+    //             "Making subnet queries for maintaining sync committee peers";
+    //             "subnets" => ?subnets_to_discover.iter().map(|s| s.subnet).collect::<Vec<_>>()
+    //         );
+    //         self.events
+    //             .push(PeerManagerEvent::DiscoverSubnetPeers(subnets_to_discover));
+    //     }
+    // }
 
-        // request the subnet query from discovery
-        if !subnets_to_discover.is_empty() {
-            debug!(
-                self.log,
-                "Making subnet queries for maintaining sync committee peers";
-                "subnets" => ?subnets_to_discover.iter().map(|s| s.subnet).collect::<Vec<_>>()
-            );
-            self.events
-                .push(PeerManagerEvent::DiscoverSubnetPeers(subnets_to_discover));
-        }
-    }
+    // /// This function checks the status of our current peers and optionally requests a discovery
+    // /// query if we need to find more peers to maintain the current number of peers
+    // fn maintain_peer_count(&mut self, dialing_peers: usize) {
+    //     // Check if we need to do a discovery lookup
+    //     if self.discovery_enabled {
+    //         let peer_count = self.network_globals.connected_or_dialing_peers();
+    //         let outbound_only_peer_count = self.network_globals.connected_outbound_only_peers();
+    //         let wanted_peers = if peer_count < self.target_peers.saturating_sub(dialing_peers) {
+    //             // We need more peers in general.
+    //             // Note: The maximum discovery query is bounded by `Discovery`.
+    //             self.target_peers.saturating_sub(dialing_peers) - peer_count
+    //         } else if outbound_only_peer_count < self.min_outbound_only_peers()
+    //             && peer_count < self.max_outbound_dialing_peers()
+    //         {
+    //             self.max_outbound_dialing_peers()
+    //                 .saturating_sub(dialing_peers)
+    //                 - peer_count
+    //         } else {
+    //             0
+    //         };
 
-    /// This function checks the status of our current peers and optionally requests a discovery
-    /// query if we need to find more peers to maintain the current number of peers
-    fn maintain_peer_count(&mut self, dialing_peers: usize) {
-        // Check if we need to do a discovery lookup
-        if self.discovery_enabled {
-            let peer_count = self.network_globals.connected_or_dialing_peers();
-            let outbound_only_peer_count = self.network_globals.connected_outbound_only_peers();
-            let wanted_peers = if peer_count < self.target_peers.saturating_sub(dialing_peers) {
-                // We need more peers in general.
-                // Note: The maximum discovery query is bounded by `Discovery`.
-                self.target_peers.saturating_sub(dialing_peers) - peer_count
-            } else if outbound_only_peer_count < self.min_outbound_only_peers()
-                && peer_count < self.max_outbound_dialing_peers()
-            {
-                self.max_outbound_dialing_peers()
-                    .saturating_sub(dialing_peers)
-                    - peer_count
-            } else {
-                0
-            };
+    //         if wanted_peers != 0 {
+    //             // We need more peers, re-queue a discovery lookup.
+    //             debug!(self.log, "Starting a new peer discovery query"; "connected" => peer_count, "target" => self.target_peers, "outbound" => outbound_only_peer_count, "wanted" => wanted_peers);
+    //             self.events
+    //                 .push(PeerManagerEvent::DiscoverPeers(wanted_peers));
+    //         }
+    //     }
+    // }
 
-            if wanted_peers != 0 {
-                // We need more peers, re-queue a discovery lookup.
-                debug!(self.log, "Starting a new peer discovery query"; "connected" => peer_count, "target" => self.target_peers, "outbound" => outbound_only_peer_count, "wanted" => wanted_peers);
-                self.events
-                    .push(PeerManagerEvent::DiscoverPeers(wanted_peers));
-            }
-        }
-    }
+    // /// Remove excess peers back down to our target values.
+    // /// This prioritises peers with a good score and uniform distribution of peers across
+    // /// subnets.
+    // ///
+    // /// The logic for the peer pruning is as follows:
+    // ///
+    // /// Global rules:
+    // /// - Always maintain peers we need for a validator duty.
+    // /// - Do not prune outbound peers to exceed our outbound target.
+    // /// - Do not prune more peers than our target peer count.
+    // /// - If we have an option to remove a number of peers, remove ones that have the least
+    // ///     long-lived subnets.
+    // /// - When pruning peers based on subnet count. If multiple peers can be chosen, choose a peer
+    // ///     that is not subscribed to a long-lived sync committee subnet.
+    // /// - When pruning peers based on subnet count, do not prune a peer that would lower us below the
+    // ///     MIN_SYNC_COMMITTEE_PEERS peer count. To keep it simple, we favour a minimum number of sync-committee-peers over
+    // ///     uniformity subnet peers. NOTE: We could apply more sophisticated logic, but the code is
+    // ///     simpler and easier to maintain if we take this approach. If we are pruning subnet peers
+    // ///     below the MIN_SYNC_COMMITTEE_PEERS and maintaining the sync committee peers, this should be
+    // ///     fine as subnet peers are more likely to be found than sync-committee-peers. Also, we're
+    // ///     in a bit of trouble anyway if we have so few peers on subnets. The
+    // ///     MIN_SYNC_COMMITTEE_PEERS
+    // ///     number should be set low as an absolute lower bound to maintain peers on the sync
+    // ///     committees.
+    // /// - Do not prune trusted peers. NOTE: This means if a user has more trusted peers than the
+    // /// excess peer limit, all of the following logic is subverted as we will not prune any peers.
+    // /// Also, the more trusted peers a user has, the less room Lighthouse has to efficiently manage
+    // /// its peers across the subnets.
+    // ///
+    // /// Prune peers in the following order:
+    // /// 1. Remove worst scoring peers
+    // /// 2. Remove peers that are not subscribed to a subnet (they have less value)
+    // /// 3. Remove peers that we have many on any particular subnet
+    // /// 4. Randomly remove peers if all the above are satisfied
+    // ///
+    // fn prune_excess_peers(&mut self) {
+    //     // The current number of connected peers.
+    //     let connected_peer_count = self.network_globals.connected_peers();
+    //     if connected_peer_count <= self.target_peers {
+    //         // No need to prune peers
+    //         return;
+    //     }
 
-    /// Remove excess peers back down to our target values.
-    /// This prioritises peers with a good score and uniform distribution of peers across
-    /// subnets.
-    ///
-    /// The logic for the peer pruning is as follows:
-    ///
-    /// Global rules:
-    /// - Always maintain peers we need for a validator duty.
-    /// - Do not prune outbound peers to exceed our outbound target.
-    /// - Do not prune more peers than our target peer count.
-    /// - If we have an option to remove a number of peers, remove ones that have the least
-    ///     long-lived subnets.
-    /// - When pruning peers based on subnet count. If multiple peers can be chosen, choose a peer
-    ///     that is not subscribed to a long-lived sync committee subnet.
-    /// - When pruning peers based on subnet count, do not prune a peer that would lower us below the
-    ///     MIN_SYNC_COMMITTEE_PEERS peer count. To keep it simple, we favour a minimum number of sync-committee-peers over
-    ///     uniformity subnet peers. NOTE: We could apply more sophisticated logic, but the code is
-    ///     simpler and easier to maintain if we take this approach. If we are pruning subnet peers
-    ///     below the MIN_SYNC_COMMITTEE_PEERS and maintaining the sync committee peers, this should be
-    ///     fine as subnet peers are more likely to be found than sync-committee-peers. Also, we're
-    ///     in a bit of trouble anyway if we have so few peers on subnets. The
-    ///     MIN_SYNC_COMMITTEE_PEERS
-    ///     number should be set low as an absolute lower bound to maintain peers on the sync
-    ///     committees.
-    /// - Do not prune trusted peers. NOTE: This means if a user has more trusted peers than the
-    /// excess peer limit, all of the following logic is subverted as we will not prune any peers.
-    /// Also, the more trusted peers a user has, the less room Lighthouse has to efficiently manage
-    /// its peers across the subnets.
-    ///
-    /// Prune peers in the following order:
-    /// 1. Remove worst scoring peers
-    /// 2. Remove peers that are not subscribed to a subnet (they have less value)
-    /// 3. Remove peers that we have many on any particular subnet
-    /// 4. Randomly remove peers if all the above are satisfied
-    ///
-    fn prune_excess_peers(&mut self) {
-        // The current number of connected peers.
-        let connected_peer_count = self.network_globals.connected_peers();
-        if connected_peer_count <= self.target_peers {
-            // No need to prune peers
-            return;
-        }
+    //     // Keep a list of peers we are pruning.
+    //     let mut peers_to_prune = std::collections::HashSet::new();
+    //     let connected_outbound_peer_count = self.network_globals.connected_outbound_only_peers();
 
-        // Keep a list of peers we are pruning.
-        let mut peers_to_prune = std::collections::HashSet::new();
-        let connected_outbound_peer_count = self.network_globals.connected_outbound_only_peers();
+    //     // Keep track of the number of outbound peers we are pruning.
+    //     let mut outbound_peers_pruned = 0;
 
-        // Keep track of the number of outbound peers we are pruning.
-        let mut outbound_peers_pruned = 0;
+    //     macro_rules! prune_peers {
+    //         ($filter: expr) => {
+    //             let filter = $filter;
+    //             for (peer_id, info) in self
+    //                 .network_globals
+    //                 .peers
+    //                 .read()
+    //                 .worst_connected_peers()
+    //                 .iter()
+    //                 .filter(|(_, info)| {
+    //                     !info.has_future_duty() && !info.is_trusted() && filter(*info)
+    //                 })
+    //             {
+    //                 if peers_to_prune.len()
+    //                     >= connected_peer_count.saturating_sub(self.target_peers)
+    //                 {
+    //                     // We have found all the peers we need to drop, end.
+    //                     break;
+    //                 }
+    //                 if peers_to_prune.contains(*peer_id) {
+    //                     continue;
+    //                 }
+    //                 // Only remove up to the target outbound peer count.
+    //                 if info.is_outbound_only() {
+    //                     if self.target_outbound_peers() + outbound_peers_pruned
+    //                         < connected_outbound_peer_count
+    //                     {
+    //                         outbound_peers_pruned += 1;
+    //                     } else {
+    //                         continue;
+    //                     }
+    //                 }
+    //                 peers_to_prune.insert(**peer_id);
+    //             }
+    //         };
+    //     }
 
-        macro_rules! prune_peers {
-            ($filter: expr) => {
-                let filter = $filter;
-                for (peer_id, info) in self
-                    .network_globals
-                    .peers
-                    .read()
-                    .worst_connected_peers()
-                    .iter()
-                    .filter(|(_, info)| {
-                        !info.has_future_duty() && !info.is_trusted() && filter(*info)
-                    })
-                {
-                    if peers_to_prune.len()
-                        >= connected_peer_count.saturating_sub(self.target_peers)
-                    {
-                        // We have found all the peers we need to drop, end.
-                        break;
-                    }
-                    if peers_to_prune.contains(*peer_id) {
-                        continue;
-                    }
-                    // Only remove up to the target outbound peer count.
-                    if info.is_outbound_only() {
-                        if self.target_outbound_peers() + outbound_peers_pruned
-                            < connected_outbound_peer_count
-                        {
-                            outbound_peers_pruned += 1;
-                        } else {
-                            continue;
-                        }
-                    }
-                    peers_to_prune.insert(**peer_id);
-                }
-            };
-        }
+    //         // Add to the peers to prune mapping
+    //         while peers_to_prune.len() < connected_peer_count.saturating_sub(self.target_peers) {
+    //             if let Some((_, peers_on_subnet)) = subnet_to_peer
+    //                 .iter_mut()
+    //                 .max_by_key(|(_, peers)| peers.len())
+    //             {
+    //                 // and the subnet still contains peers
+    //                 if !peers_on_subnet.is_empty() {
+    //                     // Order the peers by the number of subnets they are long-lived
+    //                     // subscribed too, shuffle equal peers.
+    //                     peers_on_subnet.shuffle(&mut rand::thread_rng());
+    //                     peers_on_subnet.sort_by_key(|(_, info)| info.long_lived_subnet_count());
 
-        // 1. Look through peers that have the worst score (ignoring non-penalized scored peers).
-        prune_peers!(|info: &PeerInfo<TSpec>| { info.score().score() < 0.0 });
+    //                     // Try and find a candidate peer to remove from the subnet.
+    //                     // We ignore peers that would put us below our target outbound peers
+    //                     // and we currently ignore peers that would put us below our
+    //                     // sync-committee threshold, if we can avoid it.
 
-        // 2. Attempt to remove peers that are not subscribed to a subnet, if we still need to
-        //    prune more.
-        if peers_to_prune.len() < connected_peer_count.saturating_sub(self.target_peers) {
-            prune_peers!(|info: &PeerInfo<TSpec>| { !info.has_long_lived_subnet() });
-        }
+    //                     let mut removed_peer_index = None;
+    //                     for (index, (candidate_peer, info)) in peers_on_subnet.iter().enumerate() {
+    //                         // Ensure we don't remove too many outbound peers
+    //                         if info.is_outbound_only()
+    //                             && self.target_outbound_peers()
+    //                                 >= connected_outbound_peer_count
+    //                                     .saturating_sub(outbound_peers_pruned)
+    //                         {
+    //                             // Restart the main loop with the outbound peer removed from
+    //                             // the list. This will lower the peers per subnet count and
+    //                             // potentially a new subnet may be chosen to remove peers. This
+    //                             // can occur recursively until we have no peers left to choose
+    //                             // from.
+    //                             continue;
+    //                         }
 
-        // 3. and 4. Remove peers that are too grouped on any given subnet. If all subnets are
-        //    uniformly distributed, remove random peers.
-        if peers_to_prune.len() < connected_peer_count.saturating_sub(self.target_peers) {
-            // Of our connected peers, build a map from subnet_id -> Vec<(PeerId, PeerInfo)>
-            let mut subnet_to_peer: HashMap<Subnet, Vec<(PeerId, PeerInfo<TSpec>)>> =
-                HashMap::new();
-            // These variables are used to track if a peer is in a long-lived sync-committee as we
-            // may wish to retain this peer over others when pruning.
-            let mut sync_committee_peer_count: HashMap<SyncSubnetId, u64> = HashMap::new();
-            let mut peer_to_sync_committee: HashMap<
-                PeerId,
-                std::collections::HashSet<SyncSubnetId>,
-            > = HashMap::new();
+    //                         // Check the sync committee
+    //                         if let Some(subnets) = peer_to_sync_committee.get(candidate_peer) {
+    //                             // The peer is subscribed to some long-lived sync-committees
+    //                             // Of all the subnets this peer is subscribed too, the minimum
+    //                             // peer count of all of them is min_subnet_count
+    //                             if let Some(min_subnet_count) = subnets
+    //                                 .iter()
+    //                                 .filter_map(|v| sync_committee_peer_count.get(v).copied())
+    //                                 .min()
+    //                             {
+    //                                 // If the minimum count is our target or lower, we
+    //                                 // shouldn't remove this peer, because it drops us lower
+    //                                 // than our target
+    //                                 if min_subnet_count <= MIN_SYNC_COMMITTEE_PEERS {
+    //                                     // Do not drop this peer in this pruning interval
+    //                                     continue;
+    //                                 }
+    //                             }
+    //                         }
 
-            for (peer_id, info) in self.network_globals.peers.read().connected_peers() {
-                // Ignore peers we trust or that we are already pruning
-                if info.is_trusted() || peers_to_prune.contains(peer_id) {
-                    continue;
-                }
+    //                         if info.is_outbound_only() {
+    //                             outbound_peers_pruned += 1;
+    //                         }
+    //                         // This peer is suitable to be pruned
+    //                         removed_peer_index = Some(index);
+    //                         break;
+    //                     }
 
-                // Count based on long-lived subnets not short-lived subnets
-                // NOTE: There are only 4 sync committees. These are likely to be denser than the
-                // subnets, so our priority here to make the subnet peer count uniform, ignoring
-                // the dense sync committees.
-                for subnet in info.long_lived_subnets() {
-                    match subnet {
-                        Subnet::Attestation(_) => {
-                            subnet_to_peer
-                                .entry(subnet)
-                                .or_insert_with(Vec::new)
-                                .push((*peer_id, info.clone()));
-                        }
-                        Subnet::SyncCommittee(id) => {
-                            *sync_committee_peer_count.entry(id).or_default() += 1;
-                            peer_to_sync_committee
-                                .entry(*peer_id)
-                                .or_default()
-                                .insert(id);
-                        }
-                    }
-                }
-            }
+    //                     // If we have successfully found a candidate peer to prune, prune it,
+    //                     // otherwise all peers on this subnet should not be removed due to our
+    //                     // outbound limit or min_subnet_count. In this case, we remove all
+    //                     // peers from the pruning logic and try another subnet.
+    //                     if let Some(index) = removed_peer_index {
+    //                         let (candidate_peer, _) = peers_on_subnet.remove(index);
+    //                         // Remove pruned peers from other subnet counts
+    //                         for subnet_peers in subnet_to_peer.values_mut() {
+    //                             subnet_peers.retain(|(peer_id, _)| peer_id != &candidate_peer);
+    //                         }
+    //                         // Remove pruned peers from all sync-committee counts
+    //                         if let Some(known_sync_committes) =
+    //                             peer_to_sync_committee.get(&candidate_peer)
+    //                         {
+    //                             for sync_committee in known_sync_committes {
+    //                                 if let Some(sync_committee_count) =
+    //                                     sync_committee_peer_count.get_mut(sync_committee)
+    //                                 {
+    //                                     *sync_committee_count =
+    //                                         sync_committee_count.saturating_sub(1);
+    //                                 }
+    //                             }
+    //                         }
+    //                         peers_to_prune.insert(candidate_peer);
+    //                     } else {
+    //                         peers_on_subnet.clear();
+    //                     }
+    //                     continue;
+    //                 }
+    //             }
+    //             // If there are no peers left to prune exit.
+    //             break;
+    //         }
+    //     }
 
-            // Add to the peers to prune mapping
-            while peers_to_prune.len() < connected_peer_count.saturating_sub(self.target_peers) {
-                if let Some((_, peers_on_subnet)) = subnet_to_peer
-                    .iter_mut()
-                    .max_by_key(|(_, peers)| peers.len())
-                {
-                    // and the subnet still contains peers
-                    if !peers_on_subnet.is_empty() {
-                        // Order the peers by the number of subnets they are long-lived
-                        // subscribed too, shuffle equal peers.
-                        peers_on_subnet.shuffle(&mut rand::thread_rng());
-                        peers_on_subnet.sort_by_key(|(_, info)| info.long_lived_subnet_count());
-
-                        // Try and find a candidate peer to remove from the subnet.
-                        // We ignore peers that would put us below our target outbound peers
-                        // and we currently ignore peers that would put us below our
-                        // sync-committee threshold, if we can avoid it.
-
-                        let mut removed_peer_index = None;
-                        for (index, (candidate_peer, info)) in peers_on_subnet.iter().enumerate() {
-                            // Ensure we don't remove too many outbound peers
-                            if info.is_outbound_only()
-                                && self.target_outbound_peers()
-                                    >= connected_outbound_peer_count
-                                        .saturating_sub(outbound_peers_pruned)
-                            {
-                                // Restart the main loop with the outbound peer removed from
-                                // the list. This will lower the peers per subnet count and
-                                // potentially a new subnet may be chosen to remove peers. This
-                                // can occur recursively until we have no peers left to choose
-                                // from.
-                                continue;
-                            }
-
-                            // Check the sync committee
-                            if let Some(subnets) = peer_to_sync_committee.get(candidate_peer) {
-                                // The peer is subscribed to some long-lived sync-committees
-                                // Of all the subnets this peer is subscribed too, the minimum
-                                // peer count of all of them is min_subnet_count
-                                if let Some(min_subnet_count) = subnets
-                                    .iter()
-                                    .filter_map(|v| sync_committee_peer_count.get(v).copied())
-                                    .min()
-                                {
-                                    // If the minimum count is our target or lower, we
-                                    // shouldn't remove this peer, because it drops us lower
-                                    // than our target
-                                    if min_subnet_count <= MIN_SYNC_COMMITTEE_PEERS {
-                                        // Do not drop this peer in this pruning interval
-                                        continue;
-                                    }
-                                }
-                            }
-
-                            if info.is_outbound_only() {
-                                outbound_peers_pruned += 1;
-                            }
-                            // This peer is suitable to be pruned
-                            removed_peer_index = Some(index);
-                            break;
-                        }
-
-                        // If we have successfully found a candidate peer to prune, prune it,
-                        // otherwise all peers on this subnet should not be removed due to our
-                        // outbound limit or min_subnet_count. In this case, we remove all
-                        // peers from the pruning logic and try another subnet.
-                        if let Some(index) = removed_peer_index {
-                            let (candidate_peer, _) = peers_on_subnet.remove(index);
-                            // Remove pruned peers from other subnet counts
-                            for subnet_peers in subnet_to_peer.values_mut() {
-                                subnet_peers.retain(|(peer_id, _)| peer_id != &candidate_peer);
-                            }
-                            // Remove pruned peers from all sync-committee counts
-                            if let Some(known_sync_committes) =
-                                peer_to_sync_committee.get(&candidate_peer)
-                            {
-                                for sync_committee in known_sync_committes {
-                                    if let Some(sync_committee_count) =
-                                        sync_committee_peer_count.get_mut(sync_committee)
-                                    {
-                                        *sync_committee_count =
-                                            sync_committee_count.saturating_sub(1);
-                                    }
-                                }
-                            }
-                            peers_to_prune.insert(candidate_peer);
-                        } else {
-                            peers_on_subnet.clear();
-                        }
-                        continue;
-                    }
-                }
-                // If there are no peers left to prune exit.
-                break;
-            }
-        }
-
-        // Disconnect the pruned peers.
-        for peer_id in peers_to_prune {
-            self.disconnect_peer(peer_id, GoodbyeReason::TooManyPeers);
-        }
-    }
+    //     // Disconnect the pruned peers.
+    //     for peer_id in peers_to_prune {
+    //         self.disconnect_peer(peer_id, GoodbyeReason::TooManyPeers);
+    //     }
 
     /// Unbans any temporarily banned peers that have served their timeout.
     fn unban_temporary_banned_peers(&mut self) {
@@ -1168,14 +1116,12 @@ impl<TSpec: EthSpec> PeerManager<TSpec> {
         self.shrink_mappings();
     }
 
-    // Reduce memory footprint by routinely shrinking associating mappings.
-    fn shrink_mappings(&mut self) {
-        self.inbound_ping_peers.shrink_to(5);
-        self.outbound_ping_peers.shrink_to(5);
-        self.status_peers.shrink_to(5);
-        self.temporary_banned_peers.shrink_to_fit();
-        self.sync_committee_subnets.shrink_to_fit();
-    }
+    // // Reduce memory footprint by routinely shrinking associating mappings.
+    // fn shrink_mappings(&mut self) {
+    //     self.inbound_ping_peers.shrink_to(5);
+    //     self.outbound_ping_peers.shrink_to(5);
+    //     self.status_peers.shrink_to(5);
+    // }
 }
 
 enum ConnectingType {

@@ -204,7 +204,7 @@ impl std::fmt::Display for Encoding {
 }
 
 #[derive(Debug, Clone)]
-pub struct RPCProtocol<TSpec: EthSpec> {
+pub struct RPCProtocol {
     pub fork_context: Arc<ForkContext>,
     pub max_rpc_size: usize,
     pub enable_light_client_server: bool,
@@ -366,16 +366,16 @@ impl ProtocolId {
 // The inbound protocol reads the request, decodes it and returns the stream to the protocol
 // handler to respond to once ready.
 
-pub type InboundOutput<TSocket, TSpec> = (InboundRequest<TSpec>, InboundFramed<TSocket, TSpec>);
-pub type InboundFramed<TSocket, TSpec> =
-    Framed<std::pin::Pin<Box<TimeoutStream<Compat<TSocket>>>>, InboundCodec<TSpec>>;
+pub type InboundOutput<TSocket> = (InboundRequest, InboundFramed<TSocket>);
+pub type InboundFramed<TSocket> =
+    Framed<std::pin::Pin<Box<TimeoutStream<Compat<TSocket>>>>, InboundCodec>;
 
 impl<TSocket, TSpec> InboundUpgrade<TSocket> for RPCProtocol<TSpec>
 where
     TSocket: AsyncRead + AsyncWrite + Unpin + Send + 'static,
     TSpec: EthSpec,
 {
-    type Output = InboundOutput<TSocket, TSpec>;
+    type Output = InboundOutput<TSocket>;
     type Error = RPCError;
     type Future = BoxFuture<'static, Result<Self::Output, Self::Error>>;
 
@@ -427,18 +427,18 @@ where
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum InboundRequest<TSpec: EthSpec> {
+pub enum InboundRequest {
     Status(StatusMessage),
     Goodbye(GoodbyeReason),
     BlocksByRange(OldBlocksByRangeRequest),
     BlocksByRoot(BlocksByRootRequest),
     LightClientBootstrap(LightClientBootstrapRequest),
     Ping(Ping),
-    MetaData(MetadataRequest<TSpec>),
+    MetaData(MetadataRequest),
 }
 
 /// Implements the encoding per supported protocol for `RPCRequest`.
-impl<TSpec: EthSpec> InboundRequest<TSpec> {
+impl InboundRequest {
     /* These functions are used in the handler for stream management */
 
     /// Number of responses expected for this request.
@@ -583,7 +583,7 @@ impl std::error::Error for RPCError {
     }
 }
 
-impl<TSpec: EthSpec> std::fmt::Display for InboundRequest<TSpec> {
+impl std::fmt::Display for InboundRequest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             InboundRequest::Status(status) => write!(f, "Status Message: {}", status),
