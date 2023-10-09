@@ -16,6 +16,9 @@ use crate::rpc::methods::MetadataRequest;
 use crate::rpc::*;
 use crate::service::behaviour::BehaviourEvent;
 pub use crate::service::behaviour::Gossipsub;
+
+todo!("fix crate::types imports");
+
 use crate::types::{
     fork_core_topics, subnet_from_topic_hash, GossipEncoding, GossipKind, GossipTopic,
     SnappyTransform, Subnet, SubnetDiscovery,
@@ -178,6 +181,7 @@ impl Network {
 
         let gossip_cache = {
             let slot_duration = std::time::Duration::from_secs(ctx.chain_spec.seconds_per_slot);
+            todo!("fix ctx.chain_spec.seconds_per_slot");
             let half_epoch = std::time::Duration::from_secs(
                 ctx.chain_spec.seconds_per_slot * TSpec::slots_per_epoch() / 2,
             );
@@ -209,7 +213,7 @@ impl Network {
                 score_settings.get_peer_score_params(
                     active_validators,
                     &thresholds,
-                    &enr_fork_id,
+                    // &enr_fork_id,
                     current_slot,
                 )?
             };
@@ -258,6 +262,8 @@ impl Network {
             ttfb_timeout: ctx.chain_spec.ttfb_timeout(),
             resp_timeout: ctx.chain_spec.resp_timeout(),
         };
+
+        todo!("fix config.enable_light_client_server");
         let eth2_rpc = RPC::new(
             ctx.fork_context.clone(),
             config.enable_light_client_server,
@@ -277,6 +283,7 @@ impl Network {
             )
             .await?;
             // start searching for peers
+            todo!("fix discover_peers, FIND_NODE_QUERY_CLOSEST_PEERS");
             discovery.discover_peers(FIND_NODE_QUERY_CLOSEST_PEERS);
             discovery
         };
@@ -299,8 +306,8 @@ impl Network {
 
         let peer_manager = {
             let peer_manager_cfg = PeerManagerCfg {
-                discovery_enabled: !config.disable_discovery,
-                metrics_enabled: config.metrics_enabled,
+                // discovery_enabled: !config.disable_discovery,
+                // metrics_enabled: config.metrics_enabled,
                 target_peer_count: config.target_peers,
                 ..Default::default()
             };
@@ -375,8 +382,8 @@ impl Network {
         let mut network = Network {
             swarm,
             network_globals,
-            enr_fork_id,
-            network_dir: config.network_dir.clone(),
+            // enr_fork_id,
+            // network_dir: config.network_dir.clone(),
             fork_context: ctx.fork_context,
             score_settings,
             update_gossipsub_scores,

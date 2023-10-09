@@ -280,8 +280,8 @@ impl TaskExecutor {
     {
         let log = self.log.clone();
 
-        let timer = metrics::start_timer_vec(&metrics::BLOCKING_TASKS_HISTOGRAM, &[name]);
-        metrics::inc_gauge_vec(&metrics::BLOCKING_TASKS_COUNT, &[name]);
+        // let timer = metrics::start_timer_vec(&metrics::BLOCKING_TASKS_HISTOGRAM, &[name]);
+        // metrics::inc_gauge_vec(&metrics::BLOCKING_TASKS_COUNT, &[name]);
 
         let join_handle = if let Some(handle) = self.handle() {
             handle.spawn_blocking(task)
@@ -301,8 +301,8 @@ impl TaskExecutor {
                     Err(e)
                 }
             };
-            drop(timer);
-            metrics::dec_gauge_vec(&metrics::BLOCKING_TASKS_COUNT, &[name]);
+            // drop(timer);
+            // metrics::dec_gauge_vec(&metrics::BLOCKING_TASKS_COUNT, &[name]);
             result
         };
 
@@ -327,8 +327,8 @@ impl TaskExecutor {
         future: F,
         name: &'static str,
     ) -> Option<F::Output> {
-        let timer = metrics::start_timer_vec(&metrics::BLOCK_ON_TASKS_HISTOGRAM, &[name]);
-        metrics::inc_gauge_vec(&metrics::BLOCK_ON_TASKS_COUNT, &[name]);
+        // let timer = metrics::start_timer_vec(&metrics::BLOCK_ON_TASKS_HISTOGRAM, &[name]);
+        // metrics::inc_gauge_vec(&metrics::BLOCK_ON_TASKS_COUNT, &[name]);
         let log = self.log.clone();
         let handle = self.handle()?;
         let exit = self.exit.clone();
@@ -358,7 +358,7 @@ impl TaskExecutor {
                     None
                 }
             };
-            drop(timer);
+            // drop(timer);
             output
         })
     }

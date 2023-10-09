@@ -6,10 +6,10 @@ use std::{
 
 use futures::FutureExt;
 use libp2p::{swarm::NotifyHandler, PeerId};
+use project_types::EthSpec;
 use slog::{crit, debug, Logger};
 use smallvec::SmallVec;
 use tokio_util::time::DelayQueue;
-use project_types::EthSpec;
 
 use super::{
     config::OutboundRateLimiterConfig,
@@ -69,8 +69,9 @@ impl SelfRateLimiter {
     pub fn allows(
         &mut self,
         peer_id: PeerId,
+        request_id: Id,
         req: OutboundRequest,
-    ) -> Result<BehaviourAction, Error> {
+    ) -> Result<BehaviourAction<Id>, Error> {
         let protocol = req.versioned_protocol().protocol();
         // First check that there are not already other requests waiting to be sent.
         if let Some(queued_requests) = self.delayed_requests.get_mut(&(peer_id, protocol)) {
