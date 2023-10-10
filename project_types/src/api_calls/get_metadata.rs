@@ -1,9 +1,6 @@
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
 use serde_json::Value;
-use std::error::Error;
-use std::net::Ipv4Addr;
-use std::str::FromStr;
 
 pub async fn get_metadata() -> Result<(String, String, String), Box<dyn std::error::Error>> {
     let client = Client::new();

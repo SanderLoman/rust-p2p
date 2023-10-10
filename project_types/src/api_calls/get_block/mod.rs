@@ -45,6 +45,57 @@ pub struct BeaconBlockBody<T: EthSpec> {
     pub bls_to_execution_changes: Vec<u8>,
 }
 
+impl<T: EthSpec> BeaconBlockBody<T> {
+    pub fn from_ssz_bytes() -> Result<Self, ssz::DecodeError> {
+        let randao_reveal = String::new();
+        let eth1_data = Eth1Data::default();
+        let graffiti = Graffiti::default();
+        let proposer_slashings = Vec::new();
+        let attester_slashings = Vec::new();
+        let attestations = Vec::new();
+        let deposits = Vec::new();
+        let voluntary_exits = Vec::new();
+        let sync_aggregate = SyncAggregate {
+            sync_committee_bits: String::new(),
+            sync_committee_signature: String::new(),
+        };
+
+        let execution_payload = ExecutionPayload {
+            parent_hash: ExecutionBlockHash::default(),
+            fee_recipient: Address::default(),
+            state_root: Hash256::default(),
+            receipts_root: Hash256::default(),
+            logs_bloom: FixedVector::default(),
+            prev_randao: Hash256::default(),
+            block_number: 0,
+            gas_limit: 0,
+            gas_used: 0,
+            timestamp: 0,
+            extra_data: VariableList::default(),
+            base_fee_per_gas: Uint256::default(),
+            block_hash: ExecutionBlockHash::default(),
+            transactions: Transactions::<T>::default(),
+            withdrawals: Withdrawals::<T>::default(),
+        };
+
+        let bls_to_execution_changes = Vec::new();
+
+        Ok(BeaconBlockBody {
+            randao_reveal,
+            eth1_data,
+            graffiti,
+            proposer_slashings,
+            attester_slashings,
+            attestations,
+            deposits,
+            voluntary_exits,
+            sync_aggregate,
+            execution_payload,
+            bls_to_execution_changes,
+        })
+    }
+}
+
 pub struct BeaconBlock<T: EthSpec> {
     pub slot: Slot,
     pub proposer_index: u64,
@@ -155,24 +206,16 @@ pub struct ExecutionPayload<T: EthSpec> {
     pub state_root: Hash256,
     pub receipts_root: Hash256,
 
-    #[serde(with = "ssz_types::serde_utils::hex_fixed_vec")]
     pub logs_bloom: FixedVector<u8, T::BytesPerLogsBloom>,
 
     pub prev_randao: Hash256,
-    #[serde(with = "serde_utils::quoted_u64")]
     pub block_number: u64,
-    #[serde(with = "serde_utils::quoted_u64")]
     pub gas_limit: u64,
-    #[serde(with = "serde_utils::quoted_u64")]
     pub gas_used: u64,
-    #[serde(with = "serde_utils::quoted_u64")]
     pub timestamp: u64,
-    #[serde(with = "ssz_types::serde_utils::hex_var_list")]
     pub extra_data: VariableList<u8, T::MaxExtraDataBytes>,
-    #[serde(with = "serde_utils::quoted_u256")]
     pub base_fee_per_gas: Uint256,
     pub block_hash: ExecutionBlockHash,
-    #[serde(with = "ssz_types::serde_utils::list_of_hex_var_list")]
     pub transactions: Transactions<T>,
     pub withdrawals: Withdrawals<T>,
 }
@@ -180,4 +223,12 @@ pub struct ExecutionPayload<T: EthSpec> {
 pub struct SignedBeaconBlock<T: EthSpec> {
     pub message: BeaconBlock<T>,
     pub signature: Signature,
+}
+
+// Needed for the Withdrawals type
+pub struct Withdrawal {
+    pub index: u64,
+    pub validator_index: u64,
+    pub address: Address,
+    pub amount: u64,
 }
