@@ -3,6 +3,7 @@
 pub mod eth1_data;
 pub mod graffiti;
 
+use derivative::Derivative;
 use eth1_data::Eth1Data;
 use ethereum_types::Address;
 use graffiti::Graffiti;
@@ -11,8 +12,11 @@ use reqwest::{
     Client,
 };
 use serde::de::Error;
-use ssz::{Decode, DecodeError};
+use serde_derive::{Serialize, Deserialize};
+use ssz::{Decode, DecodeError, Encode};
+use ssz_derive::Encode;
 use ssz_types::{BitVector, FixedVector, VariableList};
+use tree_hash_derive::TreeHash;
 
 use crate::{
     chain_spec::ChainSpec,
@@ -60,20 +64,32 @@ pub struct SyncAggregate {
     pub sync_committee_signature: Signature,
 }
 
+#[derive(
+    Debug, Clone, Serialize, Encode, Deserialize, TreeHash, Derivative, arbitrary::Arbitrary,
+)]
+#[arbitrary(bound = "T: EthSpec")]
 pub struct ExecutionPayload<T: EthSpec> {
     pub parent_hash: ExecutionBlockHash,
     pub fee_recipient: Address,
     pub state_root: Hash256,
     pub receipts_root: Hash256,
+    #[serde(with = "ssz_types::serde_utils::hex_fixed_vec")]
     pub logs_bloom: FixedVector<u8, T::BytesPerLogsBloom>,
     pub prev_randao: Hash256,
+    #[serde(with = "serde_utils::quoted_u64")]
     pub block_number: u64,
+    #[serde(with = "serde_utils::quoted_u64")]
     pub gas_limit: u64,
+    #[serde(with = "serde_utils::quoted_u64")]
     pub gas_used: u64,
+    #[serde(with = "serde_utils::quoted_u64")]
     pub timestamp: u64,
+    #[serde(with = "ssz_types::serde_utils::hex_var_list")]
     pub extra_data: VariableList<u8, T::MaxExtraDataBytes>,
+    #[serde(with = "serde_utils::quoted_u256")]
     pub base_fee_per_gas: Uint256,
     pub block_hash: ExecutionBlockHash,
+    #[serde(with = "ssz_types::serde_utils::list_of_hex_var_list")]
     pub transactions: Transactions<T>,
     pub withdrawals: Withdrawals<T>,
 }
@@ -84,6 +100,7 @@ pub struct SignedBeaconBlock<T: EthSpec> {
 }
 
 // Needed for the Withdrawals type
+#[derive(Debug, Clone, Serialize, Encode, Deserialize, TreeHash, Derivative)]
 pub struct Withdrawal {
     pub index: u64,
     pub validator_index: u64,
