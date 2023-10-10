@@ -4,6 +4,7 @@ pub mod eth1_data;
 pub mod graffiti;
 
 use eth1_data::Eth1Data;
+use ethereum_types::Address;
 use graffiti::Graffiti;
 use reqwest::{
     header::{HeaderMap, ACCEPT},
@@ -11,17 +12,26 @@ use reqwest::{
 };
 use serde::de::Error;
 use ssz::{Decode, DecodeError};
-use ssz_types::VariableList;
-
-pub type Signature = String;
+use ssz_types::{FixedVector, VariableList};
 
 use crate::{
     chain_spec::ChainSpec,
+    execution_block_hash::ExecutionBlockHash,
     fork_context::{Fork, ForkName},
-    Epoch, EthSpec, Hash256, Slot,
+    Epoch, EthSpec, Hash256, Slot, Uint256,
 };
 
-pub struct BeaconBlockBody {
+pub type Signature = String;
+
+pub type Transaction<N> = VariableList<u8, N>;
+pub type Transactions<T> = VariableList<
+    Transaction<<T as EthSpec>::MaxBytesPerTransaction>,
+    <T as EthSpec>::MaxTransactionsPerPayload,
+>;
+
+pub type Withdrawals<T> = VariableList<Withdrawal, <T as EthSpec>::MaxWithdrawalsPerPayload>;
+
+pub struct BeaconBlockBody<T: EthSpec> {
     pub randao_reveal: String,
     pub eth1_data: Eth1Data,
     pub graffiti: Graffiti,
@@ -31,35 +41,19 @@ pub struct BeaconBlockBody {
     pub deposits: Vec<u8>,
     pub voluntary_exits: Vec<u8>,
     pub sync_aggregate: SyncAggregate,
-    pub execution_payload: ExecutionPayload,
+    pub execution_payload: ExecutionPayload<T>,
+    pub bls_to_execution_changes: Vec<u8>,
 }
 
-pub struct BeaconBlock {
+pub struct BeaconBlock<T: EthSpec> {
     pub slot: Slot,
     pub proposer_index: u64,
     pub parent_root: Hash256,
     pub state_root: Hash256,
-    pub body: BeaconBlockBody,
+    pub body: BeaconBlockBody<T>,
 }
 
-/// Empty block trait for each block variant to implement.
-pub trait EmptyBlock {
-    /// Returns an empty block to be used during genesis.
-    fn empty(spec: &ChainSpec) -> Self;
-}
-
-impl BeaconBlock {
-    /// Returns an empty block to be used during genesis.
-    pub fn empty(spec: &ChainSpec) -> Self {
-        BeaconBlock {
-            slot: Slot::new(0),
-            proposer_index: 0,
-            parent_root: Hash256::zero(),
-            state_root: Hash256::zero(),
-            body: BeaconBlockBody::empty(spec),
-        }
-    }
-
+impl<T: EthSpec> BeaconBlock<T> {
     /// Custom SSZ decoder that takes a `ChainSpec` as context.
     pub fn from_ssz_bytes(bytes: &[u8], spec: &ChainSpec) -> Result<Self, ssz::DecodeError> {
         let slot_len = <Slot as Decode>::ssz_fixed_len();
@@ -131,35 +125,6 @@ impl BeaconBlock {
     // }
 }
 
-impl EmptyBlock for BeaconBlock {
-    /// Returns an empty Capella block to be used during genesis.
-    fn empty(spec: &ChainSpec) -> Self {
-        BeaconBlock {
-            slot: spec.genesis_slot,
-            proposer_index: 0,
-            parent_root: Hash256::zero(),
-            state_root: Hash256::zero(),
-            body: BeaconBlockBody {
-                randao_reveal: Signature::empty(),
-                eth1_data: Eth1Data {
-                    deposit_root: Hash256::zero(),
-                    block_hash: Hash256::zero(),
-                    deposit_count: 0,
-                },
-                graffiti: Graffiti::default(),
-                proposer_slashings: VariableList::empty(),
-                attester_slashings: VariableList::empty(),
-                attestations: VariableList::empty(),
-                deposits: VariableList::empty(),
-                voluntary_exits: VariableList::empty(),
-                sync_aggregate: SyncAggregate::empty(),
-                execution_payload: Payload::Capella::default(),
-                bls_to_execution_changes: VariableList::empty(),
-            },
-        }
-    }
-}
-
 pub struct Checkpoint {
     pub epoch: Epoch,
     pub root: Hash256,
@@ -184,12 +149,35 @@ pub struct SyncAggregate {
     pub sync_committee_signature: Signature,
 }
 
-pub struct ExecutionPayload {
-    pub parent_hash: Hash256,
-    pub fee_recipient: String,
+pub struct ExecutionPayload<T: EthSpec> {
+    pub parent_hash: ExecutionBlockHash,
+    pub fee_recipient: Address,
+    pub state_root: Hash256,
+    pub receipts_root: Hash256,
+
+    #[serde(with = "ssz_types::serde_utils::hex_fixed_vec")]
+    pub logs_bloom: FixedVector<u8, T::BytesPerLogsBloom>,
+
+    pub prev_randao: Hash256,
+    #[serde(with = "serde_utils::quoted_u64")]
+    pub block_number: u64,
+    #[serde(with = "serde_utils::quoted_u64")]
+    pub gas_limit: u64,
+    #[serde(with = "serde_utils::quoted_u64")]
+    pub gas_used: u64,
+    #[serde(with = "serde_utils::quoted_u64")]
+    pub timestamp: u64,
+    #[serde(with = "ssz_types::serde_utils::hex_var_list")]
+    pub extra_data: VariableList<u8, T::MaxExtraDataBytes>,
+    #[serde(with = "serde_utils::quoted_u256")]
+    pub base_fee_per_gas: Uint256,
+    pub block_hash: ExecutionBlockHash,
+    #[serde(with = "ssz_types::serde_utils::list_of_hex_var_list")]
+    pub transactions: Transactions<T>,
+    pub withdrawals: Withdrawals<T>,
 }
 
-pub struct SignedBeaconBlock {
-    pub message: BeaconBlock,
+pub struct SignedBeaconBlock<T: EthSpec> {
+    pub message: BeaconBlock<T>,
     pub signature: Signature,
 }

@@ -13,9 +13,7 @@ use libp2p::{core, noise, yamux, PeerId, Transport, TransportExt};
 use libp2p_quic;
 use project_types::chain_spec::ChainSpec;
 use project_types::fork_context::ForkContext;
-use project_types::{EthSpec, 
-    // SubnetId, SyncSubnetId
-};
+use project_types::EthSpec;
 use prometheus_client::registry::Registry;
 use slog::{debug, warn};
 use ssz::Decode;
@@ -48,7 +46,7 @@ type BoxedTransport = Boxed<(PeerId, StreamMuxerBox)>;
 pub fn build_transport(
     local_private_key: Keypair,
     quic_support: bool,
-) -> std::io::Result<(BoxedTransport, Arc<BandwidthSinks>)> {
+) -> std::io::Result<BoxedTransport> {
     // mplex config
     let mut mplex_config = libp2p_mplex::MplexConfig::new();
     mplex_config.set_max_buffer_size(256);
@@ -74,7 +72,7 @@ pub fn build_transport(
         ))
         .timeout(Duration::from_secs(10));
 
-    let (transport, bandwidth) = if quic_support {
+    let transport = if quic_support {
         // Enables Quic
         // The default quic configuration suits us for now.
         let quic_config = libp2p_quic::Config::new(&local_private_key);
@@ -91,7 +89,7 @@ pub fn build_transport(
     // // Enables DNS over the transport.
     let transport = libp2p::dns::TokioDnsConfig::system(transport)?.boxed();
 
-    Ok((transport, bandwidth))
+    Ok(transport)
 }
 
 // Useful helper functions for debugging. Currently not used in the client.

@@ -1,6 +1,7 @@
 use self::behaviour::Behaviour;
 use self::gossip_cache::GossipCache;
 use crate::config::{gossipsub_config, GossipsubConfigParams};
+use crate::discovery::enr::generate_enr;
 use crate::discovery::{
     // subnet_predicate,
     DiscoveredPeers,
@@ -46,6 +47,8 @@ use std::{
     task::{Context, Poll},
 };
 use utils::{build_transport, strip_peer_id, Context as ServiceContext, MAX_CONNECTIONS_PER_PEER};
+
+use project_types::api_calls::get_metadata::get_metadata;
 
 pub mod api_types;
 mod behaviour;
@@ -121,12 +124,12 @@ pub struct Network {
     // network_dir: PathBuf,
     fork_context: Arc<ForkContext>,
     /// Gossipsub score parameters.
-    score_settings: PeerScoreSettings,
+    // score_settings: PeerScoreSettings,
     /// The interval for updating gossipsub scores
     update_gossipsub_scores: tokio::time::Interval,
     gossip_cache: GossipCache,
     /// The bandwidth logger for the underlying libp2p transport.
-    pub bandwidth: Arc<BandwidthSinks>,
+    // pub bandwidth: Arc<BandwidthSinks>,
     /// This node's PeerId.
     pub local_peer_id: PeerId,
     /// Logger for behaviour actions.
@@ -149,14 +152,10 @@ impl Network {
         // set up a collection of variables accessible outside of the network crate
         let network_globals = {
             // Create an ENR or load from disk if appropriate
-            let enr = crate::discovery::enr::build_or_load_enr::<TSpec>(
-                local_keypair.clone(),
-                &config,
-                &ctx.enr_fork_id,
-                &log,
-            )?;
+            let enr: discv5::enr::Enr<discv5::enr::CombinedKey> =
+                generate_enr(log.clone()).await?.1;
             // Construct the metadata
-            let meta_data = utils::load_or_build_metadata(&config.network_dir, &log);
+            let meta_data: MetaData = MetaData::V2(get_metadata());
             let globals = NetworkGlobals::new(
                 enr,
                 meta_data,
@@ -165,7 +164,7 @@ impl Network {
                     .iter()
                     .map(|x| PeerId::from(x.clone()))
                     .collect(),
-                config.disable_peer_scoring,
+                config,
                 &log,
             );
             Arc::new(globals)
@@ -349,7 +348,7 @@ impl Network {
             }
         };
 
-        let (swarm, bandwidth) = {
+        let swarm = {
             // Set up the transport - tcp/ws with noise and mplex
             let (transport, bandwidth) =
                 build_transport(local_keypair.clone(), !config.disable_quic_support)
@@ -365,18 +364,10 @@ impl Network {
 
             // sets up the libp2p connection limits
 
-            (
-                SwarmBuilder::with_executor(
-                    transport,
-                    behaviour,
-                    local_peer_id,
-                    Executor(executor),
-                )
+            SwarmBuilder::with_executor(transport, behaviour, local_peer_id, Executor(executor))
                 .notify_handler_buffer_size(std::num::NonZeroUsize::new(7).expect("Not zero"))
                 .per_connection_event_buffer_size(4)
-                .build(),
-                bandwidth,
-            )
+                .build();
         };
 
         let mut network = Network {
@@ -385,10 +376,10 @@ impl Network {
             // enr_fork_id,
             // network_dir: config.network_dir.clone(),
             fork_context: ctx.fork_context,
-            score_settings,
+            // score_settings,
             update_gossipsub_scores,
             gossip_cache,
-            bandwidth,
+            // bandwidth,
             local_peer_id,
             log,
         };
