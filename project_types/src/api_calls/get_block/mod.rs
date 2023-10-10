@@ -12,7 +12,7 @@ use reqwest::{
 };
 use serde::de::Error;
 use ssz::{Decode, DecodeError};
-use ssz_types::{FixedVector, VariableList};
+use ssz_types::{BitVector, FixedVector, VariableList};
 
 use crate::{
     chain_spec::ChainSpec,
@@ -31,6 +31,66 @@ pub type Transactions<T> = VariableList<
 
 pub type Withdrawals<T> = VariableList<Withdrawal, <T as EthSpec>::MaxWithdrawalsPerPayload>;
 
+pub trait EmptyBlock {
+    /// Returns an empty block to be used during genesis.
+    fn empty(spec: &ChainSpec) -> Self;
+}
+
+pub struct Checkpoint {
+    pub epoch: Epoch,
+    pub root: Hash256,
+}
+
+pub struct AttestationData {
+    pub slot: Slot,
+    pub index: u64,
+    pub beacon_block_root: Hash256,
+    pub source: Checkpoint,
+    pub target: Checkpoint,
+}
+
+pub struct Attestation {
+    pub aggregation_bits: String,
+    pub data: AttestationData,
+    pub signature: Signature,
+}
+
+pub struct SyncAggregate {
+    pub sync_committee_bits: String,
+    pub sync_committee_signature: Signature,
+}
+
+pub struct ExecutionPayload<T: EthSpec> {
+    pub parent_hash: ExecutionBlockHash,
+    pub fee_recipient: Address,
+    pub state_root: Hash256,
+    pub receipts_root: Hash256,
+    pub logs_bloom: FixedVector<u8, T::BytesPerLogsBloom>,
+    pub prev_randao: Hash256,
+    pub block_number: u64,
+    pub gas_limit: u64,
+    pub gas_used: u64,
+    pub timestamp: u64,
+    pub extra_data: VariableList<u8, T::MaxExtraDataBytes>,
+    pub base_fee_per_gas: Uint256,
+    pub block_hash: ExecutionBlockHash,
+    pub transactions: Transactions<T>,
+    pub withdrawals: Withdrawals<T>,
+}
+
+pub struct SignedBeaconBlock<T: EthSpec> {
+    pub message: BeaconBlock<T>,
+    pub signature: Signature,
+}
+
+// Needed for the Withdrawals type
+pub struct Withdrawal {
+    pub index: u64,
+    pub validator_index: u64,
+    pub address: Address,
+    pub amount: u64,
+}
+
 pub struct BeaconBlockBody<T: EthSpec> {
     pub randao_reveal: String,
     pub eth1_data: Eth1Data,
@@ -43,6 +103,14 @@ pub struct BeaconBlockBody<T: EthSpec> {
     pub sync_aggregate: SyncAggregate,
     pub execution_payload: ExecutionPayload<T>,
     pub bls_to_execution_changes: Vec<u8>,
+}
+
+pub struct BeaconBlock<T: EthSpec> {
+    pub slot: Slot,
+    pub proposer_index: u64,
+    pub parent_root: Hash256,
+    pub state_root: Hash256,
+    pub body: BeaconBlockBody<T>,
 }
 
 impl<T: EthSpec> BeaconBlockBody<T> {
@@ -96,14 +164,6 @@ impl<T: EthSpec> BeaconBlockBody<T> {
     }
 }
 
-pub struct BeaconBlock<T: EthSpec> {
-    pub slot: Slot,
-    pub proposer_index: u64,
-    pub parent_root: Hash256,
-    pub state_root: Hash256,
-    pub body: BeaconBlockBody<T>,
-}
-
 impl<T: EthSpec> BeaconBlock<T> {
     /// Custom SSZ decoder that takes a `ChainSpec` as context.
     pub fn from_ssz_bytes(bytes: &[u8], spec: &ChainSpec) -> Result<Self, ssz::DecodeError> {
@@ -122,7 +182,7 @@ impl<T: EthSpec> BeaconBlock<T> {
             proposer_index: 0,
             parent_root: Hash256::zero(),
             state_root: Hash256::zero(),
-            body: BeaconBlockBody::from_ssz_bytes(bytes, spec)?,
+            body: BeaconBlockBody::from_ssz_bytes(),
         })
     }
 
@@ -176,59 +236,100 @@ impl<T: EthSpec> BeaconBlock<T> {
     // }
 }
 
-pub struct Checkpoint {
-    pub epoch: Epoch,
-    pub root: Hash256,
+impl<T: EthSpec> BeaconBlock<T> {
+    /// Return a Capella block where the block has maximum size.
+    pub fn full(spec: &ChainSpec) -> Self {
+        // let base_block: BeaconBlockBase<_, Payload> = BeaconBlockBase::full(spec);
+        let bls_to_execution_changes = vec![
+            SignedBlsToExecutionChange {
+                message: BlsToExecutionChange {
+                    validator_index: 0,
+                    from_bls_pubkey: PublicKeyBytes::empty(),
+                    to_execution_address: Address::zero(),
+                },
+                signature: Signature::empty()
+            };
+            T::max_bls_to_execution_changes()
+        ]
+        .into();
+        let sync_aggregate = SyncAggregate {
+            sync_committee_signature: AggregateSignature::empty(),
+            sync_committee_bits: BitVector::default(),
+        };
+        BeaconBlock {
+            slot: spec.genesis_slot,
+            proposer_index: 0,
+            parent_root: Hash256::zero(),
+            state_root: Hash256::zero(),
+            body: BeaconBlockBody {
+                proposer_slashings: base_block.body.proposer_slashings,
+                attester_slashings: base_block.body.attester_slashings,
+                attestations: base_block.body.attestations,
+                deposits: base_block.body.deposits,
+                voluntary_exits: base_block.body.voluntary_exits,
+                bls_to_execution_changes,
+                sync_aggregate,
+                randao_reveal: Signature::default(),
+                eth1_data: Eth1Data {
+                    deposit_root: Hash256::zero(),
+                    block_hash: Hash256::zero(),
+                    deposit_count: 0,
+                },
+                graffiti: Graffiti::default(),
+                execution_payload: ExecutionPayload::default(),
+            },
+        }
+    }
 }
 
-pub struct AttestationData {
-    pub slot: Slot,
-    pub index: u64,
-    pub beacon_block_root: Hash256,
-    pub source: Checkpoint,
-    pub target: Checkpoint,
+impl<T: EthSpec> EmptyBlock for BeaconBlock<T> {
+    /// Returns an empty Capella block to be used during genesis.
+    fn empty(spec: &ChainSpec) -> Self {
+        BeaconBlock {
+            slot: spec.genesis_slot,
+            proposer_index: 0,
+            parent_root: Hash256::zero(),
+            state_root: Hash256::zero(),
+            body: BeaconBlockBody {
+                randao_reveal: Signature::default(),
+                eth1_data: Eth1Data {
+                    deposit_root: Hash256::zero(),
+                    block_hash: Hash256::zero(),
+                    deposit_count: 0,
+                },
+                graffiti: Graffiti::default(),
+                proposer_slashings: VariableList::empty(),
+                attester_slashings: VariableList::empty(),
+                attestations: VariableList::empty(),
+                deposits: VariableList::empty(),
+                voluntary_exits: VariableList::empty(),
+                sync_aggregate: SyncAggregate::empty(),
+                execution_payload: ExecutionPayload,
+                bls_to_execution_changes: VariableList::empty(),
+            },
+        }
+    }
 }
 
-pub struct Attestation {
-    pub aggregation_bits: String,
-    pub data: AttestationData,
-    pub signature: Signature,
-}
-
-pub struct SyncAggregate {
-    pub sync_committee_bits: String,
-    pub sync_committee_signature: Signature,
-}
-
-pub struct ExecutionPayload<T: EthSpec> {
-    pub parent_hash: ExecutionBlockHash,
-    pub fee_recipient: Address,
-    pub state_root: Hash256,
-    pub receipts_root: Hash256,
-
-    pub logs_bloom: FixedVector<u8, T::BytesPerLogsBloom>,
-
-    pub prev_randao: Hash256,
-    pub block_number: u64,
-    pub gas_limit: u64,
-    pub gas_used: u64,
-    pub timestamp: u64,
-    pub extra_data: VariableList<u8, T::MaxExtraDataBytes>,
-    pub base_fee_per_gas: Uint256,
-    pub block_hash: ExecutionBlockHash,
-    pub transactions: Transactions<T>,
-    pub withdrawals: Withdrawals<T>,
-}
-
-pub struct SignedBeaconBlock<T: EthSpec> {
-    pub message: BeaconBlock<T>,
-    pub signature: Signature,
-}
-
-// Needed for the Withdrawals type
-pub struct Withdrawal {
-    pub index: u64,
-    pub validator_index: u64,
-    pub address: Address,
-    pub amount: u64,
+impl<T: EthSpec> ExecutionPayload<T> {
+    /// Returns an empty Capella execution payload to be used during genesis.
+    pub fn empty() -> Self {
+        ExecutionPayload {
+            parent_hash: ExecutionBlockHash::default(),
+            fee_recipient: Address::default(),
+            state_root: Hash256::default(),
+            receipts_root: Hash256::default(),
+            logs_bloom: FixedVector::default(),
+            prev_randao: Hash256::default(),
+            block_number: 0,
+            gas_limit: 0,
+            gas_used: 0,
+            timestamp: 0,
+            extra_data: VariableList::default(),
+            base_fee_per_gas: Uint256::default(),
+            block_hash: ExecutionBlockHash::default(),
+            transactions: Transactions::<T>::default(),
+            withdrawals: Withdrawals::<T>::default(),
+        }
+    }
 }
