@@ -2,6 +2,12 @@
 
 pub mod eth1_data;
 pub mod graffiti;
+pub mod attestation;
+pub mod attestation_data;
+pub mod checkpoint;
+pub mod sync_aggregate;
+pub mod execution_payload;
+pub mod withdrawal;
 
 use derivative::Derivative;
 use eth1_data::Eth1Data;
@@ -12,7 +18,7 @@ use reqwest::{
     Client,
 };
 use serde::de::Error;
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 use ssz::{Decode, DecodeError, Encode};
 use ssz_derive::Encode;
 use ssz_types::{BitVector, FixedVector, VariableList};
@@ -25,6 +31,8 @@ use crate::{
     Epoch, EthSpec, Hash256, Slot, Uint256,
 };
 
+use self::{attestation::Attestation, sync_aggregate::SyncAggregate, execution_payload::{ExecutionPayload, Withdrawals}};
+
 pub type Signature = String;
 
 pub type Transaction<N> = VariableList<u8, N>;
@@ -33,79 +41,14 @@ pub type Transactions<T> = VariableList<
     <T as EthSpec>::MaxTransactionsPerPayload,
 >;
 
-pub type Withdrawals<T> = VariableList<Withdrawal, <T as EthSpec>::MaxWithdrawalsPerPayload>;
-
 pub trait EmptyBlock {
     /// Returns an empty block to be used during genesis.
     fn empty(spec: &ChainSpec) -> Self;
 }
 
-pub struct Checkpoint {
-    pub epoch: Epoch,
-    pub root: Hash256,
-}
-
-pub struct AttestationData {
-    pub slot: Slot,
-    pub index: u64,
-    pub beacon_block_root: Hash256,
-    pub source: Checkpoint,
-    pub target: Checkpoint,
-}
-
-pub struct Attestation {
-    pub aggregation_bits: String,
-    pub data: AttestationData,
-    pub signature: Signature,
-}
-
-pub struct SyncAggregate {
-    pub sync_committee_bits: String,
-    pub sync_committee_signature: Signature,
-}
-
-#[derive(
-    Debug, Clone, Serialize, Encode, Deserialize, TreeHash, Derivative, arbitrary::Arbitrary,
-)]
-#[arbitrary(bound = "T: EthSpec")]
-pub struct ExecutionPayload<T: EthSpec> {
-    pub parent_hash: ExecutionBlockHash,
-    pub fee_recipient: Address,
-    pub state_root: Hash256,
-    pub receipts_root: Hash256,
-    #[serde(with = "ssz_types::serde_utils::hex_fixed_vec")]
-    pub logs_bloom: FixedVector<u8, T::BytesPerLogsBloom>,
-    pub prev_randao: Hash256,
-    #[serde(with = "serde_utils::quoted_u64")]
-    pub block_number: u64,
-    #[serde(with = "serde_utils::quoted_u64")]
-    pub gas_limit: u64,
-    #[serde(with = "serde_utils::quoted_u64")]
-    pub gas_used: u64,
-    #[serde(with = "serde_utils::quoted_u64")]
-    pub timestamp: u64,
-    #[serde(with = "ssz_types::serde_utils::hex_var_list")]
-    pub extra_data: VariableList<u8, T::MaxExtraDataBytes>,
-    #[serde(with = "serde_utils::quoted_u256")]
-    pub base_fee_per_gas: Uint256,
-    pub block_hash: ExecutionBlockHash,
-    #[serde(with = "ssz_types::serde_utils::list_of_hex_var_list")]
-    pub transactions: Transactions<T>,
-    pub withdrawals: Withdrawals<T>,
-}
-
 pub struct SignedBeaconBlock<T: EthSpec> {
     pub message: BeaconBlock<T>,
     pub signature: Signature,
-}
-
-// Needed for the Withdrawals type
-#[derive(Debug, Clone, Serialize, Encode, Deserialize, TreeHash, Derivative)]
-pub struct Withdrawal {
-    pub index: u64,
-    pub validator_index: u64,
-    pub address: Address,
-    pub amount: u64,
 }
 
 pub struct BeaconBlockBody<T: EthSpec> {
@@ -182,7 +125,6 @@ impl<T: EthSpec> BeaconBlockBody<T> {
 }
 
 impl<T: EthSpec> BeaconBlock<T> {
-    /// Custom SSZ decoder that takes a `ChainSpec` as context.
     pub fn from_ssz_bytes(bytes: &[u8], spec: &ChainSpec) -> Result<Self, ssz::DecodeError> {
         let slot_len = <Slot as Decode>::ssz_fixed_len();
         let slot_bytes = bytes
@@ -203,54 +145,9 @@ impl<T: EthSpec> BeaconBlock<T> {
         })
     }
 
-    /// Try decoding each beacon block variant in sequence.
-    ///
-    /// This is *not* recommended unless you really have no idea what variant the block should be.
-    /// Usually it's better to prefer `from_ssz_bytes` which will decode the correct variant based
-    /// on the fork slot.
     pub fn any_from_ssz_bytes(bytes: &[u8]) -> Result<Self, ssz::DecodeError> {
         BeaconBlock::from_ssz_bytes(bytes, &ChainSpec::mainnet())
     }
-
-    // /// Convenience accessor for the `body` as a `BeaconBlockBodyRef`.
-    // pub fn body(&self) -> BeaconBlockBodyRef<'_, T, Payload> {
-    //     self.to_ref().body()
-    // }
-
-    // /// Convenience accessor for the `body` as a `BeaconBlockBodyRefMut`.
-    // pub fn body_mut(&mut self) -> BeaconBlockBodyRefMut<'_, T, Payload> {
-    //     self.to_mut().body_mut()
-    // }
-
-    // /// Returns the epoch corresponding to `self.slot()`.
-    // pub fn epoch(&self) -> Epoch {
-    //     self.slot().epoch(T::slots_per_epoch())
-    // }
-
-    // /// Returns the `tree_hash_root` of the block.
-    // pub fn canonical_root(&self) -> Hash256 {
-    //     self.tree_hash_root()
-    // }
-
-    // /// Returns a full `BeaconBlockHeader` of this block.
-    // ///
-    // /// Note: This method is used instead of an `Into` impl to avoid a `Clone` of an entire block
-    // /// when you want to have the block _and_ the header.
-    // ///
-    // /// Note: performs a full tree-hash of `self.body`.
-    // pub fn block_header(&self) -> BeaconBlockHeader {
-    //     self.to_ref().block_header()
-    // }
-
-    // /// Returns a "temporary" header, where the `state_root` is `Hash256::zero()`.
-    // pub fn temporary_block_header(&self) -> BeaconBlockHeader {
-    //     self.to_ref().temporary_block_header()
-    // }
-
-    // /// Return the tree hash root of the block's body.
-    // pub fn body_root(&self) -> Hash256 {
-    //     self.to_ref().body_root()
-    // }
 }
 
 impl<T: EthSpec> BeaconBlock<T> {
@@ -293,60 +190,9 @@ impl<T: EthSpec> BeaconBlock<T> {
                     deposit_count: 0,
                 },
                 graffiti: Graffiti::default(),
-                execution_payload: ExecutionPayload::default(),
+                execution_payload: ExecutionPayload::,
             },
         }
     }
 }
 
-impl<T: EthSpec> EmptyBlock for BeaconBlock<T> {
-    /// Returns an empty Capella block to be used during genesis.
-    fn empty(spec: &ChainSpec) -> Self {
-        BeaconBlock {
-            slot: spec.genesis_slot,
-            proposer_index: 0,
-            parent_root: Hash256::zero(),
-            state_root: Hash256::zero(),
-            body: BeaconBlockBody {
-                randao_reveal: Signature::default(),
-                eth1_data: Eth1Data {
-                    deposit_root: Hash256::zero(),
-                    block_hash: Hash256::zero(),
-                    deposit_count: 0,
-                },
-                graffiti: Graffiti::default(),
-                proposer_slashings: VariableList::empty(),
-                attester_slashings: VariableList::empty(),
-                attestations: VariableList::empty(),
-                deposits: VariableList::empty(),
-                voluntary_exits: VariableList::empty(),
-                sync_aggregate: SyncAggregate::empty(),
-                execution_payload: ExecutionPayload,
-                bls_to_execution_changes: VariableList::empty(),
-            },
-        }
-    }
-}
-
-impl<T: EthSpec> ExecutionPayload<T> {
-    /// Returns an empty Capella execution payload to be used during genesis.
-    pub fn empty() -> Self {
-        ExecutionPayload {
-            parent_hash: ExecutionBlockHash::default(),
-            fee_recipient: Address::default(),
-            state_root: Hash256::default(),
-            receipts_root: Hash256::default(),
-            logs_bloom: FixedVector::default(),
-            prev_randao: Hash256::default(),
-            block_number: 0,
-            gas_limit: 0,
-            gas_used: 0,
-            timestamp: 0,
-            extra_data: VariableList::default(),
-            base_fee_per_gas: Uint256::default(),
-            block_hash: ExecutionBlockHash::default(),
-            transactions: Transactions::<T>::default(),
-            withdrawals: Withdrawals::<T>::default(),
-        }
-    }
-}
