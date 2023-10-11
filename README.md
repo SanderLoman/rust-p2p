@@ -1,3 +1,5 @@
+![Repo Banner 👌](assets/repo_banner.png)
+
 # Custom Ethereum Beacon Node in Rust
 
 ## Overview
