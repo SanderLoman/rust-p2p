@@ -9,6 +9,8 @@ pub mod graffiti;
 pub mod sync_aggregate;
 pub mod withdrawal;
 
+use std::marker::PhantomData;
+
 use derivative::Derivative;
 use eth1_data::Eth1Data;
 use ethereum_types::Address;
@@ -20,7 +22,7 @@ use reqwest::{
 use serde::de::Error;
 use serde_derive::{Deserialize, Serialize};
 use ssz::{Decode, DecodeError, Encode};
-use ssz_derive::Encode;
+use ssz_derive::{Encode, Decode};
 use ssz_types::{BitVector, FixedVector, VariableList};
 use tree_hash_derive::TreeHash;
 
@@ -55,18 +57,28 @@ pub struct SignedBeaconBlock<T: EthSpec> {
     pub signature: Signature,
 }
 
+#[derive(
+    Debug, Clone, Serialize, Deserialize, Derivative, Encode, Decode, TreeHash, arbitrary::Arbitrary,
+)]
 pub struct BeaconBlockBody<T: EthSpec> {
-    pub randao_reveal: String,
+    pub randao_reveal: Signature,
     pub eth1_data: Eth1Data,
     pub graffiti: Graffiti,
-    pub proposer_slashings: Vec<u8>,
-    pub attester_slashings: Vec<u8>,
-    pub attestations: Vec<Attestation>,
-    pub deposits: Vec<u8>,
-    pub voluntary_exits: Vec<u8>,
-    pub sync_aggregate: SyncAggregate,
-    pub execution_payload: ExecutionPayload<T>,
-    pub bls_to_execution_changes: Vec<u8>,
+    pub proposer_slashings: VariableList<ProposerSlashing, T::MaxProposerSlashings>,
+    pub attester_slashings: VariableList<AttesterSlashing<T>, T::MaxAttesterSlashings>,
+    pub attestations: VariableList<Attestation<T>, T::MaxAttestations>,
+    pub deposits: VariableList<Deposit, T::MaxDeposits>,
+    pub voluntary_exits: VariableList<SignedVoluntaryExit, T::MaxVoluntaryExits>,
+    pub sync_aggregate: SyncAggregate<T>,
+    #[serde(flatten)]
+    pub execution_payload: Payload::Capella,
+    pub bls_to_execution_changes:
+        VariableList<SignedBlsToExecutionChange, T::MaxBlsToExecutionChanges>,
+    #[ssz(skip_serializing, skip_deserializing)]
+    #[tree_hash(skip_hashing)]
+    #[serde(skip)]
+    #[arbitrary(default)]
+    pub _phantom: PhantomData<Payload>,
 }
 
 pub struct BeaconBlock<T: EthSpec> {
