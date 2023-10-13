@@ -3,9 +3,11 @@
 pub mod attestation;
 pub mod attestation_data;
 pub mod checkpoint;
+pub mod deposit;
 pub mod eth1_data;
 pub mod execution_payload;
 pub mod graffiti;
+pub mod proposer_slashing;
 pub mod sync_aggregate;
 pub mod withdrawal;
 
@@ -22,7 +24,7 @@ use reqwest::{
 use serde::de::Error;
 use serde_derive::{Deserialize, Serialize};
 use ssz::{Decode, DecodeError, Encode};
-use ssz_derive::{Encode, Decode};
+use ssz_derive::{Decode, Encode};
 use ssz_types::{BitVector, FixedVector, VariableList};
 use tree_hash_derive::TreeHash;
 
@@ -35,7 +37,9 @@ use crate::{
 
 use self::{
     attestation::Attestation,
+    deposit::Deposit,
     execution_payload::{ExecutionPayload, Withdrawals},
+    proposer_slashing::ProposerSlashing,
     sync_aggregate::SyncAggregate,
 };
 
@@ -66,19 +70,19 @@ pub struct BeaconBlockBody<T: EthSpec> {
     pub graffiti: Graffiti,
     pub proposer_slashings: VariableList<ProposerSlashing, T::MaxProposerSlashings>,
     pub attester_slashings: VariableList<AttesterSlashing<T>, T::MaxAttesterSlashings>,
-    pub attestations: VariableList<Attestation<T>, T::MaxAttestations>,
+    pub attestations: VariableList<Attestation, T::MaxAttestations>,
     pub deposits: VariableList<Deposit, T::MaxDeposits>,
     pub voluntary_exits: VariableList<SignedVoluntaryExit, T::MaxVoluntaryExits>,
-    pub sync_aggregate: SyncAggregate<T>,
+    pub sync_aggregate: SyncAggregate,
     #[serde(flatten)]
-    pub execution_payload: Payload::Capella,
+    pub execution_payload: ExecutionPayload<T>,
     pub bls_to_execution_changes:
         VariableList<SignedBlsToExecutionChange, T::MaxBlsToExecutionChanges>,
     #[ssz(skip_serializing, skip_deserializing)]
     #[tree_hash(skip_hashing)]
     #[serde(skip)]
     #[arbitrary(default)]
-    pub _phantom: PhantomData<Payload>,
+    pub _phantom: PhantomData<ExecutionPayload<T>>,
 }
 
 pub struct BeaconBlock<T: EthSpec> {
