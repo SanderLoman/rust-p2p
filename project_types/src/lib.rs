@@ -8,6 +8,9 @@ pub mod task_executor;
 
 pub mod api_calls;
 
+// Redirecting to Lighthouse's beacon node
+pub mod redirect;
+
 pub use eth_spec::EthSpec;
 pub use ssz_types::{typenum, typenum::Unsigned, BitList, BitVector, FixedVector, VariableList};
 

@@ -2,7 +2,7 @@ use derivative::Derivative;
 use ethereum_types::Address;
 use serde_derive::{Deserialize, Serialize};
 use ssz::Encode;
-use ssz_derive::{Decode, Encode};
+use ssz_derive::Encode;
 use ssz_types::{FixedVector, VariableList};
 use tree_hash_derive::TreeHash;
 
@@ -12,18 +12,7 @@ use super::{withdrawal::Withdrawal, Transactions};
 
 pub type Withdrawals<T> = VariableList<Withdrawal, <T as EthSpec>::MaxWithdrawalsPerPayload>;
 
-#[derive(
-    Default,
-    Debug,
-    Clone,
-    Serialize,
-    Deserialize,
-    Encode,
-    Decode,
-    TreeHash,
-    Derivative,
-    arbitrary::Arbitrary,
-)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, Encode, TreeHash, Derivative)]
 
 pub struct ExecutionPayload<T: EthSpec> {
     pub parent_hash: ExecutionBlockHash,
@@ -63,6 +52,20 @@ pub struct ExecutionPayload<T: EthSpec> {
     pub transactions: Transactions<T>,
 
     pub withdrawals: Withdrawals<T>,
+}
+
+impl<T: EthSpec + ssz::Decode> ssz::Decode for ExecutionPayload<T> {
+    fn is_ssz_fixed_len() -> bool {
+        todo!()
+    }
+
+    fn from_ssz_bytes(bytes: &[u8]) -> Result<Self, ssz::DecodeError> {
+        todo!()
+    }
+
+    fn ssz_fixed_len() -> usize {
+        todo!()
+    }
 }
 
 impl<T: EthSpec> ExecutionPayload<T> {

@@ -79,9 +79,9 @@ pub enum Response<TSpec: EthSpec> {
     /// A Status message.
     Status(StatusMessage),
     /// A response to a get BLOCKS_BY_RANGE request. A None response signals the end of the batch.
-    BlocksByRange(Option<Arc<SignedBeaconBlock>>),
+    BlocksByRange(Option<Arc<SignedBeaconBlock<TSpec>>>),
     /// A response to a get BLOCKS_BY_ROOT request.
-    BlocksByRoot(Option<Arc<SignedBeaconBlock>>),
+    BlocksByRoot(Option<Arc<SignedBeaconBlock<TSpec>>>),
 }
 
 impl<TSpec: EthSpec> std::convert::From<Response<TSpec>> for RPCCodedResponse<TSpec> {

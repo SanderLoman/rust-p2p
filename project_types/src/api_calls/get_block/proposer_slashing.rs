@@ -18,9 +18,6 @@ use super::Signature;
     Clone,
     Serialize,
     Deserialize,
-    Encode,
-    Decode,
-    TreeHash,
 )]
 pub struct ProposerSlashing {
     pub signed_header_1: SignedBeaconBlockHeader,
@@ -43,9 +40,6 @@ impl ProposerSlashing {
     Hash,
     Serialize,
     Deserialize,
-    Encode,
-    Decode,
-    TreeHash,
 )]
 pub struct SignedBeaconBlockHeader {
     pub message: BeaconBlockHeader,
