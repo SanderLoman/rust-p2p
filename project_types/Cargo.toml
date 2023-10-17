@@ -24,3 +24,4 @@ exit-future = "0.2.0"
 futures = "0.3.28"
 tokio = { version = "1.12.0", features = ["full"] }
 slog = "2.7.0"
+hyper = "0.14.27"

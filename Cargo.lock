@@ -3124,6 +3124,7 @@ dependencies = [
  "ethereum_ssz_derive",
  "exit-future",
  "futures",
+ "hyper",
  "parking_lot 0.12.1",
  "regex",
  "reqwest",

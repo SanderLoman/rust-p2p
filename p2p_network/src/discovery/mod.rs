@@ -1,38 +1,42 @@
 #![deny(unsafe_code)]
 
+pub mod enr;
+
+// use clap::{App, Arg};
+// use discv5::*;
+// use discv5::{
+//     // enr as discv5_enr, enr::CombinedKey, handler, kbucket, metrics, packet, permit_ban, rpc,
+//     // service, socket,
+//     // Discv5,
+//     // Discv5Config, Discv5ConfigBuilder, Discv5Event,
+//     // Enr,
+//     // ListenConfig,
+// };
+// use futures::Future;
+// use libp2p::swarm::dummy::ConnectionHandler;
+// use libp2p::swarm::NetworkBehaviour;
+use libp2p::PeerId;
+// use lru::LruCache;
+// use slog::Logger;
+// use std::error::Error;
+// use std::net::Ipv4Addr;
+// use std::num::NonZeroUsize;
+// use std::pin::Pin;
+// use std::time::Duration;
+use std::{collections::HashMap, time::Instant};
+// use void::Void;
+
 #[derive(Debug)]
 pub struct DiscoveredPeers {
     pub peers: HashMap<PeerId, Option<Instant>>,
 }
 
-pub(crate) mod enr;
-
-use clap::{App, Arg};
-use discv5::*;
-use discv5::{
-    enr as discv5_enr, enr::CombinedKey, handler, kbucket, metrics, packet, permit_ban, rpc,
-    service, socket, Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Event, Enr, ListenConfig,
-};
-use futures::Future;
-use libp2p::swarm::dummy::ConnectionHandler;
-use libp2p::swarm::NetworkBehaviour;
-use libp2p::PeerId;
-use lru::LruCache;
-use slog::Logger;
-use std::error::Error;
-use std::net::Ipv4Addr;
-use std::num::NonZeroUsize;
-use std::pin::Pin;
-use std::time::Duration;
-use std::{collections::HashMap, time::Instant};
-use void::Void;
-
-pub struct Discovery {
-    cached_enrs: LruCache<PeerId, Enr>,
-    enr: Enr,
-    discv5: Discv5,
-    log: Logger,
-}
+// pub struct Discovery {
+//     cached_enrs: LruCache<PeerId, Enr>,
+//     enr: Enr,
+//     discv5: Discv5,
+//     log: Logger,
+// }
 
 // impl Discovery {
 //     pub async fn new(log: slog::Logger) -> Result<Self, Box<dyn Error>> {
