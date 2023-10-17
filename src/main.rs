@@ -4,6 +4,8 @@ use dotenv::dotenv;
 use eyre::Result;
 use std::error::Error;
 
+use proxy::redirect::log_statics;
+
 // use slog::{crit, debug, error, info, trace, warn};
 
 use wagmi::{create_logger, parse_verbosity};
@@ -17,6 +19,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let log = create_logger(verbosity);
 
     generate_enr(log.clone()).await?;
+
+    log_statics(log.clone()).await;
 
     Ok(())
 }

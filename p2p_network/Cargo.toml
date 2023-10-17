@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-project_types = { version = "0.1.0", path = "../project_types" }
+proxy = { version = "0.1.0", path = "../proxy" }
 eyre = "0.6.5"
 discv5 = { version = "0.3.0", features = ["libp2p"] }
 reqwest = "0.11.18"
@@ -18,18 +18,18 @@ tokio = "1.29.1"
 void = "1.0.2"
 ethereum_ssz = "0.5.3"
 ethereum_ssz_derive = "0.5.3"
-lru = "0.11.0"
+lru = "0.12.0"
 get_if_addrs = "0.5.3"
 clap = "2.33.3"
 tiny-keccak = "2.0.2"
-unsigned-varint = { version = "0.6.0", features = ["codec"] }
+unsigned-varint = { version = "0.7.2", features = ["codec"] }
 ssz_types = "0.5.3"
 serde = { version = "1.0.116", features = ["derive"] }
 serde_derive = "1.0.116"
 tree_hash = "0.5.0"
 tree_hash_derive = "0.5.0"
 error-chain = "0.12.4"
-dirs = "3.0.1"
+dirs = "5.0.1"
 fnv = "1.0.7"
 fixed-hash = "0.8.0"
 lazy_static = "1.4.0"
@@ -42,7 +42,7 @@ hex = "0.4.2"
 tokio-util = { version = "0.6.2", features = ["codec", "compat", "time"] }
 rand = "0.8.5"
 regex = "1.5.5"
-strum = { version = "0.24.0", features = ["derive"] }
+strum = { version = "0.25.0", features = ["derive"] }
 superstruct = "0.7.0"
 prometheus-client = "0.21.0"
 delay_map = "0.3.0"
