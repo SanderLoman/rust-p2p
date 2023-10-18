@@ -1,3 +1,4 @@
+pub mod network_manager;
 /// Disabled for now, I wanna test the redirect first
 // pub mod network;
 /// Disabled for now, I wanna test the redirect first
