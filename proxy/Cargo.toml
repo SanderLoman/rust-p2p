@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+strum = "0.25.0"
+strum_macros = "0.25.3"
 ethereum-types = "0.14.1"
 parking_lot = "0.12.1"
 tree_hash = { version = "0.5.2", features = ["arbitrary"] }

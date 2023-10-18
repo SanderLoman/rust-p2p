@@ -1,3 +1,4 @@
+pub mod network;
 pub mod redirect;
 
 use lazy_static::lazy_static;
@@ -11,7 +12,7 @@ use std::sync::Mutex;
 
 lazy_static! {
     // The IP address of the real beacon node
-    static ref REAL_BEACON_NODE_IP_ADDR: Mutex<Option<SocketAddr>> = Mutex::new(None); // meer memory
+    static ref REAL_BEACON_NODE_IP_ADDR: Mutex<Option<SocketAddr>> = Mutex::new(None);
     // The TCP multiaddr of the real beacon node
     static ref REAL_BEACON_NODE_MULTIADDR: Mutex<Option<Multiaddr>> = Mutex::new(None);
 }

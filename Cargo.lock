@@ -4215,6 +4215,8 @@ dependencies = [
  "serde_json",
  "slog",
  "ssz_types",
+ "strum",
+ "strum_macros",
  "tokio",
  "tree_hash",
  "tree_hash_derive",
