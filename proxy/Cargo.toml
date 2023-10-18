@@ -4,7 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+tokio-util = { version = "0.7.9", features = ["compat"] }
+tokio-io-timeout = "1.2.0"
 strum = "0.25.0"
+superstruct = "0.7.0"
 strum_macros = "0.25.3"
 ethereum-types = "0.14.1"
 parking_lot = "0.12.1"

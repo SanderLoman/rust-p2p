@@ -1,4 +1,7 @@
-pub mod network;
+/// Disabled for now, I wanna test the redirect first
+// pub mod network;
+/// Disabled for now, I wanna test the redirect first
+// pub mod SSZ;
 pub mod redirect;
 
 use lazy_static::lazy_static;

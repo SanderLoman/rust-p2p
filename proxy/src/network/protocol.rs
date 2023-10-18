@@ -1,8 +1,23 @@
-use std::{marker::PhantomData, sync::Arc, time::Duration};
-
-use libp2p::core::UpgradeInfo;
+use super::methods::*;
+use crate::network::methods::{
+    MaxErrorLen, MaxRequestBlocks, ResponseTermination, MAX_ERROR_LEN, MAX_REQUEST_BLOCKS,
+};
+use crate::SSZ::{base::BaseInboundCodec, ssz_snappy::SSZSnappyInboundCodec, InboundCodec};
+use futures::future::BoxFuture;
+use futures::prelude::{AsyncRead, AsyncWrite};
+use futures::{FutureExt, StreamExt};
+use libp2p::core::{InboundUpgrade, UpgradeInfo};
 use ssz::Encode;
-use strum_macros::{AsRefStr, Display, EnumString};
+use std::io;
+use std::marker::PhantomData;
+use std::sync::Arc;
+use std::time::Duration;
+use strum::{AsRefStr, Display, EnumString, IntoStaticStr};
+use tokio_io_timeout::TimeoutStream;
+use tokio_util::{
+    codec::Framed,
+    compat::{Compat, FuturesAsyncReadCompatExt},
+};
 
 /// The protocol prefix the RPC protocol id.
 const PROTOCOL_PREFIX: &str = "/eth2/beacon_chain/req";
@@ -241,7 +256,7 @@ impl ProtocolId {
     }
 
     /// Returns min and max size for messages of given protocol id responses.
-    pub fn rpc_response_limits<T: EthSpec>(&self, fork_context: &ForkContext) -> RpcLimits {
+    pub fn rpc_response_limits(&self, fork_context: &ForkContext) -> RpcLimits {
         match self.versioned_protocol.protocol() {
             Protocol::Status => RpcLimits::new(
                 <StatusMessage as Encode>::ssz_fixed_len(),
@@ -255,8 +270,8 @@ impl ProtocolId {
                 <Ping as Encode>::ssz_fixed_len(),
             ),
             Protocol::MetaData => RpcLimits::new(
-                <MetaDataV1<T> as Encode>::ssz_fixed_len(),
-                <MetaDataV2<T> as Encode>::ssz_fixed_len(),
+                <MetaDataV1 as Encode>::ssz_fixed_len(),
+                <MetaDataV2 as Encode>::ssz_fixed_len(),
             ),
             Protocol::LightClientBootstrap => RpcLimits::new(
                 <LightClientBootstrapRequest as Encode>::ssz_fixed_len(),
@@ -298,6 +313,254 @@ impl ProtocolId {
             versioned_protocol,
             encoding,
             protocol_id,
+        }
+    }
+}
+
+/* Inbound upgrade */
+
+// The inbound protocol reads the request, decodes it and returns the stream to the protocol
+// handler to respond to once ready.
+
+pub type InboundOutput<TSocket, TSpec> = (InboundRequest, InboundFramed<TSocket>);
+pub type InboundFramed<TSocket> =
+    Framed<std::pin::Pin<Box<TimeoutStream<Compat<TSocket>>>>, InboundCodec>;
+
+impl<TSocket> InboundUpgrade<TSocket> for RPCProtocol
+where
+    TSocket: AsyncRead + AsyncWrite + Unpin + Send + 'static,
+{
+    type Output = InboundOutput<TSocket>;
+    type Error = RPCError;
+    type Future = BoxFuture<'static, Result<Self::Output, Self::Error>>;
+
+    fn upgrade_inbound(self, socket: TSocket, protocol: ProtocolId) -> Self::Future {
+        async move {
+            let versioned_protocol = protocol.versioned_protocol;
+            // convert the socket to tokio compatible socket
+            let socket = socket.compat();
+            let codec = match protocol.encoding {
+                Encoding::SSZSnappy => {
+                    let ssz_snappy_codec = BaseInboundCodec::new(SSZSnappyInboundCodec::new(
+                        protocol,
+                        self.max_rpc_size,
+                        self.fork_context.clone(),
+                    ));
+                    InboundCodec::SSZSnappy(ssz_snappy_codec)
+                }
+            };
+            let mut timed_socket = TimeoutStream::new(socket);
+            timed_socket.set_read_timeout(Some(self.ttfb_timeout));
+
+            let socket = Framed::new(Box::pin(timed_socket), codec);
+
+            // MetaData requests should be empty, return the stream
+            match versioned_protocol {
+                SupportedProtocol::MetaDataV1 => {
+                    Ok((InboundRequest::MetaData(MetadataRequest::new_v1()), socket))
+                }
+                SupportedProtocol::MetaDataV2 => {
+                    Ok((InboundRequest::MetaData(MetadataRequest::new_v2()), socket))
+                }
+                _ => {
+                    match tokio::time::timeout(
+                        Duration::from_secs(REQUEST_TIMEOUT),
+                        socket.into_future(),
+                    )
+                    .await
+                    {
+                        Err(e) => Err(RPCError::from(e)),
+                        Ok((Some(Ok(request)), stream)) => Ok((request, stream)),
+                        Ok((Some(Err(e)), _)) => Err(e),
+                        Ok((None, _)) => Err(RPCError::IncompleteStream),
+                    }
+                }
+            }
+        }
+        .boxed()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum InboundRequest {
+    Status(StatusMessage),
+    Goodbye(GoodbyeReason),
+    BlocksByRange(OldBlocksByRangeRequest),
+    BlocksByRoot(BlocksByRootRequest),
+    LightClientBootstrap(LightClientBootstrapRequest),
+    Ping(Ping),
+    MetaData(MetadataRequest),
+}
+
+/// Implements the encoding per supported protocol for `RPCRequest`.
+impl InboundRequest {
+    /* These functions are used in the handler for stream management */
+
+    /// Number of responses expected for this request.
+    pub fn expected_responses(&self) -> u64 {
+        match self {
+            InboundRequest::Status(_) => 1,
+            InboundRequest::Goodbye(_) => 0,
+            InboundRequest::BlocksByRange(req) => *req.count(),
+            InboundRequest::BlocksByRoot(req) => req.block_roots().len() as u64,
+            InboundRequest::Ping(_) => 1,
+            InboundRequest::MetaData(_) => 1,
+            InboundRequest::LightClientBootstrap(_) => 1,
+        }
+    }
+
+    /// Gives the corresponding `SupportedProtocol` to this request.
+    pub fn versioned_protocol(&self) -> SupportedProtocol {
+        match self {
+            InboundRequest::Status(_) => SupportedProtocol::StatusV1,
+            InboundRequest::Goodbye(_) => SupportedProtocol::GoodbyeV1,
+            InboundRequest::BlocksByRange(req) => match req {
+                OldBlocksByRangeRequest::V1(_) => SupportedProtocol::BlocksByRangeV1,
+                OldBlocksByRangeRequest::V2(_) => SupportedProtocol::BlocksByRangeV2,
+            },
+            InboundRequest::BlocksByRoot(req) => match req {
+                BlocksByRootRequest::V1(_) => SupportedProtocol::BlocksByRootV1,
+                BlocksByRootRequest::V2(_) => SupportedProtocol::BlocksByRootV2,
+            },
+            InboundRequest::Ping(_) => SupportedProtocol::PingV1,
+            InboundRequest::MetaData(req) => match req {
+                MetadataRequest::V1(_) => SupportedProtocol::MetaDataV1,
+                MetadataRequest::V2(_) => SupportedProtocol::MetaDataV2,
+            },
+            InboundRequest::LightClientBootstrap(_) => SupportedProtocol::LightClientBootstrapV1,
+        }
+    }
+
+    /// Returns the `ResponseTermination` type associated with the request if a stream gets
+    /// terminated.
+    pub fn stream_termination(&self) -> ResponseTermination {
+        match self {
+            // this only gets called after `multiple_responses()` returns true. Therefore, only
+            // variants that have `multiple_responses()` can have values.
+            InboundRequest::BlocksByRange(_) => ResponseTermination::BlocksByRange,
+            InboundRequest::BlocksByRoot(_) => ResponseTermination::BlocksByRoot,
+            InboundRequest::Status(_) => unreachable!(),
+            InboundRequest::Goodbye(_) => unreachable!(),
+            InboundRequest::Ping(_) => unreachable!(),
+            InboundRequest::MetaData(_) => unreachable!(),
+            InboundRequest::LightClientBootstrap(_) => unreachable!(),
+        }
+    }
+}
+
+/// Error in RPC Encoding/Decoding.
+#[derive(Debug, Clone, PartialEq, IntoStaticStr)]
+#[strum(serialize_all = "snake_case")]
+pub enum RPCError {
+    /// Error when decoding the raw buffer from ssz.
+    // NOTE: in the future a ssz::DecodeError should map to an InvalidData error
+    #[strum(serialize = "decode_error")]
+    SSZDecodeError(ssz::DecodeError),
+    /// IO Error.
+    IoError(String),
+    /// The peer returned a valid response but the response indicated an error.
+    ErrorResponse(RPCResponseErrorCode, String),
+    /// Timed out waiting for a response.
+    StreamTimeout,
+    /// Peer does not support the protocol.
+    UnsupportedProtocol,
+    /// Stream ended unexpectedly.
+    IncompleteStream,
+    /// Peer sent invalid data.
+    InvalidData(String),
+    /// An error occurred due to internal reasons. Ex: timer failure.
+    InternalError(&'static str),
+    /// Negotiation with this peer timed out.
+    NegotiationTimeout,
+    /// Handler rejected this request.
+    HandlerRejected,
+    /// We have intentionally disconnected.
+    Disconnected,
+}
+
+impl From<ssz::DecodeError> for RPCError {
+    #[inline]
+    fn from(err: ssz::DecodeError) -> Self {
+        RPCError::SSZDecodeError(err)
+    }
+}
+impl From<tokio::time::error::Elapsed> for RPCError {
+    fn from(_: tokio::time::error::Elapsed) -> Self {
+        RPCError::StreamTimeout
+    }
+}
+
+impl From<io::Error> for RPCError {
+    fn from(err: io::Error) -> Self {
+        RPCError::IoError(err.to_string())
+    }
+}
+
+// Error trait is required for `ProtocolsHandler`
+impl std::fmt::Display for RPCError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            RPCError::SSZDecodeError(ref err) => write!(f, "Error while decoding ssz: {:?}", err),
+            RPCError::InvalidData(ref err) => write!(f, "Peer sent unexpected data: {}", err),
+            RPCError::IoError(ref err) => write!(f, "IO Error: {}", err),
+            RPCError::ErrorResponse(ref code, ref reason) => write!(
+                f,
+                "RPC response was an error: {} with reason: {}",
+                code, reason
+            ),
+            RPCError::StreamTimeout => write!(f, "Stream Timeout"),
+            RPCError::UnsupportedProtocol => write!(f, "Peer does not support the protocol"),
+            RPCError::IncompleteStream => write!(f, "Stream ended unexpectedly"),
+            RPCError::InternalError(ref err) => write!(f, "Internal error: {}", err),
+            RPCError::NegotiationTimeout => write!(f, "Negotiation timeout"),
+            RPCError::HandlerRejected => write!(f, "Handler rejected the request"),
+            RPCError::Disconnected => write!(f, "Gracefully Disconnected"),
+        }
+    }
+}
+
+impl std::error::Error for RPCError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match *self {
+            // NOTE: this does have a source
+            RPCError::SSZDecodeError(_) => None,
+            RPCError::IoError(_) => None,
+            RPCError::StreamTimeout => None,
+            RPCError::UnsupportedProtocol => None,
+            RPCError::IncompleteStream => None,
+            RPCError::InvalidData(_) => None,
+            RPCError::InternalError(_) => None,
+            RPCError::ErrorResponse(_, _) => None,
+            RPCError::NegotiationTimeout => None,
+            RPCError::HandlerRejected => None,
+            RPCError::Disconnected => None,
+        }
+    }
+}
+
+impl<TSpec: EthSpec> std::fmt::Display for InboundRequest<TSpec> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InboundRequest::Status(status) => write!(f, "Status Message: {}", status),
+            InboundRequest::Goodbye(reason) => write!(f, "Goodbye: {}", reason),
+            InboundRequest::BlocksByRange(req) => write!(f, "Blocks by range: {}", req),
+            InboundRequest::BlocksByRoot(req) => write!(f, "Blocks by root: {:?}", req),
+            InboundRequest::Ping(ping) => write!(f, "Ping: {}", ping.data),
+            InboundRequest::MetaData(_) => write!(f, "MetaData request"),
+            InboundRequest::LightClientBootstrap(bootstrap) => {
+                write!(f, "LightClientBootstrap: {}", bootstrap.root)
+            }
+        }
+    }
+}
+
+impl RPCError {
+    /// Get a `str` representation of the error.
+    /// Used for metrics.
+    pub fn as_static_str(&self) -> &'static str {
+        match self {
+            RPCError::ErrorResponse(ref code, ..) => code.into(),
+            e => e.into(),
         }
     }
 }

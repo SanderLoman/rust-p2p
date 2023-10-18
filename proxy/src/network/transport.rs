@@ -7,64 +7,18 @@ use libp2p::{
     multiaddr::Protocol,
     noise, yamux, Multiaddr, PeerId,
 };
-use serde_derive::Serialize;
 use slog::debug;
 
-use crate::network::protocol::SupportedProtocol::*;
+use crate::network::methods::{MetaData, MetaDataV1, MetaDataV2};
 
-type Attnets = String;
-type Syncnets = String;
+pub type Attnets = String;
+pub type Syncnets = String;
 
 type BoxedTransport = Boxed<(PeerId, StreamMuxerBox)>;
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct MetaData {
-    /// A sequential counter indicating when data gets modified.
-    pub seq_number: u64,
-    /// The persistent attestation subnet bitfield.
-    pub attnets: Attnets,
-    /// The persistent sync committee bitfield.
-    pub syncnets: Syncnets,
-}
-
-impl MetaData {
-    /// Returns a V1 MetaData response from self.
-    pub fn metadata_v1(&self) -> Self {
-        match self {
-            md @ MetaData::V1(_) => md.clone(),
-            MetaData::V2(metadata) => MetaData::V1(MetaDataV1 {
-                seq_number: metadata.seq_number,
-                attnets: metadata.attnets.clone(),
-            }),
-        }
-    }
-
-    /// Returns a V2 MetaData response from self by filling unavailable fields with default.
-    pub fn metadata_v2(&self) -> Self {
-        match self {
-            MetaData::V1(metadata) => MetaData::V2(MetaDataV2 {
-                seq_number: metadata.seq_number,
-                attnets: metadata.attnets.clone(),
-                syncnets: Default::default(),
-            }),
-            md @ MetaData::V2(_) => md.clone(),
-        }
-    }
-
-    pub fn as_ssz_bytes(&self) -> Vec<u8> {
-        match self {
-            MetaData::V1(md) => md.as_ssz_bytes(),
-            MetaData::V2(md) => md.as_ssz_bytes(),
-        }
-    }
-}
-
 /// The implementation supports TCP/IP, QUIC (experimental) over UDP, noise as the encryption layer, and
 /// mplex/yamux as the multiplexing layer (when using TCP).
-pub fn build_transport(
-    local_private_key: Keypair,
-    quic_support: bool,
-) -> std::io::Result<BoxedTransport> {
+pub fn build_transport(local_private_key: Keypair) -> std::io::Result<BoxedTransport> {
     // mplex config
     let mut mplex_config = libp2p_mplex::MplexConfig::new();
     mplex_config.set_max_buffer_size(256);
@@ -90,7 +44,7 @@ pub fn build_transport(
         ))
         .timeout(Duration::from_secs(10));
 
-    let (transport, bandwidth) = if quic_support {
+    let (transport, bandwidth) = {
         // Enables Quic
         // The default quic configuration suits us for now.
         let quic_config = libp2p_quic::Config::new(&local_private_key);
@@ -100,8 +54,6 @@ pub fn build_transport(
                 Either::Right((peer_id, muxer)) => (peer_id, StreamMuxerBox::new(muxer)),
             })
             .with_bandwidth_logging()
-    } else {
-        tcp.with_bandwidth_logging()
     };
 
     // // Enables DNS over the transport.
@@ -122,7 +74,7 @@ pub fn strip_peer_id(addr: &mut Multiaddr) {
 }
 
 /// Load metadata from persisted file. Return default metadata if loading fails.
-pub fn load_or_build_metadata(log: &slog::Logger) -> MetaData<E> {
+pub fn load_or_build_metadata(log: &slog::Logger) -> MetaData {
     // We load a V2 metadata version by default (regardless of current fork)
     // since a V2 metadata can be converted to V1. The RPC encoder is responsible
     // for sending the correct metadata version based on the negotiated protocol version.
@@ -132,39 +84,34 @@ pub fn load_or_build_metadata(log: &slog::Logger) -> MetaData<E> {
         syncnets: String,
     };
     // Read metadata from persisted file if available
-    let metadata_path = network_dir.join(METADATA_FILENAME);
-    if let Ok(mut metadata_file) = File::open(metadata_path) {
-        let mut metadata_ssz = Vec::new();
-        if metadata_file.read_to_end(&mut metadata_ssz).is_ok() {
-            // Attempt to read a MetaDataV2 version from the persisted file,
-            // if that fails, read MetaDataV1
-            match MetaDataV2::<E>::from_ssz_bytes(&metadata_ssz) {
+
+    let mut metadata_ssz = Vec::new();
+
+    match MetaDataV2::from_ssz_bytes(&metadata_ssz) {
+        Ok(persisted_metadata) => {
+            meta_data.seq_number = persisted_metadata.seq_number;
+            // Increment seq number if persisted attnet is not default
+            if persisted_metadata.attnets != meta_data.attnets
+                || persisted_metadata.syncnets != meta_data.syncnets
+            {
+                meta_data.seq_number += 1;
+            }
+            debug!(log, "Loaded metadata from disk");
+        }
+        Err(_) => {
+            match MetaDataV1::from_ssz_bytes(&metadata_ssz) {
                 Ok(persisted_metadata) => {
-                    meta_data.seq_number = persisted_metadata.seq_number;
-                    // Increment seq number if persisted attnet is not default
-                    if persisted_metadata.attnets != meta_data.attnets
-                        || persisted_metadata.syncnets != meta_data.syncnets
-                    {
-                        meta_data.seq_number += 1;
-                    }
+                    let persisted_metadata = MetaData::V1(persisted_metadata);
+                    // Increment seq number as the persisted metadata version is updated
+                    meta_data.seq_number = *persisted_metadata.seq_number() + 1;
                     debug!(log, "Loaded metadata from disk");
                 }
-                Err(_) => {
-                    match MetaDataV1::<E>::from_ssz_bytes(&metadata_ssz) {
-                        Ok(persisted_metadata) => {
-                            let persisted_metadata = MetaData::V1(persisted_metadata);
-                            // Increment seq number as the persisted metadata version is updated
-                            meta_data.seq_number = *persisted_metadata.seq_number() + 1;
-                            debug!(log, "Loaded metadata from disk");
-                        }
-                        Err(e) => {
-                            debug!(
-                                log,
-                                "Metadata from file could not be decoded";
-                                "error" => ?e,
-                            );
-                        }
-                    }
+                Err(e) => {
+                    debug!(
+                        log,
+                        "Metadata from file could not be decoded";
+                        "error" => ?e,
+                    );
                 }
             }
         }

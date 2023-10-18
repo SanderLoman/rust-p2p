@@ -1,6 +1,8 @@
-pub mod transport;
+pub mod inbound;
+pub mod methods;
+pub mod outbound;
 pub mod protocol;
-
+pub mod transport;
 
 use futures::{channel::mpsc, Future};
 
