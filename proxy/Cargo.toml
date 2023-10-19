@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+discv5 = { version = "0.3.1", features = ["libp2p"] }
 tokio-util = { version = "0.7.9", features = ["compat"] }
 tokio-io-timeout = "1.2.0"
 strum = "0.25.0"

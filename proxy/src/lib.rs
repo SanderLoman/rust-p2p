@@ -1,10 +1,12 @@
+/// Enabled for now.
+pub mod network;
 pub mod network_manager;
-/// Disabled for now, I wanna test the redirect first
-// pub mod network;
 /// Disabled for now, I wanna test the redirect first
 // pub mod SSZ;
 pub mod redirect;
 
+use network_manager::NetworkManager;
+use redirect::NetworkRequests;
 use lazy_static::lazy_static;
 use libp2p::Multiaddr;
 use reqwest::header::{HeaderMap, ACCEPT};

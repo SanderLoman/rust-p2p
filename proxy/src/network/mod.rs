@@ -1,14 +1,23 @@
-pub mod inbound;
-pub mod methods;
-pub mod outbound;
-pub mod protocol;
-pub mod transport;
+// pub mod methods;
+// pub mod protocol;
+// pub mod transport;
 
-use futures::{channel::mpsc, Future};
+pub mod swarm;
 
-#[derive(Debug)]
-pub struct NetworkService {
-    network_recv: mpsc::UnboundedReceiver<()>,
+use libp2p::Swarm;
+use slog::Logger;
 
-    network_send: mpsc::UnboundedSender<()>,
+use crate::network::swarm::behaviour::Behaviour;
+use crate::{NetworkManager, NetworkRequests};
+
+pub struct Network<N: NetworkRequests>
+where {
+    // The libp2p Swarm, this will handle incoming and outgoing requests so that we can redirect them. Instead of sending data right back to them 
+    swarm: Swarm<Behaviour>,
+
+    // The NetworkManager, this will handle the requests and redirect them to the correct place.
+    network_service: NetworkManager<N>,
+
+    // The Logger for the network service.
+    log: Logger,
 }

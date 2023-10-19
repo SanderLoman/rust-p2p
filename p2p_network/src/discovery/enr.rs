@@ -4,6 +4,7 @@ use discv5::enr::{CombinedKey, Enr, EnrBuilder};
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
 use serde_json::Value;
+use slog::{debug, Logger};
 use std::error::Error;
 use std::net::Ipv4Addr;
 use std::str::FromStr;
@@ -14,13 +15,13 @@ use std::str::FromStr;
 ///
 /// Returns a tuple containing the local ENR, the generated ENR, and the combined key used for the ENR.
 pub async fn generate_enr(
-    log: slog::Logger,
+    log: Logger,
 ) -> Result<(Enr<CombinedKey>, Enr<CombinedKey>, CombinedKey), Box<dyn Error>> {
     // Generate a new combined key for the ENR
     let enr_combined_key: CombinedKey = CombinedKey::generate_secp256k1();
 
     // Fetch the local ENR and associated data
-    let (lh_enr, attnets, eth2, syncnets, ip4) = get_local_enr().await?;
+    let (lh_enr, attnets, eth2, syncnets, ip4) = get_local_enr(log.clone()).await?;
 
     let port = 7777;
 
@@ -54,7 +55,9 @@ pub async fn generate_enr(
 /// # Returns
 ///
 /// Returns a tuple containing the local ENR as a string, attnets, eth2, syncnets as byte vectors, and the IP address.
-async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>> {
+async fn get_local_enr(
+    log: Logger,
+) -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>> {
     // Initialize HTTP client
     let client = Client::new();
 
@@ -74,8 +77,12 @@ async fn get_local_enr() -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr)
     let v: Value = serde_json::from_str(&body)?;
     let enr = v["data"]["enr"].as_str().unwrap().to_string();
 
+    debug!(log, "Lighthouse ENR"; "enr" => ?enr);
+
     // Decode the ENR to extract relevant fields
     let decoded_enr: Enr<CombinedKey> = Enr::from_str(&enr)?;
+
+    debug!(log, "Lighthouse ENR"; "enr" => ?decoded_enr);
 
     let attnets = decoded_enr.get("attnets").unwrap().clone();
     let eth2 = decoded_enr.get("eth2").unwrap().clone();

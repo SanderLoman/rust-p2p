@@ -1,5 +1,28 @@
-// /* Inbound upgrade */
+use hyper::Request;
+use slog::{debug, Logger};
+use tokio::sync::mpsc;
 
+use crate::redirect::NetworkRequests;
+
+#[derive(Debug)]
+pub struct NetworkReceiver<N: NetworkRequests> {
+    pub receiver: mpsc::UnboundedReceiver<Request<N>>,
+    pub log: Logger,
+}
+
+impl<N: NetworkRequests> NetworkReceiver<N> {
+    pub fn new(log: Logger) -> Self {
+        let (_, receiver) = mpsc::unbounded_channel();
+        NetworkReceiver { receiver, log }
+    }
+
+    pub async fn receive_request(&mut self) -> Option<Request<N>> {
+        debug!(self.log, "Receiving request from network");
+        self.receiver.recv().await
+    }
+}
+
+// /* Inbound upgrade */
 // // The inbound protocol reads the request, decodes it and returns the stream to the protocol
 // // handler to respond to once ready.
 
