@@ -1,7 +1,9 @@
 use libp2p::swarm::dummy::ConnectionHandler;
 use libp2p::swarm::NetworkBehaviour;
 
-pub struct Behaviour {}
+pub struct Behaviour {
+    
+}
 
 impl NetworkBehaviour for Behaviour {
     type ConnectionHandler = ConnectionHandler;

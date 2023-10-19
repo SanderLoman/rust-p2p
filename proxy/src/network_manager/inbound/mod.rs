@@ -10,7 +10,7 @@ pub struct NetworkReceiver<N: NetworkRequests> {
     pub log: Logger,
 }
 
-impl<N: NetworkRequests> NetworkReceiver<N> {
+impl<N: NetworkRequests + std::fmt::Debug> NetworkReceiver<N> {
     pub fn new(log: Logger) -> Self {
         let (_, receiver) = mpsc::unbounded_channel();
         NetworkReceiver { receiver, log }

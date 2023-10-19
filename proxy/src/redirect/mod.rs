@@ -18,15 +18,15 @@ pub struct Redirect<N: NetworkRequests> {
     log: Logger,
 }
 
-impl<N: NetworkRequests> Redirect<N> {
+impl<N: NetworkRequests + std::fmt::Debug> Redirect<N> {
     pub fn new(
         ip: IpAddr,
         port: u16,
         enr: Enr,
-        network_manager: NetworkManager<N>,
         log: Logger,
     ) -> Self {
-        Redirect {
+        let network_manager = NetworkManager::new(log.clone());
+        Self {
             ip,
             port,
             enr,
