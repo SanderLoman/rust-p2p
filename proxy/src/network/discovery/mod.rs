@@ -140,12 +140,6 @@ impl Discovery {
     pub fn get_enr(&self) -> Enr {
         self.discv5.local_enr().clone()
     }
-
-    pub async fn start(&mut self) -> Result<(), Box<dyn Error>> {
-        self.discv5.start().await.unwrap();
-
-        Ok(())
-    }
 }
 
 // impl NetworkBehaviour for Discovery {
