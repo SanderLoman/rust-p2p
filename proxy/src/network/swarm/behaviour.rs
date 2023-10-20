@@ -1,17 +1,15 @@
 use libp2p::swarm::dummy::ConnectionHandler;
 use libp2p::swarm::NetworkBehaviour;
 
+use crate::network::discovery::Discovery;
+
 pub struct Behaviour {
-    
+    discovery: Discovery,
 }
 
 impl NetworkBehaviour for Behaviour {
     type ConnectionHandler = ConnectionHandler;
-    type OutEvent = ();
-
-    fn addresses_of_peer(&mut self, _: &libp2p::PeerId) -> Vec<libp2p::Multiaddr> {
-        todo!()
-    }
+    type ToSwarm = ();
 
     fn handle_established_inbound_connection(
         &mut self,
@@ -52,10 +50,6 @@ impl NetworkBehaviour for Behaviour {
         Ok(Vec::new())
     }
 
-    fn new_handler(&mut self) -> Self::ConnectionHandler {
-        ConnectionHandler
-    }
-
     fn on_connection_handler_event(
         &mut self,
         peer_id: libp2p::PeerId,
@@ -70,8 +64,8 @@ impl NetworkBehaviour for Behaviour {
         &mut self,
         cx: &mut std::task::Context<'_>,
         params: &mut impl libp2p::swarm::PollParameters,
-    ) -> std::task::Poll<libp2p::swarm::ToSwarm<Self::OutEvent, libp2p::swarm::THandlerInEvent<Self>>>
+    ) -> std::task::Poll<libp2p::swarm::ToSwarm<Self::ToSwarm, libp2p::swarm::THandlerInEvent<Self>>>
     {
-        todo!()
+        std::task::Poll::Pending
     }
 }

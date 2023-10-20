@@ -5,10 +5,10 @@ pub mod network_manager;
 // pub mod SSZ;
 pub mod redirect;
 
-use network_manager::NetworkManager;
-use redirect::NetworkRequests;
 use lazy_static::lazy_static;
 use libp2p::Multiaddr;
+use network_manager::NetworkManager;
+use redirect::NetworkRequests;
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
 use serde_json::Value;
