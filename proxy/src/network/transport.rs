@@ -1,21 +1,21 @@
 use std::time::Duration;
 
 use futures::future::Either;
-use hyper::header::ACCEPT;
-use hyper::{Client, HeaderMap, Uri};
+// use hyper::header::ACCEPT;
+// use hyper::{Client, HeaderMap, Uri};
 use libp2p::core::{multiaddr::Multiaddr, muxing::StreamMuxerBox, transport::Boxed};
 
 use libp2p::identity::Keypair;
 use libp2p::multiaddr::Protocol;
 use libp2p::{core, noise, yamux, PeerId, Transport};
 use libp2p_quic;
-use serde_derive::Serialize;
-use serde_json::Value;
-use slog::{debug, error, warn, Logger};
-use ssz_derive::{Decode, Encode};
-use ssz_types::BitVector;
-use std::error::Error;
-use superstruct::superstruct;
+// use serde_derive::Serialize;
+// use serde_json::Value;
+// use slog::{debug, error, warn, Logger};
+// use ssz_derive::{Decode, Encode};
+// use ssz_types::BitVector;
+// use std::error::Error;
+// use superstruct::superstruct;
 
 // use crate::network::methods::{MetaData, MetaDataV1, MetaDataV2};
 // type SubnetBitfieldLength: Unsigned + Clone + Sync + Send + Debug + PartialEq + Default;
@@ -27,7 +27,7 @@ type BoxedTransport = Boxed<(PeerId, StreamMuxerBox)>;
 
 /// The implementation supports TCP/IP, QUIC (experimental) over UDP, noise as the encryption layer, and
 /// mplex/yamux as the multiplexing layer (when using TCP).
-pub fn build_transport(local_private_key: Keypair) -> std::io::Result<(BoxedTransport)> {
+pub fn build_transport(local_private_key: Keypair) -> std::io::Result<BoxedTransport> {
     // mplex config
     let mut mplex_config = libp2p_mplex::MplexConfig::new();
     mplex_config.set_max_buffer_size(256);
