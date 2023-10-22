@@ -57,8 +57,7 @@ pub struct Discovery {
 
 impl Discovery {
     pub async fn new(log: slog::Logger) -> Result<Self, Box<dyn Error>> {
-        let log_clone = log.clone();
-        let (local_enr, enr, enr_key) = generate_enr(log_clone).await?;
+        let (local_enr, enr, enr_key) = generate_enr(log.clone()).await?;
 
         let listen_port = enr.udp4().unwrap();
 
