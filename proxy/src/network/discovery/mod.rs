@@ -10,17 +10,18 @@ use discv5::{
     service, socket, Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Event, ListenConfig,
 };
 use futures::stream::FuturesUnordered;
-use futures::Future;
+use futures::{Future, FutureExt};
 use libp2p::swarm::dummy::ConnectionHandler;
-use libp2p::swarm::NetworkBehaviour;
-use libp2p::PeerId;
+use libp2p::swarm::{DialError, DialFailure, FromSwarm, NetworkBehaviour};
+use libp2p::{Multiaddr, PeerId};
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_str, to_string_pretty};
-use slog::{debug, error, Logger};
+use slog::{debug, error, info, Logger};
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::Path;
 use std::pin::Pin;
+use std::task::Poll;
 use std::time::Duration;
 use std::{collections::HashMap, time::Instant};
 use tokio::sync::mpsc;
@@ -51,9 +52,17 @@ enum EventStream {
     InActive,
 }
 
+// Define a custom struct to hold the peer information
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PeerInfo {
+    pub enr: discv5::Enr,
+    pub multiaddr: Multiaddr,
+}
+
+// Modify DiscoveredPeers to use the custom struct
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DiscoveredPeers {
-    pub peers: HashMap<PeerId, Enr<CombinedKey>>,
+    pub peers: HashMap<PeerId, PeerInfo>,
 }
 
 impl DiscoveredPeers {
@@ -66,11 +75,7 @@ impl DiscoveredPeers {
         let path = Path::new(PATH);
         let json = serde_json::to_string_pretty(self)?;
 
-        let file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .append(true)
-            .open(path)?;
+        fs::write(path, json)?;
 
         Ok(())
     }
@@ -129,33 +134,12 @@ impl Discovery {
         })
     }
 
+    /// Searches for peers on the network.
     pub async fn discover_peers(&mut self) {
         // Load known peers from file
         let known_peers = DiscoveredPeers::load().expect("Failed to load peers.json");
 
-        for (_, enr) in &known_peers.peers {
-            // Assume request_peers is an async function to request a list of peers from a known peer
-            match self.discv5.request_peers(enr.clone()).await {
-                Ok(new_peers) => {
-                    for new_peer in new_peers {
-                        // Add new peer to your local routing table
-                        self.add_enr(new_peer.clone());
-
-                        // Update the json file with the new peer
-                        self.seen_peers
-                            .peers
-                            .insert(new_peer.peer_id().to_base58(), new_peer.clone());
-                    }
-                }
-                Err(e) => {
-                    error!(
-                        self.log,
-                        "Error requesting peers from known peer";
-                        "error" => %e
-                    );
-                }
-            }
-        }
+        for (peer_id, enr) in &known_peers.peers {}
 
         // Save updated peer list to file
         self.seen_peers.save().expect("Failed to save peers.json");
@@ -163,8 +147,6 @@ impl Discovery {
 
     /// Add an ENR to the routing table of the discovery mechanism.
     pub fn add_enr(&mut self, enr: Enr<CombinedKey>) {
-        // add the enr to seen caches
-
         if let Err(e) = self.discv5.add_enr(enr) {
             debug!(
                 self.log,
@@ -179,6 +161,7 @@ impl Discovery {
         self.discv5.table_entries_enr()
     }
 
+    /// Returns the local ENR.
     pub fn local_enr(&self) -> Enr<CombinedKey> {
         self.discv5.local_enr().clone()
     }
@@ -235,7 +218,27 @@ impl NetworkBehaviour for Discovery {
     ) {
     }
 
-    fn on_swarm_event(&mut self, event: libp2p::swarm::FromSwarm<Self::ConnectionHandler>) {}
+    fn on_swarm_event(&mut self, event: FromSwarm<Self::ConnectionHandler>) {
+        match event {
+            FromSwarm::DialFailure(DialFailure { peer_id, error, .. }) => {
+                self.on_dial_failure(peer_id, error)
+            }
+            FromSwarm::ConnectionEstablished(_)
+            | FromSwarm::ConnectionClosed(_)
+            | FromSwarm::AddressChange(_)
+            | FromSwarm::ListenFailure(_)
+            | FromSwarm::NewListener(_)
+            | FromSwarm::NewListenAddr(_)
+            | FromSwarm::ExpiredListenAddr(_)
+            | FromSwarm::ListenerError(_)
+            | FromSwarm::ListenerClosed(_)
+            | FromSwarm::NewExternalAddrCandidate(_)
+            | FromSwarm::ExternalAddrExpired(_)
+            | FromSwarm::ExternalAddrConfirmed(_) => {
+                // Ignore events not relevant to discovery
+            }
+        }
+    }
 
     fn poll(
         &mut self,
@@ -243,6 +246,95 @@ impl NetworkBehaviour for Discovery {
         params: &mut impl libp2p::swarm::PollParameters,
     ) -> std::task::Poll<libp2p::swarm::ToSwarm<Self::ToSwarm, libp2p::swarm::THandlerInEvent<Self>>>
     {
-        std::task::Poll::Pending
+        match self.event_stream {
+            EventStream::Awaiting(ref mut fut) => {
+                // Still awaiting the event stream, poll it
+                if let Poll::Ready(event_stream) = fut.poll_unpin(cx) {
+                    match event_stream {
+                        Ok(stream) => {
+                            debug!(self.log, "Discv5 event stream ready");
+                            self.event_stream = EventStream::Present(stream);
+                        }
+                        Err(e) => {
+                            slog::crit!(self.log, "Discv5 event stream failed"; "error" => %e);
+                            self.event_stream = EventStream::InActive;
+                        }
+                    }
+                }
+            }
+            EventStream::InActive => {
+                // *Conner McGregor Voice* - "You'll do nuttin"
+            }
+            EventStream::Present(ref mut stream) => {
+                while let Poll::Ready(Some(event)) = stream.poll_recv(cx) {
+                    match event {
+                        // We filter out unwanted discv5 events here and only propagate useful results to
+                        // the peer manager.
+                        Discv5Event::Discovered(_enr) => {
+                            // Peers that get discovered during a query but are not contactable or
+                            // don't match a predicate can end up here. For debugging purposes we
+                            // log these to see if we are unnecessarily dropping discovered peers
+                            /*
+                            if enr.eth2() == self.local_enr().eth2() {
+                                trace!(self.log, "Peer found in process of query"; "peer_id" => format!("{}", enr.peer_id()), "tcp_socket" => enr.tcp_socket());
+                            } else {
+                            // this is temporary warning for debugging the DHT
+                            warn!(self.log, "Found peer during discovery not on correct fork"; "peer_id" => format!("{}", enr.peer_id()), "tcp_socket" => enr.tcp_socket());
+                            }
+                            */
+                        }
+                        Discv5Event::SocketUpdated(socket_addr) => {
+                            info!(self.log, "Address updated"; "ip" => %socket_addr.ip(), "udp_port" => %socket_addr.port());
+                        }
+                        Discv5Event::EnrAdded { replaced, enr } => {
+                            // Request the newly added node for its known peers
+                            // Assuming `request_peers` is an async function that requests a list of peers from a known node
+
+                            // !!! Make a fix for this we cant use async here
+                            //
+                            // match self.discv5.request_peers(enr.node_id()) {
+                            //     Ok(new_peers) => {
+                            //         for new_peer in new_peers {
+                            //             // Add each new peer to the local routing table
+                            //             self.add_enr(new_peer);
+                            //         }
+                            //     }
+                            //     Err(e) => {
+                            //         error!(
+                            //             self.log,
+                            //             "Error requesting peers from newly added node";
+                            //             "error" => %e
+                            //         );
+                            //     }
+                            // }
+                        }
+
+                        Discv5Event::TalkRequest(_)
+                        | Discv5Event::NodeInserted { .. }
+                        | Discv5Event::SessionEstablished { .. } => {} // Ignore all other discv5 server events
+                    }
+                }
+            }
+        }
+        Poll::Pending
+    }
+}
+
+// !!! Maybe fix the WrongPeerId later
+impl Discovery {
+    fn on_dial_failure(&mut self, peer_id: Option<PeerId>, error: &DialError) {
+        if let Some(peer_id) = peer_id {
+            match error {
+                DialError::LocalPeerId { .. }
+                | DialError::Denied { .. }
+                | DialError::NoAddresses
+                | DialError::Transport(_)
+                | DialError::WrongPeerId { .. } => {
+                    // set peer as disconnected in discovery DHT
+                    debug!(self.log, "Dial failure"; "peer_id" => format!("{}", peer_id));
+                }
+                DialError::DialPeerConditionFalse(_) | DialError::Aborted => {}
+            }
+        }
     }
 }
