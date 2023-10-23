@@ -3,15 +3,23 @@
 pub mod enr;
 
 // use clap::{App, Arg};
+use discv5::enr::Enr;
 use discv5::*;
 use discv5::{
     enr as discv5_enr, enr::CombinedKey, handler, kbucket, metrics, packet, permit_ban, rpc,
-    service, socket, Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Event, Enr, ListenConfig,
+    service, socket, Discv5, Discv5Config, Discv5ConfigBuilder, Discv5Event, ListenConfig,
 };
 use futures::stream::FuturesUnordered;
 use futures::Future;
+use libp2p::swarm::dummy::ConnectionHandler;
+use libp2p::swarm::NetworkBehaviour;
 use libp2p::PeerId;
+use serde_derive::{Deserialize, Serialize};
+use serde_json::{from_str, to_string_pretty};
 use slog::{debug, error, Logger};
+use std::fs::{self, File, OpenOptions};
+use std::io::{Read, Write};
+use std::path::Path;
 use std::pin::Pin;
 use std::time::Duration;
 use std::{collections::HashMap, time::Instant};
@@ -23,9 +31,8 @@ use std::error::Error;
 use std::net::Ipv4Addr;
 
 use self::enr::generate_enr;
-// use std::num::NonZeroUsize;
-// use std::pin::Pin;
-// use void::Void;
+
+const PATH: &str = "/home/sander/rust-p2p/json/peers.json";
 
 enum EventStream {
     /// Awaiting an event stream to be generated. This is required due to the poll nature of
@@ -44,13 +51,34 @@ enum EventStream {
     InActive,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DiscoveredPeers {
-    pub peers: HashMap<PeerId, Option<Instant>>,
+    pub peers: HashMap<PeerId, Enr<CombinedKey>>,
+}
+
+impl DiscoveredPeers {
+    pub fn load() -> Result<Self, Box<dyn Error>> {
+        let file_contents = fs::read_to_string(PATH)?;
+        Ok(from_str(&file_contents)?)
+    }
+
+    pub fn save(&self) -> Result<(), Box<dyn Error>> {
+        let path = Path::new(PATH);
+        let json = serde_json::to_string_pretty(self)?;
+
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .append(true)
+            .open(path)?;
+
+        Ok(())
+    }
 }
 
 pub struct Discovery {
     discv5: Discv5,
+    seen_peers: DiscoveredPeers,
     event_stream: EventStream,
     log: Logger,
 }
@@ -82,132 +110,139 @@ impl Discovery {
             EventStream::Awaiting(Box::pin(discv5.event_stream()))
         };
 
-        // !!! TODO: !!!
-        //
-        // Instead of using the `boot_nodes_multiaddr` from the config, we should use have another file with all the found ENRs, and use that instead.
-        //
-        // // get futures for requesting the Enrs associated to these multiaddr and wait for their
-        // // completion
-        // let mut fut_coll = config
-        //     .boot_nodes_multiaddr
-        //     .iter()
-        //     .map(|addr| addr.to_string())
-        //     // request the ENR for this multiaddr and keep the original for logging
-        //     .map(|addr| {
-        //         futures::future::join(
-        //             discv5.request_enr(addr.clone()),
-        //             futures::future::ready(addr),
-        //         )
-        //     })
-        //     .collect::<FuturesUnordered<_>>();
+        let seen_peers = {
+            let mut file = File::open("json/peers.json").expect("Failed to open json/peers.json");
+            let mut contents = String::new();
+            file.read_to_string(&mut contents)
+                .expect("Failed to read json/peers.json");
+            let seen_peers: DiscoveredPeers =
+                from_str(&contents).expect("Failed to deserialize peers from json/peers.json");
 
-        // while let Some((result, original_addr)) = fut_coll.next().await {
-        //     match result {
-        //         Ok(enr) => {
-        //             debug!(
-        //                 log,
-        //                 "Adding node to routing table";
-        //                 "node_id" => %enr.node_id(),
-        //                 "peer_id" => %enr.peer_id(),
-        //                 "ip" => ?enr.ip4(),
-        //                 "udp" => ?enr.udp4(),
-        //                 "tcp" => ?enr.tcp4(),
-        //                 "quic" => ?enr.quic4()
-        //             );
-        //             let _ = discv5.add_enr(enr).map_err(|e| {
-        //                 error!(
-        //                     log,
-        //                     "Could not add peer to the local routing table";
-        //                     "addr" => original_addr.to_string(),
-        //                     "error" => e.to_string(),
-        //                 )
-        //             });
-        //         }
-        //         Err(e) => {
-        //             error!(log, "Error getting mapping to ENR"; "multiaddr" => original_addr.to_string(), "error" => e.to_string())
-        //         }
-        //     }
-        // }
+            seen_peers
+        };
 
         Ok(Self {
             discv5,
+            seen_peers,
             event_stream,
             log,
         })
     }
 
-    pub fn get_enr(&self) -> Enr {
+    pub async fn discover_peers(&mut self) {
+        // Load known peers from file
+        let known_peers = DiscoveredPeers::load().expect("Failed to load peers.json");
+
+        for (_, enr) in &known_peers.peers {
+            // Assume request_peers is an async function to request a list of peers from a known peer
+            match self.discv5.request_peers(enr.clone()).await {
+                Ok(new_peers) => {
+                    for new_peer in new_peers {
+                        // Add new peer to your local routing table
+                        self.add_enr(new_peer.clone());
+
+                        // Update the json file with the new peer
+                        self.seen_peers
+                            .peers
+                            .insert(new_peer.peer_id().to_base58(), new_peer.clone());
+                    }
+                }
+                Err(e) => {
+                    error!(
+                        self.log,
+                        "Error requesting peers from known peer";
+                        "error" => %e
+                    );
+                }
+            }
+        }
+
+        // Save updated peer list to file
+        self.seen_peers.save().expect("Failed to save peers.json");
+    }
+
+    /// Add an ENR to the routing table of the discovery mechanism.
+    pub fn add_enr(&mut self, enr: Enr<CombinedKey>) {
+        // add the enr to seen caches
+
+        if let Err(e) = self.discv5.add_enr(enr) {
+            debug!(
+                self.log,
+                "Could not add peer to the local routing table";
+                "error" => %e
+            )
+        }
+    }
+
+    /// Returns an iterator over all enr entries in the DHT.
+    pub fn table_entries_enr(&self) -> Vec<Enr<CombinedKey>> {
+        self.discv5.table_entries_enr()
+    }
+
+    pub fn local_enr(&self) -> Enr<CombinedKey> {
         self.discv5.local_enr().clone()
     }
 }
 
-// impl NetworkBehaviour for Discovery {
-//     type ConnectionHandler = ConnectionHandler;
-//     type OutEvent = Void;
+impl NetworkBehaviour for Discovery {
+    type ConnectionHandler = ConnectionHandler;
+    type ToSwarm = DiscoveredPeers;
 
-//     fn new_handler(&mut self) -> Self::ConnectionHandler {
-//         ConnectionHandler
-//     }
+    fn handle_established_inbound_connection(
+        &mut self,
+        _connection_id: libp2p::swarm::ConnectionId,
+        peer: PeerId,
+        local_addr: &libp2p::Multiaddr,
+        remote_addr: &libp2p::Multiaddr,
+    ) -> Result<libp2p::swarm::THandler<Self>, libp2p::swarm::ConnectionDenied> {
+        Ok(ConnectionHandler)
+    }
 
-//     fn addresses_of_peer(&mut self, _: &PeerId) -> Vec<libp2p::Multiaddr> {
-//         Vec::new()
-//     }
+    fn handle_established_outbound_connection(
+        &mut self,
+        _connection_id: libp2p::swarm::ConnectionId,
+        peer: PeerId,
+        addr: &libp2p::Multiaddr,
+        role_override: libp2p::core::Endpoint,
+    ) -> Result<libp2p::swarm::THandler<Self>, libp2p::swarm::ConnectionDenied> {
+        Ok(ConnectionHandler)
+    }
 
-//     fn handle_established_inbound_connection(
-//         &mut self,
-//         connection_id: libp2p::swarm::ConnectionId,
-//         peer: PeerId,
-//         local_addr: &libp2p::Multiaddr,
-//         remote_addr: &libp2p::Multiaddr,
-//     ) -> Result<libp2p::swarm::THandler<Self>, libp2p::swarm::ConnectionDenied> {
-//         Ok(ConnectionHandler)
-//     }
+    fn handle_pending_inbound_connection(
+        &mut self,
+        _connection_id: libp2p::swarm::ConnectionId,
+        _local_addr: &libp2p::Multiaddr,
+        _remote_addr: &libp2p::Multiaddr,
+    ) -> Result<(), libp2p::swarm::ConnectionDenied> {
+        Ok(())
+    }
 
-//     fn handle_established_outbound_connection(
-//         &mut self,
-//         connection_id: libp2p::swarm::ConnectionId,
-//         peer: PeerId,
-//         addr: &libp2p::Multiaddr,
-//         role_override: libp2p::core::Endpoint,
-//     ) -> Result<libp2p::swarm::THandler<Self>, libp2p::swarm::ConnectionDenied> {
-//         Ok(ConnectionHandler)
-//     }
+    fn handle_pending_outbound_connection(
+        &mut self,
+        _connection_id: libp2p::swarm::ConnectionId,
+        _maybe_peer: Option<PeerId>,
+        _addresses: &[libp2p::Multiaddr],
+        _effective_role: libp2p::core::Endpoint,
+    ) -> Result<Vec<libp2p::Multiaddr>, libp2p::swarm::ConnectionDenied> {
+        Ok(Vec::new())
+    }
 
-//     fn handle_pending_inbound_connection(
-//         &mut self,
-//         connection_id: libp2p::swarm::ConnectionId,
-//         local_addr: &libp2p::Multiaddr,
-//         remote_addr: &libp2p::Multiaddr,
-//     ) -> Result<(), libp2p::swarm::ConnectionDenied> {
-//         Ok(())
-//     }
+    fn on_connection_handler_event(
+        &mut self,
+        _peer_id: PeerId,
+        _connection_id: libp2p::swarm::ConnectionId,
+        _event: libp2p::swarm::THandlerOutEvent<Self>,
+    ) {
+    }
 
-//     fn handle_pending_outbound_connection(
-//         &mut self,
-//         connection_id: libp2p::swarm::ConnectionId,
-//         maybe_peer: Option<PeerId>,
-//         addresses: &[libp2p::Multiaddr],
-//         effective_role: libp2p::core::Endpoint,
-//     ) -> Result<Vec<libp2p::Multiaddr>, libp2p::swarm::ConnectionDenied> {
-//         Ok(Vec::new())
-//     }
+    fn on_swarm_event(&mut self, event: libp2p::swarm::FromSwarm<Self::ConnectionHandler>) {}
 
-//     fn on_connection_handler_event(
-//         &mut self,
-//         peer_id: PeerId,
-//         connection_id: libp2p::swarm::ConnectionId,
-//         event: libp2p::swarm::THandlerOutEvent<Self>,
-//     ) {
-//     }
-
-//     fn on_swarm_event(&mut self, event: libp2p::swarm::FromSwarm<Self::ConnectionHandler>) {}
-
-//     fn poll(
-//         &mut self,
-//         cx: &mut std::task::Context<'_>,
-//         params: &mut impl libp2p::swarm::PollParameters,
-//     ) -> std::task::Poll<libp2p::swarm::ToSwarm<Self::OutEvent, libp2p::swarm::THandlerInEvent<Self>>>
-//     {
-//         std::task::Poll::Pending
-//     }
-// }
+    fn poll(
+        &mut self,
+        cx: &mut std::task::Context<'_>,
+        params: &mut impl libp2p::swarm::PollParameters,
+    ) -> std::task::Poll<libp2p::swarm::ToSwarm<Self::ToSwarm, libp2p::swarm::THandlerInEvent<Self>>>
+    {
+        std::task::Poll::Pending
+    }
+}

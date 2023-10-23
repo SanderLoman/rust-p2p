@@ -1,6 +1,7 @@
 // pub mod methods;
 // pub mod protocol;
 pub mod transport;
+#[allow(clippy::mutable_key_type)]
 pub mod discovery;
 pub mod swarm;
 
