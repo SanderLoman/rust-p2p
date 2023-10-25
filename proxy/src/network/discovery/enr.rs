@@ -4,7 +4,7 @@ use discv5::enr::{CombinedKey, Enr, EnrBuilder};
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
 use serde_json::Value;
-use slog::{debug, Logger};
+use slog::{debug, error, info, Logger};
 use std::error::Error;
 use std::net::Ipv4Addr;
 use std::str::FromStr;
@@ -21,7 +21,7 @@ pub async fn generate_enr(
     let enr_combined_key: CombinedKey = CombinedKey::generate_secp256k1();
 
     // Fetch the local ENR and associated data
-    let (lh_enr, attnets, eth2, syncnets, ip4) = get_local_enr(log.clone()).await?;
+    let (lh_enr, attnets, eth2, syncnets, quic, ip4) = get_local_enr(log.clone()).await?;
 
     let port = 7777;
 
@@ -33,17 +33,18 @@ pub async fn generate_enr(
         .add_value("attnets", &attnets)
         .add_value("eth2", &eth2)
         .add_value("syncnets", &syncnets)
+        .add_value("quic", &quic)
         .build(&enr_combined_key)?;
 
-    slog::info!(log, "ENR generated"; "enr" => ?enr.to_base64());
+    info!(log, "ENR generated"; "enr" => ?enr.to_base64());
 
     // Decode the generated ENR for verification
     let decoded_generated_enr: Enr<CombinedKey> = Enr::from_str(&enr.to_base64()).map_err(|e| {
-        slog::error!(log, "Failed to decode generated ENR"; "error" => ?e);
+        error!(log, "Failed to decode generated ENR"; "error" => ?e);
         e
     })?;
 
-    slog::debug!(log, "ENR generated (decoded)"; "enr" => ?decoded_generated_enr);
+    debug!(log, "ENR generated (decoded)"; "enr" => ?decoded_generated_enr);
 
     let lh_enr = Enr::from_str(&lh_enr)?;
 
@@ -57,7 +58,7 @@ pub async fn generate_enr(
 /// Returns a tuple containing the local ENR as a string, attnets, eth2, syncnets as byte vectors, and the IP address.
 async fn get_local_enr(
     log: Logger,
-) -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>> {
+) -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>> {
     // Initialize HTTP client
     let client = Client::new();
 
@@ -84,12 +85,14 @@ async fn get_local_enr(
 
     debug!(log, "Lighthouse ENR"; "enr" => ?decoded_enr);
 
-    let attnets = decoded_enr.get("attnets").unwrap().clone();
-    let eth2 = decoded_enr.get("eth2").unwrap().clone();
-    let syncnets = decoded_enr.get("syncnets").unwrap().clone();
+    let attnets = decoded_enr.get("attnets").unwrap().to_vec().clone();
+    let eth2 = decoded_enr.get("eth2").unwrap().to_vec().clone();
+    let syncnets = decoded_enr.get("syncnets").unwrap().to_vec().clone();
     let ip4 = decoded_enr
         .ip4()
         .unwrap_or_else(|| Ipv4Addr::new(83, 128, 37, 242));
 
-    Ok((enr, attnets.to_vec(), eth2.to_vec(), syncnets.to_vec(), ip4))
+    let quic = decoded_enr.get("quic").unwrap().to_vec().clone();
+
+    Ok((enr, attnets, eth2, syncnets, quic, ip4))
 }

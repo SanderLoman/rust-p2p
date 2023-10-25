@@ -130,7 +130,7 @@ impl Discovery {
 
         let event_stream = {
             discv5.start().await.unwrap();
-            debug!(log, "Discv5 started"; "enr" => ?enr);
+            debug!(log, "Discv5 started"; "local_enr" => format!("{}", discv5.local_enr()));
             EventStream::Awaiting(Box::pin(discv5.event_stream()))
         };
 
