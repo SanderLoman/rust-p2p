@@ -3,29 +3,25 @@ use std::{error::Error, net::IpAddr};
 use discv5::Enr;
 use slog::{debug, Logger};
 
-use hyper::{Body, Request, Response};
-
 use crate::network_manager::NetworkManager;
 
-pub trait NetworkRequests {}
-
 #[derive(Debug)]
-pub struct Redirect<N: NetworkRequests> {
+pub struct Redirect {
     ip: IpAddr,
     port: u16,
     enr: Enr,
-    network_manager: NetworkManager<N>,
+    network_manager: NetworkManager,
     log: Logger,
 }
 
-impl<N: NetworkRequests + std::fmt::Debug> Redirect<N> {
-    pub fn new(
+impl Redirect {
+    pub async fn new(
         ip: IpAddr,
         port: u16,
         enr: Enr,
         log: Logger,
     ) -> Self {
-        let network_manager = NetworkManager::new(log.clone());
+        let network_manager = NetworkManager::new(log.clone()).await;
         Self {
             ip,
             port,
@@ -33,10 +29,6 @@ impl<N: NetworkRequests + std::fmt::Debug> Redirect<N> {
             network_manager,
             log,
         }
-    }
-
-    pub fn redirect(&self, req: Request<N>) -> Response<N> {
-        todo!("redirect")
     }
 }
 

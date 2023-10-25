@@ -2,25 +2,13 @@ use hyper::Request;
 use slog::{debug, Logger};
 use tokio::sync::mpsc;
 
-use crate::redirect::NetworkRequests;
-
 #[derive(Debug)]
-pub struct NetworkReceiver<N: NetworkRequests> {
-    pub receiver: mpsc::UnboundedReceiver<Request<N>>,
+pub struct NetworkReceiver {
+    // pub receiver: mpsc::UnboundedReceiver<_>,
     pub log: Logger,
 }
 
-impl<N: NetworkRequests + std::fmt::Debug> NetworkReceiver<N> {
-    pub fn new(log: Logger) -> Self {
-        let (_, receiver) = mpsc::unbounded_channel();
-        NetworkReceiver { receiver, log }
-    }
-
-    pub async fn receive_request(&mut self) -> Option<Request<N>> {
-        debug!(self.log, "Receiving request from network");
-        self.receiver.recv().await
-    }
-}
+impl NetworkReceiver {}
 
 // /* Inbound upgrade */
 // // The inbound protocol reads the request, decodes it and returns the stream to the protocol

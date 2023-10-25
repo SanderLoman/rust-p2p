@@ -2,27 +2,17 @@ use hyper::Request;
 use slog::{debug, Logger};
 use tokio::sync::mpsc;
 
-use crate::redirect::NetworkRequests;
-
 #[derive(Clone, Debug)]
-pub struct NetworkSender<N: NetworkRequests> {
-    pub sender: mpsc::UnboundedSender<Request<N>>,
+pub struct NetworkSender {
+    // pub sender: mpsc::UnboundedSender<>,
     pub log: Logger,
 }
 
-impl<N: NetworkRequests + std::fmt::Debug> NetworkSender<N> {
-    pub fn new(log: Logger) -> Self {
-        let (sender, _) = mpsc::unbounded_channel();
-        NetworkSender { sender, log }
-    }
-
-    pub fn send_request(
-        &self,
-        request: Request<N>,
-    ) -> Result<(), mpsc::error::SendError<Request<N>>> {
-        debug!(self.log, "Sending request to network"; "request" => format!("{:?}", request));
-        self.sender.send(request)
-    }
+impl NetworkSender {
+    // pub fn new(log: Logger) -> Self {
+    //     let (sender, _) = mpsc::unbounded_channel();
+    //     NetworkSender { sender, log }
+    // }
 }
 
 // /* RPC Response type - used for outbound upgrades */
