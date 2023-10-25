@@ -24,6 +24,14 @@ lazy_static! {
     pub static ref REAL_BEACON_NODE_MULTIADDR: Mutex<Option<Multiaddr>> = Mutex::new(None);
 }
 
+/// Returns the current version of this build of ConTower.
+///
+/// A plus-sign (`+`) is appended to the git commit if the tree is dirty (not commited).
+/// Commit hash is omitted if the sources don't include git information.
+///
+/// ## Example
+///
+/// `ConTower/v0.1.0-67da032+`
 pub const VERSION: &str = git_version!(
     args = [
         "--always",
@@ -32,15 +40,15 @@ pub const VERSION: &str = git_version!(
         // NOTE: using --match instead of --exclude for compatibility with old Git
         "--match=thiswillnevermatchlol"
     ],
-    prefix = "ConTower/v1.0.0-",
-    fallback = "ConTower/v1.0.0-" 
+    prefix = "ConTower/v0.1.0-",
+    fallback = "ConTower/v0.1.0-"
 );
 
 /// Returns `VERSION`, but with platform information appended to the end.
 ///
 /// ## Example
 ///
-/// `ConTower/v1.5.1-67da032+/x86_64-linux`
+/// `ConTower/v0.1.0-67da032+/x86_64-linux`
 pub fn version_with_platform() -> String {
     format!("{}/{}-{}", VERSION, Target::arch(), Target::os())
 }
