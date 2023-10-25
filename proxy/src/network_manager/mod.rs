@@ -7,8 +7,8 @@ use self::inbound::NetworkReceiver;
 use self::outbound::NetworkSender;
 // !!! Maybe not needed
 //
-// pub struct Proxy<N: NetworkRequests> {
-//     redirect: Redirect<N>,
+// pub struct Proxy {
+//     redirect: Redirect,
 //     log: Logger,
 // }
 

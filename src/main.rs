@@ -8,6 +8,7 @@ use wagmi::{create_logger, parse_verbosity};
 
 use proxy::network::discovery::Discovery;
 
+use proxy::version_with_platform;
 
 #[tokio::main()]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -16,6 +17,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let log = create_logger(verbosity);
 
     Discovery::new(log.clone()).await?;
+
+    let test = version_with_platform();
+
+    println!("{}", test);
 
     Ok(())
 }

@@ -35,7 +35,7 @@ use self::enr::generate_enr;
 
 const PATH: &str = "/home/sander/rust-p2p/json/peers.json";
 
-enum EventStream {
+pub enum EventStream {
     /// Awaiting an event stream to be generated. This is required due to the poll nature of
     /// `Discovery`
     Awaiting(
@@ -117,7 +117,7 @@ impl Discovery {
             discv5::ListenConfig::from_ip(Ipv4Addr::UNSPECIFIED.into(), listen_port);
 
         let discv5_config = Discv5ConfigBuilder::new(discv5_listen_config)
-            .ban_duration(Some(Duration::from_secs(60)))
+            .ban_duration(Some(Duration::from_secs(0)))
             .query_timeout(Duration::from_secs(10))
             .request_retries(1)
             .request_timeout(Duration::from_secs(1))
@@ -183,7 +183,7 @@ impl NetworkBehaviour for Discovery {
 
     fn handle_established_inbound_connection(
         &mut self,
-        _connection_id: libp2p::swarm::ConnectionId,
+        connection_id: libp2p::swarm::ConnectionId,
         peer: PeerId,
         local_addr: &libp2p::Multiaddr,
         remote_addr: &libp2p::Multiaddr,
@@ -193,7 +193,7 @@ impl NetworkBehaviour for Discovery {
 
     fn handle_established_outbound_connection(
         &mut self,
-        _connection_id: libp2p::swarm::ConnectionId,
+        connection_id: libp2p::swarm::ConnectionId,
         peer: PeerId,
         addr: &libp2p::Multiaddr,
         role_override: libp2p::core::Endpoint,
@@ -203,28 +203,28 @@ impl NetworkBehaviour for Discovery {
 
     fn handle_pending_inbound_connection(
         &mut self,
-        _connection_id: libp2p::swarm::ConnectionId,
+        connection_id: libp2p::swarm::ConnectionId,
         _local_addr: &libp2p::Multiaddr,
-        _remote_addr: &libp2p::Multiaddr,
+        remote_addr: &libp2p::Multiaddr,
     ) -> Result<(), libp2p::swarm::ConnectionDenied> {
         Ok(())
     }
 
     fn handle_pending_outbound_connection(
         &mut self,
-        _connection_id: libp2p::swarm::ConnectionId,
-        _maybe_peer: Option<PeerId>,
-        _addresses: &[libp2p::Multiaddr],
-        _effective_role: libp2p::core::Endpoint,
+        connection_id: libp2p::swarm::ConnectionId,
+        maybe_peer: Option<PeerId>,
+        addresses: &[libp2p::Multiaddr],
+        effective_role: libp2p::core::Endpoint,
     ) -> Result<Vec<libp2p::Multiaddr>, libp2p::swarm::ConnectionDenied> {
         Ok(Vec::new())
     }
 
     fn on_connection_handler_event(
         &mut self,
-        _peer_id: PeerId,
-        _connection_id: libp2p::swarm::ConnectionId,
-        _event: libp2p::swarm::THandlerOutEvent<Self>,
+        peer_id: PeerId,
+        connection_id: libp2p::swarm::ConnectionId,
+        event: libp2p::swarm::THandlerOutEvent<Self>,
     ) {
     }
 

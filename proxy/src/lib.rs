@@ -5,6 +5,7 @@ pub mod network_manager;
 // pub mod SSZ;
 pub mod redirect;
 
+use git_version::git_version;
 use lazy_static::lazy_static;
 use libp2p::Multiaddr;
 use network_manager::NetworkManager;
@@ -14,12 +15,34 @@ use serde_json::Value;
 use std::error::Error;
 use std::net::SocketAddr;
 use std::sync::Mutex;
+use target_info::Target;
 
 lazy_static! {
     // The IP address of the real beacon node
     pub static ref REAL_BEACON_NODE_IP_ADDR: Mutex<Option<SocketAddr>> = Mutex::new(None);
     // The TCP multiaddr of the real beacon node
     pub static ref REAL_BEACON_NODE_MULTIADDR: Mutex<Option<Multiaddr>> = Mutex::new(None);
+}
+
+pub const VERSION: &str = git_version!(
+    args = [
+        "--always",
+        "--dirty=+",
+        "--abbrev=7",
+        // NOTE: using --match instead of --exclude for compatibility with old Git
+        "--match=thiswillnevermatchlol"
+    ],
+    prefix = "/v1.0.0-",
+    fallback = "ConTower/v1.0.0" 
+);
+
+/// Returns `VERSION`, but with platform information appended to the end.
+///
+/// ## Example
+///
+/// `ConTower/v1.5.1-67da032+/x86_64-linux`
+pub fn version_with_platform() -> String {
+    format!("{}/{}-{}", VERSION, Target::arch(), Target::os())
 }
 
 pub async fn get_lh_tcp_multiaddr() -> Result<(), Box<dyn Error>> {
