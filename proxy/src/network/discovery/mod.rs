@@ -67,16 +67,35 @@ pub struct DiscoveredPeers {
 
 impl DiscoveredPeers {
     pub fn load() -> Result<Self, Box<dyn Error>> {
-        let file_contents = fs::read_to_string(PATH)?;
-        Ok(from_str(&file_contents)?)
+        let path = Path::new(PATH);
+        if !path.exists() {
+            // The file does not exist, so create it with an empty DiscoveredPeers object
+            return Self::initialize_file(&path);
+        }
+
+        // Attempt to read and deserialize the file content
+        let file_contents = fs::read_to_string(&path)?;
+        match serde_json::from_str::<Self>(&file_contents) {
+            Ok(data) => Ok(data),
+            Err(_) => {
+                // Deserialization failed, so overwrite the file with an empty DiscoveredPeers object
+                Self::initialize_file(&path)
+            }
+        }
+    }
+
+    fn initialize_file(path: &Path) -> Result<Self, Box<dyn Error>> {
+        let discovered_peers = Self {
+            peers: HashMap::new(),
+        };
+        let json = serde_json::to_string_pretty(&discovered_peers)?;
+        fs::write(path, json)?;
+        Ok(discovered_peers)
     }
 
     pub fn save(&self) -> Result<(), Box<dyn Error>> {
-        let path = Path::new(PATH);
         let json = serde_json::to_string_pretty(self)?;
-
-        fs::write(path, json)?;
-
+        fs::write(PATH, json)?;
         Ok(())
     }
 }
@@ -115,16 +134,7 @@ impl Discovery {
             EventStream::Awaiting(Box::pin(discv5.event_stream()))
         };
 
-        let seen_peers = {
-            let mut file = File::open("json/peers.json").expect("Failed to open json/peers.json");
-            let mut contents = String::new();
-            file.read_to_string(&mut contents)
-                .expect("Failed to read json/peers.json");
-            let seen_peers: DiscoveredPeers =
-                from_str(&contents).expect("Failed to deserialize peers from json/peers.json");
-
-            seen_peers
-        };
+        let seen_peers = DiscoveredPeers::load()?;
 
         Ok(Self {
             discv5,
@@ -243,7 +253,7 @@ impl NetworkBehaviour for Discovery {
     fn poll(
         &mut self,
         cx: &mut std::task::Context<'_>,
-        params: &mut impl libp2p::swarm::PollParameters,
+        _: &mut impl libp2p::swarm::PollParameters,
     ) -> std::task::Poll<libp2p::swarm::ToSwarm<Self::ToSwarm, libp2p::swarm::THandlerInEvent<Self>>>
     {
         match self.event_stream {
