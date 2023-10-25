@@ -11,19 +11,18 @@ use network_manager::NetworkManager;
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
 use serde_json::Value;
-use slog::{info, Logger};
 use std::error::Error;
 use std::net::SocketAddr;
 use std::sync::Mutex;
 
 lazy_static! {
     // The IP address of the real beacon node
-    static ref REAL_BEACON_NODE_IP_ADDR: Mutex<Option<SocketAddr>> = Mutex::new(None);
+    pub static ref REAL_BEACON_NODE_IP_ADDR: Mutex<Option<SocketAddr>> = Mutex::new(None);
     // The TCP multiaddr of the real beacon node
-    static ref REAL_BEACON_NODE_MULTIADDR: Mutex<Option<Multiaddr>> = Mutex::new(None);
+    pub static ref REAL_BEACON_NODE_MULTIADDR: Mutex<Option<Multiaddr>> = Mutex::new(None);
 }
 
-pub async fn get_lh_tcp_multiaddr(log: Logger) -> Result<(), Box<dyn Error>> {
+pub async fn get_lh_tcp_multiaddr() -> Result<(), Box<dyn Error>> {
     let url = "http://127.0.0.1:5052/eth/v1/node/identity";
 
     let client = Client::new();
@@ -68,7 +67,6 @@ pub async fn get_lh_tcp_multiaddr(log: Logger) -> Result<(), Box<dyn Error>> {
         let socket_addr = SocketAddr::new(ip, port);
         let mut ip_addr_storage = REAL_BEACON_NODE_IP_ADDR.lock().unwrap();
         *ip_addr_storage = Some(socket_addr);
-        info!(log, "Got the real beacon node's IP address and TCP multiaddr"; "ip_addr" => format!("{:?}", socket_addr), "multiaddr" => format!("{:?}", multiaddr));
     }
 
     Ok(())
