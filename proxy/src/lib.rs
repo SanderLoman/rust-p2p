@@ -32,8 +32,8 @@ pub const VERSION: &str = git_version!(
         // NOTE: using --match instead of --exclude for compatibility with old Git
         "--match=thiswillnevermatchlol"
     ],
-    prefix = "/v1.0.0-",
-    fallback = "ConTower/v1.0.0" 
+    prefix = "ConTower/v1.0.0-",
+    fallback = "ConTower/v1.0.0-" 
 );
 
 /// Returns `VERSION`, but with platform information appended to the end.
