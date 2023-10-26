@@ -1,4 +1,5 @@
 pub mod discovery;
+pub mod network_globals;
 pub mod swarm;
 pub mod transport;
 
@@ -53,7 +54,7 @@ impl Network {
         let swarm = {
             // Set up the transport - tcp/ws with noise and mplex
             let transport = build_transport(local_keypair.clone().into())
-                .map_err(|e| format!("Failed to build transport: {:?}", e))?;
+                .map_err(|e| format!("Failed to build transport: {:?}", e));
 
             // use the executor for libp2p
             struct Executor(task_executor::TaskExecutor);

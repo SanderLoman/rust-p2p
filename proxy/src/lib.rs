@@ -8,7 +8,6 @@ pub mod redirect;
 use git_version::git_version;
 use lazy_static::lazy_static;
 use libp2p::Multiaddr;
-use network_manager::NetworkManager;
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
 use serde_json::Value;
