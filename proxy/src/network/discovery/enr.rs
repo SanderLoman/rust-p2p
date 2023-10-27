@@ -14,14 +14,12 @@ use std::str::FromStr;
 /// # Returns
 ///
 /// Returns a tuple containing the local ENR, the generated ENR, and the combined key used for the ENR.
-pub async fn generate_enr(
-    log: Logger,
-) -> Result<(Enr<CombinedKey>, Enr<CombinedKey>, CombinedKey), Box<dyn Error>> {
+pub async fn generate_enr(log: Logger) -> Enr<CombinedKey> {
     // Generate a new combined key for the ENR
     let enr_combined_key: CombinedKey = CombinedKey::generate_secp256k1();
 
     // Fetch the local ENR and associated data
-    let (lh_enr, attnets, eth2, syncnets, quic, ip4) = get_local_enr(log.clone()).await?;
+    let (attnets, eth2, syncnets, quic, ip4) = get_local_enr(log.clone()).await.unwrap();
 
     let port = 7777;
 
@@ -34,21 +32,24 @@ pub async fn generate_enr(
         .add_value("eth2", &eth2)
         .add_value("syncnets", &syncnets)
         .add_value("quic", &quic)
-        .build(&enr_combined_key)?;
+        .build(&enr_combined_key)
+        .unwrap();
 
     info!(log, "ENR generated"; "enr" => ?enr.to_base64());
 
     // Decode the generated ENR for verification
-    let decoded_generated_enr: Enr<CombinedKey> = Enr::from_str(&enr.to_base64()).map_err(|e| {
-        error!(log, "Failed to decode generated ENR"; "error" => ?e);
-        e
-    })?;
+    // let decoded_generated_enr: Enr<CombinedKey> = Enr::from_str(&enr.to_base64()).map_err(|e| {
+    //     error!(log, "Failed to decode generated ENR"; "error" => ?e);
+    //     e
+    // });
 
-    debug!(log, "ENR generated (decoded)"; "enr" => ?decoded_generated_enr);
+    // debug!(log, "ENR generated (decoded)"; "enr" => ?decoded_generated_enr);
 
-    let lh_enr = Enr::from_str(&lh_enr)?;
+    // let lh_enr = Enr::from_str(&lh_enr)?;
 
-    Ok((lh_enr, enr, enr_combined_key))
+    info!(log, "enr"; "enr" => ?enr);
+
+    enr
 }
 
 /// Fetches the local ENR and associated data like attnets, eth2, and syncnets fields.
@@ -58,7 +59,7 @@ pub async fn generate_enr(
 /// Returns a tuple containing the local ENR as a string, attnets, eth2, syncnets as byte vectors, and the IP address.
 async fn get_local_enr(
     log: Logger,
-) -> Result<(String, Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>> {
+) -> Result<(Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>, Ipv4Addr), Box<dyn Error>> {
     // Initialize HTTP client
     let client = Client::new();
 
@@ -94,5 +95,5 @@ async fn get_local_enr(
 
     let quic = decoded_enr.get("quic").unwrap().to_vec().clone();
 
-    Ok((enr, attnets, eth2, syncnets, quic, ip4))
+    Ok((attnets, eth2, syncnets, quic, ip4))
 }

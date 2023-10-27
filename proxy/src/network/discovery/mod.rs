@@ -11,6 +11,7 @@ use discv5::{
 };
 use futures::stream::FuturesUnordered;
 use futures::{Future, FutureExt};
+use libp2p::identity::Keypair;
 use libp2p::swarm::dummy::ConnectionHandler;
 use libp2p::swarm::{DialError, DialFailure, FromSwarm, NetworkBehaviour};
 use libp2p::{Multiaddr, PeerId};
@@ -32,6 +33,8 @@ use std::error::Error;
 use std::net::Ipv4Addr;
 
 use self::enr::generate_enr;
+
+use super::network_globals::CombinedKeyExt;
 
 const PATH: &str = "/home/sander/rust-p2p/json/peers.json";
 
@@ -108,8 +111,8 @@ pub struct Discovery {
 }
 
 impl Discovery {
-    pub async fn new(log: slog::Logger) -> Result<Self, Box<dyn Error>> {
-        let (local_enr, enr, enr_key) = generate_enr(log.clone()).await?;
+    pub async fn new(local_key: Keypair, log: slog::Logger) -> Result<Self, Box<dyn Error>> {
+        let enr: Enr<CombinedKey> = generate_enr(log.clone()).await;
 
         let listen_port = enr.udp4().unwrap();
 
@@ -125,6 +128,8 @@ impl Discovery {
             .query_peer_timeout(Duration::from_secs(3))
             .ping_interval(Duration::from_secs(300))
             .build();
+
+        let enr_key: CombinedKey = CombinedKey::from_libp2p(local_key)?;
 
         let mut discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
 
