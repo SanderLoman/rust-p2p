@@ -9,8 +9,8 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use libp2p::identity::Keypair;
-#[allow(deprecated)]
-use libp2p::swarm::SwarmBuilder;
+// #[allow(deprecated)]
+use libp2p::SwarmBuilder;
 use libp2p::{identify, Swarm};
 use slog::Logger;
 
@@ -87,9 +87,19 @@ impl Network {
             // behaviour
             // local_peer_id
             // executor
-            #[allow(deprecated)]
-            SwarmBuilder::with_executor(transport, behaviour, local_peer_id, Executor(executor))
-                .build()
+            // #[allow(deprecated)]
+            // SwarmBuilder::with_executor(transport, behaviour, local_peer_id, Executor(executor))
+            //     .build()
+
+            SwarmBuilder::with_new_identity()
+                .with_tokio()
+                .with_tcp()?
+                .with_quic()
+                .with_other_transport()?
+                .with_dns()?
+                .with_relay_client()?
+                .with_behaviour()?
+                .build();
         };
 
         let mut network = Network {
