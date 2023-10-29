@@ -1,5 +1,4 @@
 mod metrics;
-pub mod test_utils;
 
 use futures::channel::mpsc::Sender;
 use futures::prelude::*;

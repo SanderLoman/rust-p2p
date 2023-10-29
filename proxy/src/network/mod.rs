@@ -1,21 +1,22 @@
+pub mod build_swarm;
 pub mod discovery;
+pub mod metrics;
 pub mod network_globals;
 pub mod swarm;
 pub mod task_executor;
-pub mod transport;
 
 use std::error::Error;
 use std::pin::Pin;
 use std::sync::Arc;
 
 use libp2p::identity::Keypair;
-// #[allow(deprecated)]
+use libp2p::tcp::Config;
 use libp2p::SwarmBuilder;
 use libp2p::{identify, Swarm};
 use slog::Logger;
 
+use crate::network::build_swarm::build_swarm;
 use crate::network::swarm::behaviour::Behaviour;
-use crate::network::transport::build_transport;
 use crate::version_with_platform;
 
 use self::discovery::Discovery;
@@ -68,39 +69,12 @@ impl Network {
 
         println!("local peer id: {:?}", local_peer_id);
 
-        let swarm = {
-            // Set up the transport - tcp/ws with noise and mplex
-            let transport = build_transport(local_keypair.clone().into())
-                .map_err(|e| format!("Failed to build transport: {:?}", e))
-                .unwrap();
-
-            // use the executor for libp2p
-            struct Executor(task_executor::TaskExecutor);
-            impl libp2p::swarm::Executor for Executor {
-                fn exec(&self, f: Pin<Box<dyn futures::Future<Output = ()> + Send>>) {
-                    self.0.spawn(f, "libp2p");
-                }
-            }
-
-            // sets up the libp2p connection limits
-            // transport
-            // behaviour
-            // local_peer_id
-            // executor
-            // #[allow(deprecated)]
-            // SwarmBuilder::with_executor(transport, behaviour, local_peer_id, Executor(executor))
-            //     .build()
-
-            SwarmBuilder::with_new_identity()
-                .with_tokio()
-                .with_tcp()?
-                .with_quic()
-                .with_other_transport()?
-                .with_dns()?
-                .with_relay_client()?
-                .with_behaviour()?
-                .build();
-        };
+        let swarm = build_swarm(
+            local_keypair,
+            behaviour,
+            task_executor::TaskExecutor::new(log.clone()),
+        )
+        .unwrap();
 
         let mut network = Network {
             swarm,
