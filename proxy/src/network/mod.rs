@@ -1,6 +1,6 @@
 pub mod build_swarm;
 pub mod discovery;
-pub mod metrics;
+pub mod metrics_for_task_executor;
 pub mod network_globals;
 pub mod swarm;
 pub mod task_executor;
