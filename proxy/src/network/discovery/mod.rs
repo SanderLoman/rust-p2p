@@ -34,7 +34,7 @@ use std::net::Ipv4Addr;
 
 use self::enr::generate_enr;
 
-use super::network_globals::CombinedKeyExt;
+use super::types::network_globals::CombinedKeyExt;
 
 const PATH: &str = "/home/sander/rust-p2p/json/peers.json";
 

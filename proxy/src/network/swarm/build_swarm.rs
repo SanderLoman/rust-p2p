@@ -15,7 +15,7 @@ type BoxedTransport = Boxed<(PeerId, StreamMuxerBox)>;
 use libp2p::{core::upgrade::SelectUpgrade, dns, tcp, Swarm, SwarmBuilder};
 use std::io::Result;
 
-use super::task_executor;
+use crate::network::task_executor;
 
 pub fn build_swarm(
     local_keypair: Keypair,

@@ -1,9 +1,8 @@
-pub mod build_swarm;
 pub mod discovery;
 pub mod metrics_for_task_executor;
-pub mod network_globals;
 pub mod swarm;
 pub mod task_executor;
+pub mod types;
 
 use std::error::Error;
 use std::pin::Pin;
@@ -15,12 +14,12 @@ use libp2p::SwarmBuilder;
 use libp2p::{identify, Swarm};
 use slog::Logger;
 
-use crate::network::build_swarm::build_swarm;
 use crate::network::swarm::behaviour::Behaviour;
+use crate::network::swarm::build_swarm::build_swarm;
 use crate::version_with_platform;
 
 use self::discovery::Discovery;
-use self::network_globals::NetworkGlobals;
+use self::types::network_globals::NetworkGlobals;
 
 pub struct Network {
     // The libp2p Swarm, this will handle incoming and outgoing requests so that we can redirect them. Instead of sending data right back to them
