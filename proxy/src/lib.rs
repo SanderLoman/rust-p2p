@@ -8,6 +8,7 @@ pub mod redirect;
 use git_version::git_version;
 use lazy_static::lazy_static;
 use libp2p::Multiaddr;
+use libp2p::multiaddr::Protocol;
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
 use serde_json::Value;
@@ -100,4 +101,15 @@ pub async fn get_lh_tcp_multiaddr() -> Result<(), Box<dyn Error>> {
     }
 
     Ok(())
+}
+
+/// For a multiaddr that ends with a peer id, this strips this suffix. Rust-libp2p
+/// only supports dialing to an address without providing the peer id.
+pub fn strip_peer_id(addr: &mut Multiaddr) {
+    let last = addr.pop();
+    match last {
+        Some(Protocol::P2p(_)) => {}
+        Some(other) => addr.push(other),
+        _ => {}
+    }
 }
