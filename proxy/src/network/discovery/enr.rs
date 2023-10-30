@@ -4,7 +4,7 @@ use discv5::enr::{CombinedKey, Enr, EnrBuilder};
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
 use serde_json::Value;
-use slog::{debug, error, info, Logger};
+use slog::{debug, info, Logger};
 use std::error::Error;
 use std::net::Ipv4Addr;
 use std::str::FromStr;
