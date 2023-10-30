@@ -1,14 +1,12 @@
-/// Enabled for now.
 pub mod network;
-pub mod network_manager;
-/// Disabled for now, I wanna test the redirect first
+/// Disabled for now
 // pub mod SSZ;
 pub mod redirect;
 
 use git_version::git_version;
 use lazy_static::lazy_static;
-use libp2p::Multiaddr;
 use libp2p::multiaddr::Protocol;
+use libp2p::Multiaddr;
 use reqwest::header::{HeaderMap, ACCEPT};
 use reqwest::Client;
 use serde_json::Value;
@@ -35,7 +33,7 @@ lazy_static! {
 pub const VERSION: &str = git_version!(
     args = [
         "--always",
-        "--dirty=+",
+        "--dirty=*",
         "--abbrev=7",
         // NOTE: using --match instead of --exclude for compatibility with old Git
         "--match=thiswillnevermatchlol"

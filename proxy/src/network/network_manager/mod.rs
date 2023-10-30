@@ -1,10 +1,9 @@
-pub mod inbound;
-pub mod outbound;
+pub mod peer_manager;
+pub mod requests;
 
 use slog::{debug, Logger};
+use tokio::sync::mpsc::{channel, Receiver, Sender};
 
-use self::inbound::NetworkReceiver;
-use self::outbound::NetworkSender;
 // !!! Maybe not needed
 //
 // pub struct Proxy {
@@ -14,8 +13,8 @@ use self::outbound::NetworkSender;
 
 #[derive(Debug)]
 pub struct NetworkManager {
-    // pub network_sender: NetworkSender,
-    // pub network_receiver: NetworkReceiver,
+    pub network_sender: Sender<()>,
+    pub network_receiver: Receiver<()>,
     // requests: Vec<Request>,
     log: Logger,
 }
@@ -23,8 +22,8 @@ pub struct NetworkManager {
 impl NetworkManager {
     pub async fn new(log: Logger) -> Self {
         NetworkManager {
-            // network_sender: NetworkSender::new(log.clone()),
-            // network_receiver: NetworkReceiver::new(log.clone()),
+            network_sender: channel(1).0,
+            network_receiver: channel(1).1,
             // requests: Vec::new(),
             log,
         }

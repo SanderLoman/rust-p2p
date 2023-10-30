@@ -18,10 +18,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let verbosity = parse_verbosity();
     let log = create_logger(verbosity);
 
-    // Discovery::new(log.clone()).await?;
-
-    let enr = generate_enr(log.clone()).await?;
-
     let test = version_with_platform();
 
     println!("{}", test);
