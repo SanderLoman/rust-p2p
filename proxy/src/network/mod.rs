@@ -71,6 +71,7 @@ impl Network {
         let swarm = build_swarm(
             local_keypair,
             behaviour,
+            local_peer_id,
             task_executor::TaskExecutor::new(log.clone()),
         )
         .unwrap();
