@@ -1,4 +1,6 @@
+use std::error::Error;
 use std::pin::Pin;
+use std::sync::Arc;
 use std::time::Duration;
 
 use futures::future::Either;
@@ -11,17 +13,23 @@ use libp2p_mplex::{MaxBufferBehaviour, MplexConfig};
 use libp2p_quic;
 
 type BoxedTransport = Boxed<(PeerId, StreamMuxerBox)>;
+use libp2p::swarm::Swarm;
+#[allow(deprecated)]
+use libp2p::swarm::SwarmBuilder;
 
-use libp2p::{core::upgrade::SelectUpgrade, dns, tcp, Swarm, SwarmBuilder};
-use std::io::Result;
+use libp2p::{core::upgrade::SelectUpgrade, dns, tcp};
+use std::result::Result;
 
+use crate::network::swarm::behaviour::Behaviour;
 use crate::network::task_executor;
+use crate::network::types::network_globals::NetworkGlobals;
 
 pub fn build_swarm(
     local_keypair: Keypair,
-    behaviour: impl libp2p::swarm::NetworkBehaviour,
+    behaviour: Behaviour,
+    local_peer_id: PeerId,
     executor: task_executor::TaskExecutor,
-) -> Result<Swarm<impl libp2p::swarm::NetworkBehaviour>> {
+) -> Result<Swarm<Behaviour>, Box<dyn Error>> {
     // Set up the multiplexing
     let mut mplex_config = MplexConfig::new();
     mplex_config.set_max_buffer_size(256);
@@ -39,7 +47,7 @@ pub fn build_swarm(
     let tcp_config = tcp::Config::default().nodelay(true);
     let transport = tcp::tokio::Transport::new(tcp_config)
         .upgrade(libp2p::core::upgrade::Version::V1)
-        .authenticate(security_upgrade.clone()) // use cloned security_upgrade
+        .authenticate(security_upgrade) // use cloned security_upgrade
         .multiplex(multiplexer_upgrade)
         .timeout(Duration::from_secs(10));
 
@@ -63,16 +71,21 @@ pub fn build_swarm(
         }
     }
 
-    // Build the swarm
-    let local_peer_id = PeerId::from(local_keypair.public());
-    let swarm = SwarmBuilder::with_existing_identity(local_keypair)
-        .with_tokio()
-        .with_tcp(tcp_config, security_upgrade, multiplexer_upgrade)? // use security_upgrade
-        .with_quic()
-        .with_dns()?
-        .with_behaviour(behaviour)?
-        .with_executor(Executor(executor))
-        .build();
+    // // Build the swarm
+    // let swarm = SwarmBuilder::with_existing_identity(local_keypair)
+    //     .with_tokio()
+    //     .with_tcp(tcp_config, security_upgrade, multiplexer_upgrade)
+    //     .unwrap() // use security_upgrade
+    //     .with_quic()
+    //     .with_dns()?
+    //     .with_behaviour(|_| behaviour)
+    //     .unwrap()
+    //     .build();
+
+    #[allow(deprecated)]
+    let swarm =
+        SwarmBuilder::with_executor(transport, behaviour, local_peer_id, Executor(executor))
+            .build();
 
     Ok(swarm)
 }
@@ -80,15 +93,4 @@ pub fn build_swarm(
 /// Generate authenticated XX Noise config from identity keys
 fn generate_noise_config(identity_keypair: &Keypair) -> noise::Config {
     noise::Config::new(identity_keypair).expect("signing can fail only once during starting a node")
-}
-
-/// For a multiaddr that ends with a peer id, this strips this suffix. Rust-libp2p
-/// only supports dialing to an address without providing the peer id.
-pub fn strip_peer_id(addr: &mut Multiaddr) {
-    let last = addr.pop();
-    match last {
-        Some(Protocol::P2p(_)) => {}
-        Some(other) => addr.push(other),
-        _ => {}
-    }
 }
