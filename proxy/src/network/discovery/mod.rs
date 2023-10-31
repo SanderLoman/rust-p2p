@@ -22,6 +22,7 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::Path;
 use std::pin::Pin;
+use std::sync::Arc;
 use std::task::Poll;
 use std::time::Duration;
 use std::{collections::HashMap, time::Instant};
@@ -34,7 +35,7 @@ use std::net::Ipv4Addr;
 
 use self::enr::generate_enr;
 
-use super::types::network_globals::CombinedKeyExt;
+use super::types::network_globals::{CombinedKeyExt, self, NetworkGlobals};
 
 const PATH: &str = "/home/sander/rust-p2p/json/peers.json";
 
@@ -111,8 +112,8 @@ pub struct Discovery {
 }
 
 impl Discovery {
-    pub async fn new(local_key: Keypair, log: slog::Logger) -> Result<Self, Box<dyn Error>> {
-        let enr: Enr<CombinedKey> = generate_enr(log.clone()).await;
+    pub async fn new(local_key: Keypair, network_globals: Arc<NetworkGlobals>, log: slog::Logger) -> Result<Self, Box<dyn Error>> {
+        let enr: Enr<CombinedKey> = network_globals.local_enr();
 
         let listen_port = enr.udp4().unwrap();
 
@@ -131,7 +132,7 @@ impl Discovery {
 
         let enr_key: CombinedKey = CombinedKey::from_libp2p(local_key)?;
 
-        let mut discv5: Discv5 = Discv5::new(enr.clone(), enr_key, discv5_config)?;
+        let mut discv5: Discv5 = Discv5::new(enr, enr_key, discv5_config)?;
 
         let event_stream = {
             discv5.start().await.unwrap();

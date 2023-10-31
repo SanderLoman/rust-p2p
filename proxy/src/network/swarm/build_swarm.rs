@@ -23,6 +23,7 @@ use std::result::Result;
 use crate::network::swarm::behaviour::Behaviour;
 use crate::network::task_executor;
 use crate::network::types::network_globals::NetworkGlobals;
+use crate::network::AppReqId;
 
 pub fn build_swarm(
     local_keypair: Keypair,

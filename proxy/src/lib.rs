@@ -111,3 +111,11 @@ pub fn strip_peer_id(addr: &mut Multiaddr) {
         _ => {}
     }
 }
+
+pub fn generate_libp2p_keypair() -> libp2p::identity::Keypair {
+    libp2p::identity::Keypair::generate_secp256k1()
+}
+
+pub fn generate_discv5_keypair() -> discv5::enr::CombinedKey {
+    discv5::enr::CombinedKey::generate_secp256k1()
+}

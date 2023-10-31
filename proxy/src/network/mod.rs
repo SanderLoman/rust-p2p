@@ -38,6 +38,8 @@ pub struct SubstreamId(usize);
 pub trait ReqId: Send + 'static + std::fmt::Debug + Copy + Clone {}
 impl<T> ReqId for T where T: Send + 'static + std::fmt::Debug + Copy + Clone {}
 
+pub type AppReqId = dyn ReqId;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum PubsubMessage {
     // !!!
@@ -69,7 +71,7 @@ pub enum PubsubMessage {
 
 /// The types of events than can be obtained from polling the behaviour.
 #[derive(Debug)]
-pub enum NetworkEvent<AppReqId: ReqId> {
+pub enum NetworkEvent<AppReqId> {
     /// We have successfully dialed and connected to a peer.
     PeerConnectedOutgoing(PeerId),
     /// A peer has successfully dialed and connected to us.
@@ -130,7 +132,9 @@ impl Network {
     pub async fn new(local_keypair: Keypair, log: Logger) -> Result<Network, Box<dyn Error>> {
         let network_globals = {
             // Create an ENR or load from disk if appropriate
-            let enr = crate::network::discovery::enr::generate_enr(log.clone()).await;
+            let enr =
+                crate::network::discovery::enr::generate_enr(local_keypair.clone(), log.clone())
+                    .await;
             // Create the network globals
             let globals = NetworkGlobals::new(enr, &log);
             Arc::new(globals)
@@ -145,7 +149,7 @@ impl Network {
         };
 
         // Build and start the discovery sub-behaviour
-        let discovery = Discovery::new(local_keypair.clone(), log.clone())
+        let discovery = Discovery::new(local_keypair.clone(), network_globals.clone(), log.clone())
             .await
             .unwrap();
 
@@ -208,104 +212,5 @@ impl Network {
     /// Returns the local ENR of the node.
     pub fn local_enr(&self) -> Enr {
         self.network_globals.local_enr()
-    }
-
-    pub fn poll_network(&mut self, cx: &mut Context) -> Poll<NetworkEvent> {
-        while let Poll::Ready(Some(swarm_event)) = self.swarm.poll_next_unpin(cx) {
-            let maybe_event = match swarm_event {
-                SwarmEvent::Behaviour(behaviour_event) => match behaviour_event {
-                    BehaviourEvent::Discovery(_) => None,
-                    BehaviourEvent::Identify(_) => None,
-                },
-                SwarmEvent::ConnectionEstablished { .. } => None,
-                SwarmEvent::ConnectionClosed { .. } => None,
-                SwarmEvent::IncomingConnection {
-                    local_addr,
-                    send_back_addr,
-                    connection_id: _,
-                } => {
-                    trace!(self.log, "Incoming connection"; "our_addr" => %local_addr, "from" => %send_back_addr);
-                    None
-                }
-                SwarmEvent::IncomingConnectionError {
-                    local_addr,
-                    send_back_addr,
-                    error,
-                    connection_id: _,
-                } => {
-                    let error_repr = match error {
-                        libp2p::swarm::ListenError::Aborted => {
-                            "Incoming connection aborted".to_string()
-                        }
-                        libp2p::swarm::ListenError::WrongPeerId { obtained, endpoint } => {
-                            format!("Wrong peer id, obtained {obtained}, endpoint {endpoint:?}")
-                        }
-                        libp2p::swarm::ListenError::LocalPeerId { endpoint } => {
-                            format!("Dialing local peer id {endpoint:?}")
-                        }
-                        libp2p::swarm::ListenError::Denied { cause } => {
-                            format!("Connection was denied with cause: {cause:?}")
-                        }
-                        libp2p::swarm::ListenError::Transport(t) => match t {
-                            libp2p::TransportError::MultiaddrNotSupported(m) => {
-                                format!("Transport error: Multiaddr not supported: {m}")
-                            }
-                            libp2p::TransportError::Other(e) => {
-                                format!("Transport error: other: {e}")
-                            }
-                        },
-                    };
-                    debug!(self.log, "Failed incoming connection"; "our_addr" => %local_addr, "from" => %send_back_addr, "error" => error_repr);
-                    None
-                }
-                SwarmEvent::OutgoingConnectionError {
-                    peer_id: _,
-                    error: _,
-                    connection_id: _,
-                } => {
-                    // The Behaviour event is more general than the swarm event here. It includes
-                    // connection failures. So we use that log for now, in the peer manager
-                    // behaviour implementation.
-                    None
-                }
-                SwarmEvent::NewListenAddr { address, .. } => {
-                    Some(NetworkEvent::NewListenAddr(address))
-                }
-                SwarmEvent::ExpiredListenAddr { address, .. } => {
-                    debug!(self.log, "Listen address expired"; "address" => %address);
-                    None
-                }
-                SwarmEvent::ListenerClosed {
-                    addresses, reason, ..
-                } => {
-                    crit!(self.log, "Listener closed"; "addresses" => ?addresses, "reason" => ?reason);
-                    if Swarm::listeners(&self.swarm).count() == 0 {
-                        Some(NetworkEvent::ZeroListeners)
-                    } else {
-                        None
-                    }
-                }
-                SwarmEvent::ListenerError { error, .. } => {
-                    // this is non fatal, but we still check
-                    warn!(self.log, "Listener error"; "error" => ?error);
-                    if Swarm::listeners(&self.swarm).count() == 0 {
-                        Some(NetworkEvent::ZeroListeners)
-                    } else {
-                        None
-                    }
-                }
-                SwarmEvent::Dialing { .. } => None,
-            };
-
-            if let Some(ev) = maybe_event {
-                return Poll::Ready(ev);
-            }
-        }
-
-        Poll::Pending
-    }
-
-    pub async fn next_event(&mut self) -> NetworkEvent {
-        futures::future::poll_fn(|cx| self.poll_network(cx)).await
     }
 }
