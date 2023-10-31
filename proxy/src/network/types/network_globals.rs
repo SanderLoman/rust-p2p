@@ -19,7 +19,7 @@ pub struct NetworkGlobals {
 }
 
 impl NetworkGlobals {
-    pub fn new(enr: Enr, log: &slog::Logger) -> Self {
+    pub fn new(enr: Enr) -> Self {
         NetworkGlobals {
             local_enr: RwLock::new(enr.clone()),
             peer_id: RwLock::new(enr.peer_id()),

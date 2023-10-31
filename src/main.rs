@@ -8,19 +8,12 @@ use wagmi::{create_logger, parse_verbosity};
 
 // use proxy::network::discovery::Discovery;
 
-use proxy::network::discovery::enr::generate_enr;
-
-use proxy::version_with_platform;
 
 #[tokio::main()]
 async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
     let verbosity = parse_verbosity();
-    let log = create_logger(verbosity);
-
-    let test = version_with_platform();
-
-    println!("{}", test);
+    let _log = create_logger(verbosity);
 
     Ok(())
 }

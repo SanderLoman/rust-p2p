@@ -1,18 +1,15 @@
 use std::error::Error;
 use std::pin::Pin;
-use std::sync::Arc;
 use std::time::Duration;
 
 use futures::future::Either;
-use libp2p::core::{multiaddr::Multiaddr, muxing::StreamMuxerBox, transport::Boxed};
+use libp2p::core::muxing::StreamMuxerBox;
 
 use libp2p::identity::Keypair;
-use libp2p::multiaddr::Protocol;
-use libp2p::{core, noise, yamux, PeerId, Transport};
+use libp2p::{noise, yamux, PeerId, Transport};
 use libp2p_mplex::{MaxBufferBehaviour, MplexConfig};
 use libp2p_quic;
 
-type BoxedTransport = Boxed<(PeerId, StreamMuxerBox)>;
 use libp2p::swarm::Swarm;
 #[allow(deprecated)]
 use libp2p::swarm::SwarmBuilder;
@@ -22,7 +19,6 @@ use std::result::Result;
 
 use crate::network::swarm::behaviour::Behaviour;
 use crate::network::task_executor;
-use crate::network::types::network_globals::NetworkGlobals;
 
 pub fn build_swarm(
     local_keypair: Keypair,
@@ -70,17 +66,6 @@ pub fn build_swarm(
             self.0.spawn(f, "libp2p");
         }
     }
-
-    // // Build the swarm
-    // let swarm = SwarmBuilder::with_existing_identity(local_keypair)
-    //     .with_tokio()
-    //     .with_tcp(tcp_config, security_upgrade, multiplexer_upgrade)
-    //     .unwrap() // use security_upgrade
-    //     .with_quic()
-    //     .with_dns()?
-    //     .with_behaviour(|_| behaviour)
-    //     .unwrap()
-    //     .build();
 
     #[allow(deprecated)]
     let swarm =
