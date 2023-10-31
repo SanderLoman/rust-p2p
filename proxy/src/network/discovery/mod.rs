@@ -1,6 +1,7 @@
 #![deny(unsafe_code)]
 
 pub mod enr;
+pub mod enr_ext;
 
 // use clap::{App, Arg};
 use discv5::enr::Enr;
@@ -31,8 +32,6 @@ use tokio::sync::mpsc;
 // use libp2p::swarm::NetworkBehaviour;
 use std::error::Error;
 use std::net::Ipv4Addr;
-
-use self::enr::generate_enr;
 
 use super::types::network_globals::CombinedKeyExt;
 

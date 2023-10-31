@@ -3215,6 +3215,7 @@ dependencies = [
  "exit-future",
  "futures",
  "git-version",
+ "hex",
  "hyper",
  "lazy_static",
  "libp2p",
