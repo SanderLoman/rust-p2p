@@ -27,7 +27,7 @@ pub async fn build_enr(
     enr_key: &CombinedKey,
     config: &NetworkConfig,
 ) -> Result<Enr, Box<dyn Error>> {
-    let mut builder: EnrBuilder<CombinedKey> = create_enr_builder_from_config(config, true);
+    let mut builder: EnrBuilder<CombinedKey> = create_enr_builder_from_config(config);
     let (eth2, attnets, syncnets) = get_values().await.unwrap();
 
     // set the `eth2` field on our ENR
@@ -42,10 +42,7 @@ pub async fn build_enr(
     Ok(builder.build(enr_key).unwrap())
 }
 
-pub fn create_enr_builder_from_config<T: EnrKey>(
-    config: &NetworkConfig,
-    enable_libp2p: bool,
-) -> EnrBuilder<T> {
+pub fn create_enr_builder_from_config<T: EnrKey>(config: &NetworkConfig) -> EnrBuilder<T> {
     let mut builder = EnrBuilder::new("v4");
     let (maybe_ipv4_address, maybe_ipv6_address) = &config.enr_address;
 
