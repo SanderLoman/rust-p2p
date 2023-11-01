@@ -1,0 +1,15 @@
+[package]
+name = "task_executor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.33.0", features = ["full"] }
+slog = { version = "2.7.0" }
+futures = { version = "0.3.29" }
+exit-future = "0.2.0"
+lazy_static = "1.4.0"
+metrics = { path="../metrics" }
+sloggers = "2.1.2"
+
+

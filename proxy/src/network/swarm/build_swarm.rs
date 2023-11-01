@@ -18,7 +18,6 @@ use libp2p::{core::upgrade::SelectUpgrade, dns, tcp};
 use std::result::Result;
 
 use crate::network::swarm::behaviour::Behaviour;
-use crate::network::task_executor;
 
 pub fn build_swarm(
     local_keypair: Keypair,

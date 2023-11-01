@@ -1,6 +1,8 @@
 [workspace]
 members = [
-    "proxy",
+    "network",
+    "essentials/task_executor",
+    "essentials/metrics"
 ]
 
 [package]

@@ -5,10 +5,8 @@ pub mod discovery;
 
 pub mod listen_addr;
 
-pub mod metrics_for_task_executor;
 pub mod network_manager;
 pub mod swarm;
-pub mod task_executor;
 pub mod types;
 
 use libp2p::swarm::DialError;
