@@ -1,6 +1,6 @@
 # My plan for the project
 
-- Ok so i have an idea of making a sort of beacon node that will act as a relay or a proxy you could say. The main goals of this is to make sure that this "beacon node" is participating in the ethereum 2.0 network and that it will find all peers within the network, now that might sound hard to do but i think its possible. With that comes making connections to peers that we discover over time, however 1 beacon node can probably not handle millions of connections at once. So thats why i thought of this relay that where it would receive alot of request of other peers and then sort of "reflect" them to other peers, to make sure we dont overload our REAL beacon node (lighthouse). So it would look somewhat like this: Random_peer1 -> My_node -> Random_peer2, and then "Random_peer2" send it back the data (response) to "My_node" and we send it back to "Random_peer1". So like this Random_peer2 -> "My_node" -> Random_peer1.
+- ### Ok so i have an idea of making a sort of beacon node that will act as a relay or a proxy you could say. The main goals of this is to make sure that this "beacon node" is participating in the ethereum 2.0 network and that it will find all peers within the network, now that might sound hard to do but i think its possible. With that comes making connections to peers that we discover over time, however 1 beacon node can probably not handle millions of connections at once. So thats why i thought of this relay that where it would receive alot of request of other peers and then sort of "reflect" them to other peers, to make sure we dont overload our REAL beacon node (lighthouse). So it would look somewhat like this: Random_peer1 -> My_node -> Random_peer2, and then "Random_peer2" send it back the data (response) to "My_node" and we send it back to "Random_peer1". So like this Random_peer2 -> "My_node" -> Random_peer1.
 
 # ChatGPT suggestions:
 
@@ -50,3 +50,5 @@
 
 - ### Documentation and User Guides
   Since you're already planning to document your implementation thoroughly, it might also be helpful to create user guides and API documentation for others who might want to use or contribute to your project.
+
+Combining these features could result in a robust, scalable, and highly efficient custom beacon node that could not only handle a large number of requests but also do so in a way that's beneficial for the Ethereum 2.0 network as a whole.
