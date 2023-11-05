@@ -11,7 +11,6 @@ version = "69.69.69"
 edition = "2021"
 
 [dependencies]
-proxy = { path = "proxy" }
 tokio = { version = "1.29.1", features = ["full"] }
 slog = { version = "2.5.2", features = ["max_level_trace"] }
 sloggers = { version = "2.1.1", features = ["json"] }
