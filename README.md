@@ -86,8 +86,9 @@ We welcome contributions! Please see our [Contribution Guide](#) for more detail
 
 For further inquiries or direct communication with the maintainers:
 
-- [Contact Form](#)
-- Email: [support@contower.eth](mailto:support@contower.eth)
+Coming soon!
+
+- [support@contower.org](mailto:support@contower.org)
 
 ## Security
 
