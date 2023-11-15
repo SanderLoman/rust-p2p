@@ -69,6 +69,7 @@ Coming soon!
 Stay updated with the latest changes and improvements to Contower.
 
 Coming soon!
+
 - [Version History](#)
 
 ## License
@@ -79,8 +80,7 @@ Contower is released under the MIT License.
 
 Coming soon!
 
-Contower is an open-source project.
-We welcome contributions! Please see our [Contribution Guide](#) for more details.
+Contower is an open-source project. We welcome contributions! Please see our [Contribution Guide](#) for more details.
 
 ## Contact
 
