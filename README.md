@@ -1,4 +1,4 @@
-![Contower Banner](assets/contower_banner.png)
+![Contower Banner](assets/repo_banner.png)
 
 # Contower: Advancing Decentralization in Ethereum 2.0
 
