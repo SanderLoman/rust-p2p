@@ -80,7 +80,8 @@ Contower is released under the MIT License.
 
 Coming soon!
 
-Contower is an open-source project. We welcome contributions! Please see our [Contribution Guide](#) for more details.
+Contower is an open-source project.
+We welcome contributions! Please see our [Contribution Guide](#) for more details.
 
 ## Contact
 

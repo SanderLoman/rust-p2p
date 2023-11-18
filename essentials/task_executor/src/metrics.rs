@@ -1,5 +1,4 @@
 pub use metrics::*;
-// Handles async task metrics
 use lazy_static::lazy_static;
 
 lazy_static! {
