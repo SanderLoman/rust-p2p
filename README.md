@@ -1,6 +1,6 @@
 ![Contower Banner](assets/repo_banner.png)
 
-# Contower: A Rust-built Proxy for Ethereum 2.0
+# Contower: A proxy client for Ethereum 2.0
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
