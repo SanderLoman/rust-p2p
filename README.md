@@ -14,12 +14,6 @@ Contower is our fresh take on a Rust-built proxy that's all about upping the gam
 - **Bringing Nodes Together:** Making sure every node is connected and nobody's left out.
 - **Using Resources Smartly:** By using transient caching, we keep important data handy without needing to store it forever.
 
-## Functionality
-
-- **Quick to Get Going:** Starts up fast and doesn't hog resources or need a ton of space.
-- **Relay Networking:** Handles how nodes connect and talk to each other, using a smart relay setup.
-- **Clever Caching:** Quick access to data, especially keeping up with the latest on the blockchain, while staying light on its feet.
-
 ## Relay Protocol
 
 Contower smartly sends requests where they need to go and deals with temporary data, making sure the network doesn't get too crowded and stays strong and spread out.
