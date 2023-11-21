@@ -1,7 +1,9 @@
 #![deny(unsafe_code)]
 
 use clap::{App, Arg};
+use git_version::git_version;
 use slog::{o, Drain, Level, Logger, Record};
+use target_info::Target;
 
 // A custom Drain filter that allows logging only for specific log levels.
 struct RangeLevelFilter<D> {
@@ -81,4 +83,33 @@ pub fn create_logger(levels: Vec<Level>) -> Logger {
 
     // Create and return the root Logger
     Logger::root(drain.fuse(), o!())
+}
+
+/// Returns the current version of this build of ConTower.
+///
+/// A plus-sign (`+`) is appended to the git commit if the tree is dirty (not commited).
+/// Commit hash is omitted if the sources don't include git information.
+///
+/// ## Example
+///
+/// `ConTower/v0.1.0-67da032+`
+pub const VERSION: &str = git_version!(
+    args = [
+        "--always",
+        "--dirty=*",
+        "--abbrev=7",
+        // NOTE: using --match instead of --exclude for compatibility with old Git
+        "--match=thiswillnevermatchlol"
+    ],
+    prefix = "ConTower/v0.1.0-",
+    fallback = "ConTower/v0.1.0-"
+);
+
+/// Returns `VERSION`, but with platform information appended to the end.
+///
+/// ## Example
+///
+/// `ConTower/v0.1.0-67da032+/x86_64-linux`
+pub fn version_with_platform() -> String {
+    format!("{}/{}-{}", VERSION, Target::arch(), Target::os())
 }

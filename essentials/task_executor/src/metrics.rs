@@ -1,5 +1,4 @@
-pub use crate::network::metrics_for_task_executor::*;
-// Handles async task metrics
+pub use metrics::*;
 use lazy_static::lazy_static;
 
 lazy_static! {
