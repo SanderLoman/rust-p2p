@@ -1,0 +1,6 @@
+[book]
+authors = ["SanderLoman"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Contower Book"

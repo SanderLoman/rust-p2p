@@ -11,16 +11,8 @@ Contower is our fresh take on a Rust-built proxy that's all about upping the gam
 ## Objectives
 
 - **Boosting Network Decentralization:** We're spreading out the workload to make the network more even and strong.
-- **Bringing Nodes Together:** Making sure every node is connected and nobody's left out.
+- **Connecting (all) Nodes:** Trying to make sure we can connect to almost the whole network if not all of it.
 - **Using Resources Smartly:** By using transient caching, we keep important data handy without needing to store it forever.
-
-## Relay Protocol
-
-Contower smartly sends requests where they need to go and deals with temporary data, making sure the network doesn't get too crowded and stays strong and spread out.
-
-## Getting Started
-
-We'll show you how to dive in with Contower really soon.
 
 ## Documentation
 
@@ -35,18 +27,6 @@ Jump into our community to talk, get help, or help others.
 - [GitHub Issues](https://github.com/SanderLoman/rust-p2p/issues)
 - [Discord](https://discord.gg/Q5RQEyZ4)
 
-## FAQs
-
-We'll answer all the common questions shortly.
-
-## Changelog
-
-Stay in the loop with what's new and improved in Contower.
-
-Details coming your way soon.
-
-- [Version History](#)
-
 ## License
 
 Contower is shared with everyone under the MIT License. It's all about working together.
@@ -54,13 +34,3 @@ Contower is shared with everyone under the MIT License. It's all about working t
 ## Contributing
 
 We're pumped to see what you've got to offer! More on how you can contribute is on the way.
-
-Contower is all about teamwork. Come be a part of it.
-
-## Security
-
-We'll fill you in on how we keep things secure around here.
-
-## Known Limitations
-
-We'll be upfront about any hiccups or things we're still working on. Stay tuned!
