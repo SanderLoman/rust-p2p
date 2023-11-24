@@ -20,8 +20,18 @@ jobs:
         with:
           toolchain: stable
           override: true
+      - name: Cache cargo-tarpaulin
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/cargo-tarpaulin
+            ~/.cargo/bin/tarpaulin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: ${{ runner.os }}-cargo-tarpaulin-${{ hashFiles('**/Cargo.lock') }}
       - name: Install cargo-tarpaulin
-        run: cargo install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin || true
       - name: Run tests with coverage
         run: cargo tarpaulin --out Xml --output-dir ./target/tarpaulin
       - name: Upload coverage to Codecov
@@ -32,6 +42,5 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: true
           verbose: true
-
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
