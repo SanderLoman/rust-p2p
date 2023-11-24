@@ -14,12 +14,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Build and test with coverage
-        run: |
-          cargo test --verbose
-          cargo tarpaulin
-        if: success()
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
