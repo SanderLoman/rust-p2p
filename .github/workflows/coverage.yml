@@ -23,14 +23,15 @@ jobs:
       - name: Install cargo-tarpaulin
         run: cargo install cargo-tarpaulin
       - name: Run tests with coverage
-        run: cargo tarpaulin --out Xml
+        run: cargo tarpaulin --out Xml --output-dir ./target/tarpaulin
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          file: ./target/tarpaulin-report.xml
+          file: ./target/tarpaulin/cobertura.xml
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: true
           verbose: true
+
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
