@@ -14,10 +14,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v3
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin
+      - name: Run tests with coverage
+        run: cargo tarpaulin --out Xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          file: ./target/debug/tarpaulin-report.xml
+          file: ./target/tarpaulin-report.xml
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: true
