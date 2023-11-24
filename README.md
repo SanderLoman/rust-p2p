@@ -2,7 +2,7 @@
 
 ![Contower Banner](assets/repo_banner.png)
 
-[![Rust](https://github.com/SanderLoman/ConTower/actions/workflows/rust.yml/badge.svg)](https://github.com/SanderLoman/ConTower/actions/workflows/rust.yml)
+[![build](https://github.com/SanderLoman/ConTower/actions/workflows/rust.yml/badge.svg)](https://github.com/SanderLoman/ConTower/actions/workflows/rust.yml)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
