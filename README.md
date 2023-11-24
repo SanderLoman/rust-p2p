@@ -29,7 +29,7 @@ Jump into our community to talk, get help, or help others.
 
 ## License
 
-Contower is shared with everyone under the MIT License. It's all about working together.
+Contower is shared with everyone under the MIT License.
 
 ## Contributing
 
