@@ -2,6 +2,7 @@
 
 ![Contower Banner](assets/repo_banner.png)
 
+[![Rust](https://github.com/SanderLoman/ConTower/actions/workflows/rust.yml/badge.svg)](https://github.com/SanderLoman/ConTower/actions/workflows/rust.yml)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
@@ -26,10 +27,6 @@ Jump into our community to talk, get help, or help others.
 
 - [GitHub Issues](https://github.com/SanderLoman/rust-p2p/issues)
 - [Discord](https://discord.gg/Q5RQEyZ4)
-
-## License
-
-Contower is shared with everyone under the MIT License.
 
 ## Contributing
 
