@@ -30,8 +30,13 @@ jobs:
             ~/.cargo/registry/cache
             ~/.cargo/git/db
           key: ${{ runner.os }}-cargo-tarpaulin-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install cargo-tarpaulin
-        run: cargo install cargo-tarpaulin || true
+      - name: Check if cargo-tarpaulin is installed
+        run: |
+          if cargo tarpaulin --version; then
+            echo "Cargo-tarpaulin already installed"
+          else
+            cargo install cargo-tarpaulin
+          fi
       - name: Run tests with coverage
         run: cargo tarpaulin --out Xml --output-dir ./target/tarpaulin
       - name: Upload coverage to Codecov
