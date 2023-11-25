@@ -113,3 +113,21 @@ pub const VERSION: &str = git_version!(
 pub fn version_with_platform() -> String {
     format!("{}/{}-{}", VERSION, Target::arch(), Target::os())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_version() {
+        assert_eq!(VERSION, "ConTower/v0.1.0-9ad47e4*");
+    }
+
+    #[test]
+    fn test_version_with_platform() {
+        assert_eq!(
+            version_with_platform(),
+            "ConTower/v0.1.0-9ad47e4*/x86_64-linux"
+        );
+    }
+}
