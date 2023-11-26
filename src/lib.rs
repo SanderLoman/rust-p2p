@@ -1,5 +1,7 @@
 #![deny(unsafe_code)]
 
+use std::error::Error;
+
 use clap::{App, Arg};
 use git_version::git_version;
 use slog::{o, Drain, Level, Logger, Record};
@@ -112,4 +114,11 @@ pub const VERSION: &str = git_version!(
 /// `ConTower/v0.1.0-67da032+/x86_64-linux`
 pub fn version_with_platform() -> String {
     format!("{}/{}-{}", VERSION, Target::arch(), Target::os())
+}
+
+pub async fn run() -> Result<(), Box<dyn Error>> {
+    let verbosity = parse_verbosity();
+    let _log = create_logger(verbosity);
+
+    Ok(())
 }

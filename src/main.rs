@@ -14,3 +14,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
+
+// tests/integration_test.rs
+
+#[tokio::test]
+async fn test_run() {
+    use wagmi::run; // replace `your_crate` with the actual name of your crate
+
+    // Call the `run` function and assert on its result.
+    // Here we're just checking that it doesn't return an error.
+    assert!(run().await.is_ok());
+}
