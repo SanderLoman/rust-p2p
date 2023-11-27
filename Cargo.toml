@@ -3,7 +3,7 @@ members = ["network", "essentials/task_executor", "essentials/metrics"]
 
 [package]
 name = "wagmi"
-version = "69.69.69"
+version = "0.1.0"
 edition = "2021"
 
 [workspace.dependencies]
