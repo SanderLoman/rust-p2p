@@ -92,7 +92,7 @@ pub fn create_logger(levels: Vec<Level>) -> Logger {
 ///
 /// ## Example
 ///
-/// `ConTower/v0.1.0-67da032+`
+/// `ConTower/v0.1.0-67da032*`
 pub const VERSION: &str = git_version!(
     args = [
         "--always",
@@ -109,7 +109,7 @@ pub const VERSION: &str = git_version!(
 ///
 /// ## Example
 ///
-/// `ConTower/v0.1.0-67da032+/x86_64-linux`
+/// `ConTower/v0.1.0-67da032*/x86_64-linux`
 pub fn version_with_platform() -> String {
     format!("{}/{}-{}", VERSION, Target::arch(), Target::os())
 }
