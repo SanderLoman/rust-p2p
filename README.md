@@ -4,7 +4,7 @@
 
 [![build](https://github.com/SanderLoman/ConTower/actions/workflows/build.yml/badge.svg)](https://github.com/SanderLoman/ConTower/actions/workflows/build.yml)
 [![tests](https://github.com/SanderLoman/ConTower/actions/workflows/tests.yml/badge.svg)](https://github.com/SanderLoman/ConTower/actions/workflows/tests.yml)
-[![Codecov](https://img.shields.io/codecov/c/github/SanderLoman/ConTower)](https://app.codecov.io/gh/SanderLoman/ConTower)
+[![Codecov](https://img.shields.io/codecov/c/github/SanderLoman/ConTower?token=JT1850HR9J)](https://app.codecov.io/gh/SanderLoman/ConTower)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
