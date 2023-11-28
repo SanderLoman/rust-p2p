@@ -9,27 +9,27 @@
 
 ## Overview
 
-Contower is our fresh take on a Rust-built proxy that's all about upping the game for decentralization on the Ethereum 2.0 network. It's different because it doesn't need its own database. Instead, it's like a middleman that not only makes sure nodes are talking to each other smoothly but also keeps tabs on the latest block data and the state of the blockchain, using something called transient caching. This keeps things efficient and up-to-date.
+Contower represents a groundbreaking advancement in the Ethereum 2.0 network, uniquely merging the execution and consensus clients into a unified relay/proxy networking client. Crafted with Rust, Contower stands out by eliminating the need for its own database. Functioning as a versatile intermediary, it not only facilitates seamless node communication but also innovatively monitors the latest blockchain developments and state changes through transient caching. This strategic integration not only streamlines network functionality but also enhances overall efficiency and decentralization. By consolidating these key components, Contower sets a new standard in blockchain networking, aiming for full network connectivity and intelligent resource utilization.
 
 ## Objectives
 
-- **Boosting Network Decentralization:** We're spreading out the workload to make the network more even and strong.
-- **Connecting (all) Nodes:** Trying to make sure we can connect to almost the whole network if not all of it.
-- **Using Resources Smartly:** By using transient caching, we keep important data handy without needing to store it forever.
+- **Enhanced Network Integration:** Seamlessly merging execution and consensus mechanisms to fortify network coherence and resilience.
+- **Universal Node Connectivity:** Striving for comprehensive network coverage, connecting a broad spectrum of nodes.
+- **Optimized Resource Utilization:** Employing transient caching to maintain critical data accessibly and efficiently.
 
 ## Documentation
 
-We're working on putting together all the guides, API details, and how you can help out.
+Documentation detailing guides, API specifics, and collaboration opportunities is currently in development.
 
-Hang tight!
+Stay tuned!
 
 ## Community and Support
 
-Jump into our community to talk, get help, or help others.
+Engage with our community for discussions, support, and collaboration.
 
 - [GitHub Issues](https://github.com/SanderLoman/rust-p2p/issues)
-- [Discord](https://discord.gg/Q5RQEyZ4)
+- [Discord](https://discord.gg/vHWpWsjCqx)
 
 ## Contributing
 
-We're pumped to see what you've got to offer! More on how you can contribute is on the way.
+Eager to witness your contributions and innovations! Further details on how you can contribute are forthcoming.
