@@ -30,6 +30,10 @@ Engage with our community for discussions, support, and collaboration.
 - [GitHub Issues](https://github.com/SanderLoman/rust-p2p/issues)
 - [Discord](https://discord.gg/vHWpWsjCqx)
 
+## Security
+
+See [SECURITY.md](SECURITY.md) for more information.
+
 ## Contributing
 
 Eager to witness your contributions and innovations! Further details on how you can contribute are forthcoming.
