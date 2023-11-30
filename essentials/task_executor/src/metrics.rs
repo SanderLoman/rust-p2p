@@ -1,5 +1,5 @@
-pub use metrics::*;
 use lazy_static::lazy_static;
+pub use metrics::*;
 
 lazy_static! {
     pub static ref ASYNC_TASKS_COUNT: Result<IntGaugeVec> = try_create_int_gauge_vec(
