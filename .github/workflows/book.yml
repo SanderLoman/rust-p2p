@@ -137,6 +137,8 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: github-pages
+      - name: Create the book directory
+        run: mkdir -p ./book
 
       - name: Unpack artifact
         run: tar -xvf ./artifact.tar -C ./book
