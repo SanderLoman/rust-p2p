@@ -76,6 +76,7 @@ jobs:
 
       - name: Build book
         run: mdbook build
+        working-directory: ./book
 
       - name: Build docs
         run: cargo docs
