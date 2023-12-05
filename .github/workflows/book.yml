@@ -51,6 +51,7 @@ jobs:
 
       - name: Run linkcheck
         run: mdbook-linkcheck --standalone
+        working-directory: ./book
 
   build:
     runs-on: ubuntu-latest
