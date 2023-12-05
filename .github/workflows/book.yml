@@ -79,12 +79,14 @@ jobs:
         run: mdbook build
         working-directory: ./book/
 
+      - name: Create documentation directory
+        run: mkdir -p target/book/docs
+
       - name: Build docs
         run: cargo doc --workspace --no-deps
 
       - name: Move docs to book folder
-        run: |
-          mv target/doc target/book/docs
+        run: mv target/doc/* target/book/docs/
 
       - name: Archive artifact
         shell: sh
