@@ -80,9 +80,7 @@ jobs:
         working-directory: ./book/
 
       - name: Build docs
-        run: cargo doc
-        env:
-          RUSTDOCFLAGS: --cfg docsrs --show-type-layout --generate-link-to-definition --enable-index-page -Zunstable-options
+        run: cargo doc --workspace --no-deps
 
       - name: Move docs to book folder
         run: |
