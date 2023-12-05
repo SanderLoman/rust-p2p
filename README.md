@@ -17,12 +17,6 @@ Contower represents a groundbreaking advancement in the Ethereum 2.0 network, un
 - **Universal Node Connectivity:** Striving for comprehensive network coverage, connecting a broad spectrum of nodes.
 - **Optimized Resource Utilization:** Employing transient caching to maintain critical data accessibly and efficiently.
 
-## Documentation
-
-Documentation detailing guides, API specifics, and collaboration opportunities is currently in development.
-
-Stay tuned!
-
 ## Community and Support
 
 Engage with our community for discussions, support, and collaboration.
@@ -30,10 +24,16 @@ Engage with our community for discussions, support, and collaboration.
 - [GitHub Issues](https://github.com/SanderLoman/rust-p2p/issues)
 - [Discord](https://discord.gg/vHWpWsjCqx)
 
-## Security
+## Documentation
 
-See [SECURITY.md](SECURITY.md) for more information.
+See the [book](./book/src/SUMMARY.md) for more information.
 
 ## Contributing
 
-Eager to witness your contributions and innovations! Further details on how you can contribute are forthcoming.
+Eager to witness your contributions and innovations!
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for more information.

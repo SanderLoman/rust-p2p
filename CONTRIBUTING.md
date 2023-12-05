@@ -25,6 +25,8 @@ Your contributions to Contower can have a significant impact. You might want to:
 
 ## How to Get Started
 
+To begin contributing to Contower, please familiarize yourself with our contributing guidelines by visiting the contributing section of our book [here](./book/src/contributing.md).
+
 Contributing to Contower follows a similar process to many open-source projects on GitHub. We use GitHub [Issues](https://github.com/SanderLoman/contower/issues) to track tasks and [Pull Requests](https://github.com/SanderLoman/contower/pulls) for code submissions. For informal discussions and updates, join our [Discord](https://discord.gg/vHWpWsjCqx).
 
 ### General Workflow
@@ -68,4 +70,3 @@ Mistakes are part of the learning process. We focus on constructive feedback and
 ### Disagreements with Project Methods
 
 We are open to feedback and constructive criticism. If you have suggestions for improvement, please let us know.
-
