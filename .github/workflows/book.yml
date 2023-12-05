@@ -1,5 +1,3 @@
-# Documentation and mdbook related jobs.
-
 name: book
 
 on:
