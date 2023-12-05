@@ -32,6 +32,7 @@ jobs:
 
       - name: Run tests
         run: mdbook test
+        working-directory: ./book
 
   lint:
     runs-on: ubuntu-latest
