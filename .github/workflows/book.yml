@@ -260,4 +260,4 @@ jobs:
         with:
           enable_jekyll: false
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./book/book
+          publish_dir: ./book
