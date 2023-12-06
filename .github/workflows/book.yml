@@ -81,7 +81,7 @@ jobs:
         working-directory: ./book
 
       - name: Build docs
-        run: cargo docs
+        run: cargo doc --open --no-deps
         env:
           # Keep in sync with ./ci.yml:jobs.docs
           RUSTDOCFLAGS:
@@ -90,7 +90,13 @@ jobs:
 
       - name: Move docs to book folder
         run: |
+          mkdir -p target/book/docs
           mv target/doc target/book/docs
+
+      - name: Debug - List directories
+        run: |
+          ls -la target/
+          ls -la target/book/
 
       - name: Archive artifact
         shell: sh
