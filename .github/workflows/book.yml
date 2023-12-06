@@ -247,17 +247,16 @@ jobs:
           if-no-files-found: error
 
   deploy:
-    needs: [build, lint, test]
+    if: github.ref_name == 'main' && github.event_name == 'push'
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/unstable' && github.event_name == 'push' }}
+    needs: [test, lint, build]
     permissions:
-      contents: write
-      packages: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          enable_jekyll: false
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./book
+        uses: actions/deploy-pages@v2
