@@ -188,6 +188,9 @@ jobs:
   build-and-deploy:
     needs: lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
