@@ -217,7 +217,8 @@ jobs:
       - name: Move docs to book folder
         run: |
           mkdir -p book/docs
-          mv target/doc/* book/
+          find target/doc -type d -exec sh -c 'mkdir -p book/docs/${0#target/doc/}' {} \;
+          find target/doc -type f -exec sh -c 'cp -n ${0} book/docs/${0#target/doc/}' {} \;
 
       - name: Archive artifact
         run: |
