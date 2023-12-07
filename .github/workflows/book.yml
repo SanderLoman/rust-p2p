@@ -216,13 +216,8 @@ jobs:
 
       - name: Move docs to book folder
         run: |
-          mkdir -p book/docs
-          mv target/doc book/docs
-
-      - name: Debug - List directories
-        run: |
-          ls -la target/
-          ls -la book/
+          mkdir -p book/
+          mv target/doc book/
 
       - name: Archive artifact
         run: |
