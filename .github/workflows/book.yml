@@ -161,6 +161,9 @@ jobs:
         run: |
           wget -qO- https://github.com/sgoudham/mdbook-template/releases/latest/download/mdbook-template-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C $HOME/.cargo/bin
 
+      - name: List files in the repository
+        run: ls -alh
+
       - name: Run tests
         run: mdbook test
         # working-directory: ./book
