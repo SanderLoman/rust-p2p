@@ -51,7 +51,7 @@ jobs:
         run: mdbook-linkcheck --standalone
 
   build:
-    #
+    # This can be bypassed for now by adding --no-deps to the cargo doc command.
     #
     # TODO: reenable when <https://github.com/rust-lang/rust/issues/118670> is resolved.
     # if: false
@@ -78,7 +78,7 @@ jobs:
         run: mdbook build
 
       - name: Build docs
-        run: cargo doc
+        run: cargo doc --no-deps
         env:
           # Keep in sync with ./ci.yml:jobs.docs
           RUSTDOCFLAGS:
@@ -112,6 +112,8 @@ jobs:
           if-no-files-found: error
 
   deploy:
+    # Enabled for now since we disabled the if statement in the build job.
+    #
     # Only deploy if a push to main
     # TODO: reenable when <https://github.com/rust-lang/rust/issues/118670> is resolved.
     if: github.ref_name == 'unstable' && github.event_name == 'push'
