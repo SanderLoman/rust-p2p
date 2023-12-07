@@ -216,9 +216,8 @@ jobs:
 
       - name: Move docs to book folder
         run: |
-          mkdir -p book/docs
-          find target/doc -type d -exec sh -c 'mkdir -p book/docs/${0#target/doc/}' {} \;
-          find target/doc -type f -exec sh -c 'cp -n ${0} book/docs/${0#target/doc/}' {} \;
+          mkdir -p target/book/docs
+          mv target/doc target/book/docs
 
       - name: Archive artifact
         run: |
@@ -243,17 +242,23 @@ jobs:
           if-no-files-found: error
 
   deploy:
+    # Only deploy if a push to main
     if: github.ref_name == 'unstable' && github.event_name == 'push'
     runs-on: ubuntu-latest
     needs: [test, lint, build]
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
     permissions:
       pages: write
       id-token: write
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     timeout-minutes: 60
+
     steps:
-      - uses: actions/checkout@v4
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v2
