@@ -26,7 +26,7 @@ Engage with our community for discussions, support, and collaboration.
 
 ## Documentation
 
-See the [book](./book/src/SUMMARY.md) for more information.
+See the [Book](https://nodura.github.io/Contower/) for more information.
 
 ## Contributing
 
