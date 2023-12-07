@@ -217,7 +217,7 @@ jobs:
       - name: Move docs to book folder
         run: |
           mkdir -p book/docs
-          mv target/doc book/docs
+          mv target/doc/* book/
 
       - name: Archive artifact
         run: |
@@ -227,7 +227,7 @@ jobs:
           done
           tar \
             --dereference --hard-dereference \
-            --directory "book/docs" \
+            --directory "book" \
             -cvf "$RUNNER_TEMP/artifact.tar" \
             --exclude=.git \
             --exclude=.github \
