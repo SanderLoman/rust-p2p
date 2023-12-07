@@ -52,7 +52,7 @@ jobs:
 
   build:
     # TODO: reenable when <https://github.com/rust-lang/rust/issues/118670> is resolved.
-    if: false
+    # if: false
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
