@@ -255,6 +255,7 @@ jobs:
       id-token: write
     environment:
       name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
