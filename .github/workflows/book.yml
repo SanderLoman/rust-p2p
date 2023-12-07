@@ -163,7 +163,7 @@ jobs:
 
       - name: Run tests
         run: mdbook test
-        working-directory: ./book
+        # working-directory: ./book
 
   lint:
     needs: test
@@ -178,7 +178,7 @@ jobs:
 
       - name: Run linkcheck
         run: mdbook-linkcheck --standalone
-        working-directory: ./book
+        # working-directory: ./book
 
   build:
     runs-on: ubuntu-latest
@@ -207,7 +207,7 @@ jobs:
 
       - name: Build book
         run: mdbook build
-        working-directory: ./book
+        # working-directory: ./book
 
       - name: Build docs
         run: cargo doc --no-deps
