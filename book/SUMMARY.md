@@ -1,5 +1,5 @@
 # Summary
 
-- [Introduction](./introduction.md)
-- [Overview](./overview.md)
-- [Contributing](./contributing.md)
+* [Introduction](./introduction.md)
+* [Installation](./installation.md)
+* [Contributing](./contributing.md)
