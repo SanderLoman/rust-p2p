@@ -15,9 +15,9 @@ This client serves as an adaptable intermediary, capable of either facilitating 
 
 ## Objectives
 
-- **Unified Client Architecture:** Contower merges execution and consensus mechanisms into one framework. This relay/proxy functionality simplifies the Ethereum ecosystem and opens avenues for future blockchain innovations.
+- **Unified Client Architecture:** Contower integrates execution and consensus mechanisms into a cohesive framework, with additional relay functionality. Each component can be toggled independently, allowing users to choose between running a merged execution/consensus client, activating relay capabilities, or utilizing both features simultaneously. This design provides flexibility and paves the way for future innovations in the Ethereum ecosystem.
 
-- **Performance Enhancement:** Contower's design, free from the constraints of a traditional database, ensures fast processing and efficient resource use. This performance focus sets a new standard for blockchain client operations.
+- **Performance Enhancement:** Contower's design, free from the constraints of a traditional database, ensures fast processing and efficient resource use.
 
 - **Client Diversity:** Introducing Contower to the Ethereum network adds to its robustness and guards against systemic risks. Diverse client types contribute to a stronger network.
 
