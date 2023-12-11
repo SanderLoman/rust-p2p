@@ -1,4 +1,4 @@
-# Contower: A proxy client for Ethereum 2.0
+# Contower: A proxy client for Ethereum
 
 ![Contower Banner](assets/repo_banner.png)
 
@@ -9,13 +9,21 @@
 
 ## Overview
 
-Contower represents a groundbreaking advancement in the Ethereum 2.0 network, uniquely merging the execution and consensus clients into a unified relay/proxy networking client. Crafted with Rust, Contower stands out by eliminating the need for its own database. Functioning as a versatile intermediary, it not only facilitates seamless node communication but also innovatively monitors the latest blockchain developments and state changes through transient caching. This strategic integration not only streamlines network functionality but also enhances overall efficiency and decentralization. By consolidating these key components, Contower sets a new standard in blockchain networking, aiming for full network connectivity and intelligent resource utilization.
+Contower is our latest development for the Ethereum network, designed to bring flexibility and efficiency to blockchain operations. It uniquely integrates execution and consensus clients into a versatile relay/proxy networking client. Developed with Rust, Contower stands out for its optional reliance on a traditional database, allowing for streamlined and adaptable operations.
+
+This client serves as an adaptable intermediary, capable of either facilitating node communication and monitoring blockchain developments with transient caching or functioning as a full node with its own database. Users have the choice to run Contower as a lean relay/proxy client, a complete node client incorporating execution and consensus mechanisms, or even both simultaneously. This flexibility ensures that Contower can meet various user needs, enhancing network functionality, efficiency, and decentralization, tailored to individual preferences and requirements.
 
 ## Objectives
 
-- **Enhanced Network Integration:** Seamlessly merging execution and consensus mechanisms to fortify network coherence and resilience.
-- **Universal Node Connectivity:** Striving for comprehensive network coverage, connecting a broad spectrum of nodes.
-- **Optimized Resource Utilization:** Employing transient caching to maintain critical data accessibly and efficiently.
+- **Unified Client Architecture:** Contower merges execution and consensus mechanisms into one framework. This relay/proxy functionality simplifies the Ethereum ecosystem and opens avenues for future blockchain innovations.
+
+- **Performance Enhancement:** Contower's design, free from the constraints of a traditional database, ensures fast processing and efficient resource use. This performance focus sets a new standard for blockchain client operations.
+
+- **Client Diversity:** Introducing Contower to the Ethereum network adds to its robustness and guards against systemic risks. Diverse client types contribute to a stronger network.
+
+- **Broad EVM Chain Support:** Designed to be compatible with a variety of EVM chains, Contower aims to be versatile across different blockchain networks, increasing its utility and applicability.
+
+- **Configurability and Accessibility:** Contower caters to a range of users, from large-scale node operators to individual enthusiasts. Its configurable nature ensures it meets various operational needs, whether optimizing for speed or adapting to limited hardware.
 
 ## Community and Support
 
