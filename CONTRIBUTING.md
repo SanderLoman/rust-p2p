@@ -5,9 +5,9 @@
 [Chat Badge]: https://img.shields.io/discord/1174374333062316032?logo=discord
 [Chat Link]: https://discord.gg/vHWpWsjCqx
 
-Contower is an innovative project in the Ethereum 2.0 ecosystem. Our community is at the heart of what we do, and we welcome contributions from everyone. We strive to create a positive, respectful, and engaging environment for all collaborators.
+Contower is an innovative project in the Ethereum ecosystem. Our community is at the heart of what we do, and we welcome contributions from everyone. We strive to create a positive, respectful, and engaging environment for all collaborators.
 
-Although Contower operates within the Ethereum 2.0 framework, our focus includes unique challenges and opportunities, particularly in developing robust and efficient beacon nodes and relay mechanisms.
+Although Contower operates within the Ethereum framework, our focus includes unique challenges and opportunities, particularly in developing robust and efficient beacon nodes and relay mechanisms.
 
 This guide is for anyone interested in contributing, whether you're new to open-source or an experienced hand looking for a new challenge.
 
@@ -15,7 +15,7 @@ This guide is for anyone interested in contributing, whether you're new to open-
 
 Your contributions to Contower can have a significant impact. You might want to:
 
-- Play a role in shaping the future of Ethereum 2.0.
+- Play a role in shaping the future of Ethereum.
 - Build a reputation as a developer in the cutting-edge field of blockchain technology.
 - Dive into the complexities of beacon nodes and relay systems.
 - Enhance your understanding of open-source projects.
@@ -59,9 +59,9 @@ There’s a wide range of tasks available, from simple documentation updates to 
 
 We welcome developers of all skill levels. If your code needs improvement, we’ll guide you through it.
 
-### Lack of Ethereum 2.0 Knowledge
+### Lack of Ethereum Knowledge
 
-Many tasks don’t require in-depth knowledge of Ethereum 2.0. You’ll learn as you contribute.
+Many tasks don’t require in-depth knowledge of Ethereum. You’ll learn as you contribute.
 
 ### Fear of Making Mistakes
 
