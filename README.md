@@ -34,7 +34,7 @@ Engage with our community for discussions, support, and collaboration.
 
 ## Documentation
 
-See the [Book](https://nodura.github.io/Contower/) for more information.
+See the <a href="https://nodura.github.io/Contower/" target="_blank" rel="noopener noreferrer">Book</a> for more information.
 
 ## Contributing
 
