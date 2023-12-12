@@ -1,3 +1,5 @@
+⚠️ **This project is still in development and not ready for production use.** ⚠️
+
 # Contower: A proxy client for Ethereum
 
 ![Contower Banner](assets/repo_banner.png)
