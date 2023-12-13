@@ -1,5 +1,5 @@
 [workspace]
-members = ["network", "essentials/task_executor", "essentials/metrics"]
+members = ["common/task_executor", "common/metrics"]
 
 [package]
 name = "wagmi"
