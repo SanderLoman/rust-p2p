@@ -13,7 +13,7 @@
 
 Contower is our latest development for the Ethereum network, designed to bring flexibility and efficiency to blockchain operations. It uniquely integrates execution and consensus clients into a versatile relay/proxy networking client. Developed with Rust, Contower stands out for its optional reliance on a traditional database, allowing for streamlined and adaptable operations.
 
-This client serves as an adaptable intermediary, capable of either facilitating node communication and monitoring blockchain developments with transient caching or functioning as a full node with its own database. Users have the choice to run Contower as a lean relay/proxy client, a complete node client incorporating execution and consensus mechanisms, or even both simultaneously. This flexibility ensures that Contower can meet various user needs, enhancing network functionality, efficiency, and decentralization, tailored to individual preferences and requirements.
+This client serves as an adaptable intermediary, capable of either facilitating relay communication and keeping track of the latest blockchain traffic with transient caching or functioning as a full node with its own database. Users have the choice to run Contower as a lean relay/proxy client, a complete node client incorporating execution and consensus mechanisms, or even both simultaneously. This flexibility ensures that Contower can meet various user needs, enhancing network functionality, efficiency, and decentralization, tailored to individual preferences and requirements.
 
 ## Objectives
 
