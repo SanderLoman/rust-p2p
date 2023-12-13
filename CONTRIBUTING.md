@@ -2,9 +2,6 @@
 
 [![Chat Badge]][Chat Link]
 
-[Chat Badge]: https://img.shields.io/discord/1174374333062316032?logo=discord
-[Chat Link]: https://discord.gg/vHWpWsjCqx
-
 Contower is an innovative project in the Ethereum ecosystem. Our community is at the heart of what we do, and we welcome contributions from everyone. We strive to create a positive, respectful, and engaging environment for all collaborators.
 
 Although Contower operates within the Ethereum framework, our focus includes unique challenges and opportunities, particularly in developing robust and efficient beacon nodes and relay mechanisms.
@@ -70,3 +67,6 @@ Mistakes are part of the learning process. We focus on constructive feedback and
 ### Disagreements with Project Methods
 
 We are open to feedback and constructive criticism. If you have suggestions for improvement, please let us know.
+
+[Chat Badge]: https://img.shields.io/discord/1174374333062316032?logo=discord
+[Chat Link]: https://discord.gg/vHWpWsjCqx
