@@ -1,0 +1,9 @@
+[env]
+# Set the number of arenas to 16 when using jemalloc.
+JEMALLOC_SYS_WITH_MALLOC_CONF = "abort_conf:true,narenas:16"
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-Clink-arg=/STACK:10000000"]
+
+[target.i686-pc-windows-msvc]
+rustflags = ["-Clink-arg=/STACK:10000000"]
