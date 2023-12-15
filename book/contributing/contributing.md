@@ -50,6 +50,8 @@ In situations where a panic is unlikely but still needs to be communicated to th
 Every `TODO` comment must be linked to a corresponding GitHub issue.
 
 ```rust
+use std::error::Error;
+
 pub fn my_function(&mut self, _something: &[u8]) -> Result<String, Error> {
   // TODO: Implement feature
   // Issue link: https://github.com/Nodura/Contower/issues/XX
@@ -75,6 +77,8 @@ fn make_blockchain() {} // Inline comment after a space
 - Place these comments before attributes.
 
 ```rust
+use std::path::PathBuf;
+
 /// Configuration for the Contower instance, covering the core settings.
 /// This general configuration can be extended by other components. #[derive(Clone)]
 #[derive(Clone)]
