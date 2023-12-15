@@ -50,11 +50,16 @@ In situations where a panic is unlikely but still needs to be communicated to th
 Every `TODO` comment must be linked to a corresponding GitHub issue.
 
 ```rust
-use std::error::Error;
+use std::error::Error; // Importing Error trait
 
-pub fn my_function(&mut self, _something: &[u8]) -> Result<String, Error> {
-  // TODO: Implement feature
-  // Issue link: https://github.com/Nodura/Contower/issues/XX
+struct MyExampleStruct; // Example struct
+
+impl MyExampleStruct {
+    pub fn my_function(&mut self, _something: &[u8]) -> Result<String, Box<dyn Error>> {
+        // TODO: Implement feature
+        // Issue link: https://github.com/Nodura/Contower/issues/XX
+        Ok("Example response".to_string())
+    }
 }
 ```
 
