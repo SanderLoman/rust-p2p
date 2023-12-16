@@ -1,9 +1,14 @@
 [workspace]
-members = ["common/task_executor", "common/metrics"]
+members = [
+    "common/task_executor",
+    "common/metrics",
+    "contower",
+    "execution",
+    "consensus",
+]
+resolver = "2"
 
-[package]
-name = "wagmi"
-version = "0.1.0"
+[workspace.package]
 edition = "2021"
 
 [workspace.dependencies]
@@ -19,20 +24,7 @@ futures = { version = "0.3.29" }
 exit-future = "0.2.0"
 lazy_static = "1.4.0"
 prometheus = "0.13.3"
-
-[dependencies]
-tokio = { version = "1.34.0", features = ["full"] }
-slog = { version = "2.7.0", features = ["max_level_trace"] }
-sloggers = { version = "2.1.2", features = ["json"] }
-slog-term = "2.9.0"
-slog-async = "2.8.0"
-dotenv = "0.15.0"
-eyre = "0.6.8"
-clap = "2.33.3"
 target_info = "0.1.0"
 git-version = "0.3.5"
-# libp2p = { version = "0.51.3", features = ["secp256k1", "ed25519", "tcp", "dns", "async-std", "noise", "mplex", "yamux", "websocket", "ping", "macros", "kad", "mdns", "macros", "tokio", "websocket", "gossipsub", "autonat", "floodsub", "identify", "quic"] }
-# discv5 = { version = "0.3.0", features = ["libp2p"] }
-# eth2_ssz = "0.4.0"
-# eth2_ssz_types = "0.2.1"
-# eth2_ssz_derive = "0.3.0"
+
+# Local dependencies
