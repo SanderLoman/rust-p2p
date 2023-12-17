@@ -2,8 +2,11 @@
 members = [
     "common/task_executor",
     "common/metrics",
+
     "contower",
+
     "execution",
+
     "consensus",
 ]
 resolver = "2"
