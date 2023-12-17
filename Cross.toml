@@ -1,7 +1,7 @@
-# Copied from Reth's Cross.toml file at https://github.com/paradigmxyz/reth/blob/main/Cross.toml
+# Copied from Lighthouse's Cross.toml file at https://github.com/sigp/lighthouse/blob/stable/Cross.toml
 
-[build]
-pre-build = [
-    # rust-bindgen dependencies: llvm-dev libclang-dev (>= 5.0) clang (>= 5.0)
-    "apt-get update && apt-get install --assume-yes --no-install-recommends llvm-dev libclang-6.0-dev clang-6.0",
-]
+[target.x86_64-unknown-linux-gnu]
+pre-build = ["apt-get install -y cmake clang-3.9"]
+
+[target.aarch64-unknown-linux-gnu]
+pre-build = ["apt-get install -y cmake clang-3.9"]
