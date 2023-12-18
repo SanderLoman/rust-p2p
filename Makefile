@@ -37,7 +37,7 @@ CARGO_INSTALL_EXTRA_FLAGS?=
 #
 # Binaries will most likely be found in `./target/release`
 install:
-	cargo install --path lighthouse --force --locked \
+	cargo install --path contower --force --locked \
 		--features "$(FEATURES)" \
 		--profile "$(PROFILE)" \
 		$(CARGO_INSTALL_EXTRA_FLAGS)
@@ -63,24 +63,24 @@ install-lcli:
 # optimized CPU functions that may not be available on some systems. This
 # results in a more portable binary with ~20% slower BLS verification.
 build-x86_64:
-	cross build --bin lighthouse --target x86_64-unknown-linux-gnu --features "modern,$(CROSS_FEATURES)" --profile "$(CROSS_PROFILE)" --locked
+	cross build --bin contower --target x86_64-unknown-linux-gnu --features "modern,$(CROSS_FEATURES)" --profile "$(CROSS_PROFILE)" --locked
 build-x86_64-portable:
-	cross build --bin lighthouse --target x86_64-unknown-linux-gnu --features "portable,$(CROSS_FEATURES)" --profile "$(CROSS_PROFILE)" --locked
+	cross build --bin contower --target x86_64-unknown-linux-gnu --features "portable,$(CROSS_FEATURES)" --profile "$(CROSS_PROFILE)" --locked
 build-aarch64:
-	cross build --bin lighthouse --target aarch64-unknown-linux-gnu --features "$(CROSS_FEATURES)" --profile "$(CROSS_PROFILE)" --locked
+	cross build --bin contower --target aarch64-unknown-linux-gnu --features "$(CROSS_FEATURES)" --profile "$(CROSS_PROFILE)" --locked
 build-aarch64-portable:
-	cross build --bin lighthouse --target aarch64-unknown-linux-gnu --features "portable,$(CROSS_FEATURES)" --profile "$(CROSS_PROFILE)" --locked
+	cross build --bin contower --target aarch64-unknown-linux-gnu --features "portable,$(CROSS_FEATURES)" --profile "$(CROSS_PROFILE)" --locked
 
 # Create a `.tar.gz` containing a binary for a specific target.
 define tarball_release_binary
-	cp $(1)/lighthouse $(BIN_DIR)/lighthouse
+	cp $(1)/contower $(BIN_DIR)/contower
 	cd $(BIN_DIR) && \
-		tar -czf lighthouse-$(GIT_TAG)-$(2)$(3).tar.gz lighthouse && \
-		rm lighthouse
+		tar -czf contower-$(GIT_TAG)-$(2)$(3).tar.gz contower && \
+		rm contower
 endef
 
 # Create a series of `.tar.gz` files in the BIN_DIR directory, each containing
-# a `lighthouse` binary for a different target.
+# a `contower` binary for a different target.
 #
 # The current git tag will be used as the version in the output file names. You
 # will likely need to use `git tag` and create a semver tag (e.g., `v0.2.3`).
