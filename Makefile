@@ -1,6 +1,6 @@
 # Heavily inspired by LightHouse's Makefile at https://github.com/sigp/lighthouse/blob/stable/Makefile
 
-⚠️ This Makefile is not finished yet. ⚠️
+# ⚠️ This Makefile is not finished yet. ⚠️
 
 GIT_TAG := $(shell git describe --tags --candidates 1)
 BIN_DIR = "bin"
