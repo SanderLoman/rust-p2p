@@ -10,10 +10,10 @@ Contower is an evolving project in the Ethereum ecosystem, focused on bringing i
 
 ## Getting Started
 
-1. Familiarize yourself with the project by reading our [documentation](https://nodura.github.io/Contower/).
+1. Familiarize yourself with the [how to contribute](https://github.com/Nodura/Contower/blob/unstable/CONTRIBUTING.md) guide.
 2. Set up your development environment as described in [setup instructions](./setup.md).
 3. Check out the [open issues](https://github.com/SanderLoman/Contower/issues) for areas where you can contribute.
-   - Start with issues labeled [good first issue](https://github.com/SanderLoman/Contower/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) if you're new.
+    - Start with issues labeled [good first issue](https://github.com/SanderLoman/Contower/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) if you're new.
 4. Before starting work on an issue, please comment on it to let others know you're working on it.
 5. Submit your contributions as a pull request for review.
 
@@ -25,8 +25,8 @@ Questions or discussions? Join us on [Discord](https://discord.gg/vHWpWsjCqx).
 
 Contower will permenantly have two branches:
 
-- **`stable`**: Our primary development branch. Base your contributions here.
-- **`unstable`**: Create a new branch for each feature or fix you're working on.
+-   **`stable`**: Our primary development branch. Base your contributions here.
+-   **`unstable`**: Create a new branch for each feature or fix you're working on.
 
 ### Rust Development
 
@@ -67,8 +67,8 @@ impl MyExampleStruct {
 
 **General Comments**
 
-- Use line comments (`//`) rather than block comments (`/* ... */`).
-- Comments can be placed either before the item they refer to or after a space on the same line.
+-   Use line comments (`//`) rather than block comments (`/* ... */`).
+-   Comments can be placed either before the item they refer to or after a space on the same line.
 
 ```rust
 // Description of the struct
@@ -78,8 +78,8 @@ fn make_blockchain() {} // Inline comment after a space
 
 **Documentation Comments**
 
-- Use `///` for generating documentation comments.
-- Place these comments before attributes.
+-   Use `///` for generating documentation comments.
+-   Place these comments before attributes.
 
 ```rust
 use std::path::PathBuf;
@@ -99,9 +99,9 @@ Rust is a powerful, low-level language offering great control and performance. T
 
 Learning Rust can be challenging, but there are numerous resources available:
 
-- [Rust Book](https://doc.rust-lang.org/stable/book/) for a comprehensive introduction.
-- [Rust by Example](https://doc.rust-lang.org/stable/rust-by-example/) for practical learning.
-- [Learning Rust With Entirely Too Many Linked Lists](http://cglab.ca/~abeinges/blah/too-many-lists/book/) for a unique approach.
-- [Rustlings](https://github.com/rustlings/rustlings) for interactive exercises.
-- [Rust Exercism](https://exercism.io/tracks/rust) for coding challenges.
-- [Learn X in Y Minutes - Rust](https://learnxinyminutes.com/docs/rust/) for a quick overview.
+-   [Rust Book](https://doc.rust-lang.org/stable/book/) for a comprehensive introduction.
+-   [Rust by Example](https://doc.rust-lang.org/stable/rust-by-example/) for practical learning.
+-   [Learning Rust With Entirely Too Many Linked Lists](http://cglab.ca/~abeinges/blah/too-many-lists/book/) for a unique approach.
+-   [Rustlings](https://github.com/rustlings/rustlings) for interactive exercises.
+-   [Rust Exercism](https://exercism.io/tracks/rust) for coding challenges.
+-   [Learn X in Y Minutes - Rust](https://learnxinyminutes.com/docs/rust/) for a quick overview.
