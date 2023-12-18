@@ -10,9 +10,15 @@ Contower (derived from "Control Tower"), is a **proxy client for the Ethereum ne
 
 ## What is Contower?
 
-[Contower](https://github.com/SanderLoman/Contower/) is an innovative client for the Ethereum network that combines the functionalities of both execution and consensus layers into a versatile relay/proxy. Offering the choice to operate with or without a traditional database, thus providing a streamlined and adaptable approach to blockchain interactions.
+[Contower](https://github.com/Nodura/Contower/) is a highly adaptable Ethereum network client, designed for users who require flexibility in blockchain operations. It stands out for its ability to combine execution, consensus, and relay/proxy functions within a single framework. Users have the option to enable any combination of these features, making Contower a versatile tool in the blockchain environment. Here are some examples of how it can be configured:
 
-This client serves as a flexible intermediary in the Ethereum network. It can function as a lean relay/proxy client, a comprehensive node client encompassing both execution and consensus elements, or it can operate in both capacities simultaneously. This makes Contower a uniquely adaptable tool, suited to a wide range of user requirements, enhancing network functionality, efficiency, and decentralization, tailored to individual preferences and operational needs.
+-   **Full Feature Mode**
+-   **Execution and Consensus Mode**
+-   **Execution and Relaying Mode**
+-   **Consensus and Relaying Mode**
+-   **Single Feature Mode**
+
+This modular approach allows Contower to cater to a broad spectrum of users, from those requiring a full-fledged client to those needing a more streamlined tool for specific tasks.
 
 ## What are the Key Features of Contower?
 
@@ -44,8 +50,8 @@ Contower is a versatile tool for anyone involved in the Ethereum network, from d
 
 Join our community for discussions, support, and collaboration:
 
-- [GitHub Issues](https://github.com/SanderLoman/Contower/issues)
-- [Discord](https://discord.gg/vHWpWsjCqx)
+-   [GitHub Issues](https://github.com/SanderLoman/Contower/issues)
+-   [Discord](https://discord.gg/vHWpWsjCqx)
 
 [Chat Badge]: https://img.shields.io/discord/1174374333062316032?logo=discord
 [Chat Link]: https://discord.gg/vHWpWsjCqx
