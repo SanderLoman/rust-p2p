@@ -163,7 +163,9 @@ name = "contower"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "consensus",
  "dotenv",
+ "execution",
  "exit-future",
  "eyre",
  "futures",
