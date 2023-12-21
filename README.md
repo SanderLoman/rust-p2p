@@ -17,22 +17,22 @@ This client serves as an adaptable intermediary, capable of either facilitating 
 
 ## Objectives
 
-- **Unified Client Architecture:** Contower integrates execution and consensus mechanisms into a cohesive framework, with additional relay functionality. Each component can be toggled independently, allowing users to choose between running a merged execution/consensus client, activating relay capabilities, or utilizing both features simultaneously. This design provides flexibility and paves the way for future innovations in the Ethereum ecosystem.
+-   **Unified Client Architecture:** Contower integrates execution and consensus mechanisms into a cohesive framework, with additional relay functionality. Each component can be toggled independently, allowing users to choose between running a merged execution/consensus client, activating relay capabilities, or utilizing both features simultaneously. This design provides flexibility and paves the way for future innovations in the Ethereum ecosystem.
 
-- **Performance Enhancement:** Contower's design, free from the constraints of a traditional database, ensures fast processing and efficient resource use.
+-   **Performance Enhancement:** Contower's design, free from the constraints of a traditional database, ensures fast processing and efficient resource use.
 
-- **Client Diversity:** Introducing Contower to the Ethereum network adds to its robustness and guards against systemic risks. Diverse client types contribute to a stronger network.
+-   **Client Diversity:** Introducing Contower to the Ethereum network adds to its robustness and guards against systemic risks. Diverse client types contribute to a stronger network.
 
-- **Broad EVM Chain Support:** Designed to be compatible with a variety of EVM chains, Contower aims to be versatile across different blockchain networks, increasing its utility and applicability.
+-   **Broad EVM Chain Support:** Designed to be compatible with a variety of EVM chains, Contower aims to be versatile across different blockchain networks, increasing its utility and applicability.
 
-- **Configurability and Accessibility:** Contower caters to a range of users, from large-scale node operators to individual enthusiasts. Its configurable nature ensures it meets various operational needs, whether optimizing for speed or adapting to limited hardware.
+-   **Configurability and Accessibility:** Contower caters to a range of users, from large-scale node operators to individual enthusiasts. Its configurable nature ensures it meets various operational needs, whether optimizing for speed or adapting to limited hardware.
 
 ## Community and Support
 
 Engage with our community for discussions, support, and collaboration.
 
-- [GitHub Issues](https://github.com/SanderLoman/rust-p2p/issues)
-- [Discord](https://discord.gg/vHWpWsjCqx)
+-   [GitHub Issues](https://github.com/SanderLoman/rust-p2p/issues)
+-   [Discord](https://discord.gg/vHWpWsjCqx)
 
 ## Documentation
 
@@ -52,10 +52,10 @@ See [SECURITY.md](SECURITY.md) for more information.
 
 As we continue to develop and enhance our project, we extend our sincere gratitude to several key players in the Ethereum ecosystem whose contributions have been invaluable.
 
-- [Lighthouse](https://github.com/sigp/lighthouse): A special thank you to the Lighthouse team for their remarkable work in the Ethereum space. Their efforts in creating a secure, high-performance Eth2 client have not only pushed the boundaries of innovation but also provided us with insights and inspiration for our own development. We deeply appreciate their commitment to the Ethereum community and their ongoing contributions.
+-   [Lighthouse](https://github.com/sigp/lighthouse): A special thank you to the Lighthouse team for their remarkable work in the Ethereum space. Their efforts in creating a secure, high-performance Eth2 client have not only pushed the boundaries of innovation but also provided us with insights and inspiration for our own development. We deeply appreciate their commitment to the Ethereum community and their ongoing contributions.
 
-- [Reth](https://github.com/paradigmxyz/reth): Our heartfelt thanks go out to the Reth team for their pioneering work in Ethereum protocol implementation. Their inventive approaches and solutions have significantly influenced our project, offering us valuable perspectives and tools to enhance our own development. We are grateful for their dedication to advancing the Ethereum ecosystem.
+-   [Reth](https://github.com/paradigmxyz/reth): Our heartfelt thanks go out to the Reth team for their pioneering work in Ethereum protocol implementation. Their inventive approaches and solutions have significantly influenced our project, offering us valuable perspectives and tools to enhance our own development. We are grateful for their dedication to advancing the Ethereum ecosystem.
 
-- The Community: We would also like to extend our thanks to all the individuals and teams who have directly or indirectly contributed to our project. Your insights, feedback, and support have been instrumental in our journey, and we look forward to continuing this collaborative effort. Your contributions are a testament to the power of community-driven development in the blockchain space.
+-   The Community: We would also like to extend our thanks to all the individuals and teams who have directly or indirectly contributed to our project. Your insights, feedback, and support have been instrumental in our journey, and we look forward to continuing this collaborative effort. Your contributions are a testament to the power of community-driven development in the blockchain space.
 
 To all of you, thank you for your invaluable contributions and for being an integral part of our journey.
