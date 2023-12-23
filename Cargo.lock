@@ -155,7 +155,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "consensus"
+name = "consensus_common"
 version = "0.1.0"
 
 [[package]]
@@ -163,7 +163,7 @@ name = "contower"
 version = "0.1.0"
 dependencies = [
  "clap",
- "consensus",
+ "consensus_common",
  "dotenv",
  "execution",
  "exit-future",
