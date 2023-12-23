@@ -12,13 +12,13 @@ This guide is for anyone interested in contributing, whether you're new to open-
 
 Your contributions to Contower can have a significant impact. You might want to:
 
-- Play a role in shaping the future of Ethereum.
-- Build a reputation as a developer in the cutting-edge field of blockchain technology.
-- Dive into the complexities of beacon nodes and relay systems.
-- Enhance your understanding of open-source projects.
-- Hone your software development and problem-solving skills.
-- Showcase your abilities in a public space, opening doors for professional growth.
-- Connect with experts and enthusiasts in the Ethereum and broader blockchain community.
+-   Play a role in shaping the future of Ethereum.
+-   Build a reputation as a developer in the cutting-edge field of blockchain technology.
+-   Dive into the complexities of beacon nodes and relay systems.
+-   Enhance your understanding of open-source projects.
+-   Hone your software development and problem-solving skills.
+-   Showcase your abilities in a public space, opening doors for professional growth.
+-   Connect with experts and enthusiasts in the Ethereum and broader blockchain community.
 
 ## How to Get Started
 

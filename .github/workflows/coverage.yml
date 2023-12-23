@@ -1,51 +1,51 @@
 name: coverage
 
 on:
-  push:
-    branches: ["unstable", "stable"]
-  pull_request:
-    branches: ["unstable", "stable"]
+    push:
+        branches: ["unstable", "stable"]
+    pull_request:
+        branches: ["unstable", "stable"]
 
 env:
-  CARGO_TERM_COLOR: always
+    CARGO_TERM_COLOR: always
 
 jobs:
-  coverage:
-    runs-on: ubuntu-latest
+    coverage:
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: Cache cargo-tarpaulin
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/cargo-tarpaulin
-            ~/.cargo/bin/tarpaulin
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-          key: ${{ runner.os }}-cargo-tarpaulin-${{ hashFiles('**/Cargo.lock') }}
-      - name: Check if cargo-tarpaulin is installed
-        run: |
-          if cargo tarpaulin --version; then
-            echo "Cargo-tarpaulin already installed"
-          else
-            cargo install cargo-tarpaulin
-          fi
-      - name: Run tests with coverage
-        run: cargo tarpaulin --out Xml --output-dir ./target/tarpaulin
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./target/tarpaulin/cobertura.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: true
-          verbose: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        steps:
+            - uses: actions/checkout@v4
+            - name: Set up Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: stable
+                  override: true
+            - name: Cache cargo-tarpaulin
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/.cargo/bin/cargo-tarpaulin
+                      ~/.cargo/bin/tarpaulin
+                      ~/.cargo/registry/index
+                      ~/.cargo/registry/cache
+                      ~/.cargo/git/db
+                  key: ${{ runner.os }}-cargo-tarpaulin-${{ hashFiles('**/Cargo.lock') }}
+            - name: Check if cargo-tarpaulin is installed
+              run: |
+                  if cargo tarpaulin --version; then
+                    echo "Cargo-tarpaulin already installed"
+                  else
+                    cargo install cargo-tarpaulin
+                  fi
+            - name: Run tests with coverage
+              run: cargo tarpaulin --out Xml --output-dir ./target/tarpaulin
+            - name: Upload coverage to Codecov
+              uses: codecov/codecov-action@v3
+              with:
+                  file: ./target/tarpaulin/cobertura.xml
+                  flags: unittests
+                  name: codecov-umbrella
+                  fail_ci_if_error: true
+                  verbose: true
+              env:
+                  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
