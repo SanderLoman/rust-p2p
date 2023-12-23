@@ -1,19 +1,19 @@
 name: tests
 
 on:
-  push:
-    branches: ["unstable", "stable"]
-  pull_request:
-    branches: ["unstable", "stable"]
+    push:
+        branches: ["unstable", "stable"]
+    pull_request:
+        branches: ["unstable", "stable"]
 
 env:
-  CARGO_TERM_COLOR: always
+    CARGO_TERM_COLOR: always
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+    test:
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run tests
-        run: cargo test --verbose
+        steps:
+            - uses: actions/checkout@v3
+            - name: Run tests
+              run: cargo test --verbose
