@@ -42,13 +42,6 @@ install:
 		--profile "$(PROFILE)" \
 		$(CARGO_INSTALL_EXTRA_FLAGS)
 
-# Builds the lcli binary in release (optimized).
-install-lcli:
-	cargo install --path lcli --force --locked \
-		--features "$(FEATURES)" \
-		--profile "$(PROFILE)" \
-		$(CARGO_INSTALL_EXTRA_FLAGS)
-
 # The following commands use `cross` to build a cross-compile.
 #
 # These commands require that:
