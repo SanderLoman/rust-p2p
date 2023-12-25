@@ -20,5 +20,3 @@ clap = { workspace = true }
 execution = { workspace = true }
 
 [dev-dependencies]
-consensus_common = { workspace = true }
-contower_common = { workspace = true }

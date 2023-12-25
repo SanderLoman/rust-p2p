@@ -159,16 +159,10 @@ name = "consensus"
 version = "0.1.0"
 
 [[package]]
-name = "consensus_common"
-version = "0.1.0"
-
-[[package]]
 name = "contower"
 version = "0.1.0"
 dependencies = [
  "clap",
- "consensus_common",
- "contower_common",
  "dotenv",
  "execution",
  "exit-future",
@@ -183,10 +177,6 @@ dependencies = [
  "target_info",
  "tokio",
 ]
-
-[[package]]
-name = "contower_common"
-version = "0.1.0"
 
 [[package]]
 name = "core-foundation-sys"
@@ -260,10 +250,6 @@ checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
 
 [[package]]
 name = "execution"
-version = "0.1.0"
-
-[[package]]
-name = "execution_common"
 version = "0.1.0"
 
 [[package]]
@@ -757,6 +743,10 @@ name = "regex-syntax"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08c74e62047bb2de4ff487b251e4a92e24f48745648451635cec7d591162d9f"
+
+[[package]]
+name = "relay"
+version = "0.1.0"
 
 [[package]]
 name = "rle-decode-fast"
