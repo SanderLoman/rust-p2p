@@ -4,13 +4,12 @@ members = [
     "common/metrics",
 
     "contower",
-    "contower/common",
-
+    
     "consensus",
-    "consensus/common",
 
     "execution",
-    "execution/common",
+
+    "relay",
 ]
 resolver = "2"
 
@@ -34,16 +33,18 @@ target_info = "0.1.0"
 git-version = "0.3.5"
 
 # Local dependencies
+
+# Execution
 execution = { path = "./execution" }
-execution_common = { path = "./execution/common" }
 
+# Consensus
 consensus = { path = "./consensus" }
-consensus_common = { path = "./consensus/common" }
 
+# Relay
+relay = { path = "./relay" }
+
+# Contower
 contower = { path = "./contower" }
-contower_common = { path = "./contower/common" }
-
-# --- 
 
 [profile.maxperf]
 inherits = "release"
