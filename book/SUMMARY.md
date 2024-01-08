@@ -6,6 +6,6 @@
     -   [Docker](./installation/docker.md)
     -   [Building from Source](./installation/source.md)
     -   [Ras-pi Installation](./installation/ras-pi.md)
-    -   [Cross Compilation](./installation/cross-compilation.md)
+    -   [Cross Compilation](./installation/cross-compiling.md)
 -   [Contributing](./contributing/contributing.md)
     -   [Dev Environment](./contributing/setup.md)
