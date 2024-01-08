@@ -48,4 +48,4 @@ The installation process of Contower is designed to be as smooth and user-friend
 
 ## Encountering Issues?
 
-If you encounter any issues during the installation process, please join our [Discord](https://discord.gg/7hPv2T6) and ask for help in the `#🦾support` channel or make a post in the `#community-forum`. Our team and community members will be happy to assist you.
+If you encounter any issues during the installation process, please join our [Discord](https://discord.gg/7hPv2T6) and ask for help in the `#🦾support` channel or make a post in the `#community-forum`. Our team and community members will be happy to assist you
