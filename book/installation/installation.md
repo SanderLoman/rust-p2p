@@ -10,7 +10,7 @@ Installation of Contower is straightforward and can be achieved through a few me
 
 We also offer additional guides for specific platforms and use cases:
 
--   [Raspberry Pi guide](./pi.md).
+-   [Raspberry Pi guide](./ras-pi.md).
 -   [Cross-compiling for developers](./cross-compiling.md).
 
 ## System Requirements
@@ -48,4 +48,4 @@ The installation process of Contower is designed to be as smooth and user-friend
 
 ## Encountering Issues?
 
-If you encounter any issues during the installation process, please join our [Discord](https://discord.gg/7hPv2T6) and ask for help in the `#🦾support` channel or make a post in the `#community-forum`. Our team and community members will be happy to assist you.
+If you encounter any issues during the installation process, please join our [Discord](https://discord.gg/wxVuY2RCat) and ask for help in the `#🦾support` channel or make a post in the `#community-forum`. Our team and community members will be happy to assist you.
