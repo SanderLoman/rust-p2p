@@ -1,16 +1,5 @@
 [workspace]
-members = [
-    "common/task_executor",
-    "common/metrics",
-
-    "contower",
-    
-    "consensus",
-
-    "execution",
-
-    "relay",
-]
+members = ["contower", "consensus", "execution", "relay"]
 resolver = "2"
 
 [workspace.package]
@@ -24,7 +13,7 @@ slog-term = "2.9.0"
 slog-async = "2.8.0"
 dotenv = "0.15.0"
 eyre = "0.6.8"
-clap = "2.33.3"
+clap = "4.5.0"
 futures = { version = "0.3.29" }
 exit-future = "0.2.0"
 lazy_static = "1.4.0"
