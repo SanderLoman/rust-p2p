@@ -17,12 +17,12 @@ We also offer additional guides for specific platforms and use cases:
 
 To ensure optimal performance of Contower, it's important to consider the hardware requirements. These requirements are tailored to accommodate the diverse functionalities of Contower, catering to its relay, execution, and consensus components.
 
-|         | Relay Client                      | Execution Client                  | Consensus Client                  |
-| ------- | --------------------------------- | --------------------------------- | --------------------------------- |
-| CPU     | Quad-core AMD Ryzen or Intel Core | Quad-core AMD Ryzen or Intel Core | Quad-core AMD Ryzen or Intel Core |
-| Memory  | 4 GB RAM                          | 8 GB RAM                          | 16 GB RAM                         |
-| Storage | < 1 GB SSD                        | 1 TB SSD                          | 2 TB SSD                          |
-| Network | Stable 40 Mbps+                   | Stable 40 Mbps+                   | Stable 40 Mbps+                   |
+|         | Relay Client | Execution Client | Consensus Client |
+| ------- | ------------ | ---------------- | ---------------- |
+| CPU     | TBD          | TBD              | TBD              |
+| Memory  | TBD          | TBD              | TBD              |
+| Storage | TBD          | TBD              | TBD              |
+| Network | TBD          | TBD              | TBD              |
 
 _Note: These specifications represent minimum recommendations. Performance may vary based on network conditions and specific configurations. It is advisable to review these requirements in light of your planned usage of Contower._
 
