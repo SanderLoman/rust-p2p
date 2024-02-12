@@ -25,8 +25,8 @@ Questions or discussions? Join us on [Discord](https://discord.gg/vHWpWsjCqx).
 
 Contower will permenantly have two branches:
 
--   `stable`: Our primary development branch. Base your contributions here.
--   `unstable`: Create a new branch for each feature or fix you're working on.
+-   `stable`: Our primary development branch. This is where we merge new features and changes after they have been tested and are ready for release.
+-   `unstable`: Our secondary development branch. This is where we merge new features and changes before they are moved to `staging` and then `stable`.
 
 ### Rust Development
 
