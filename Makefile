@@ -1,4 +1,4 @@
-# Heavily inspired by LightHouse's Makefile at https://github.com/sigp/lighthouse/blob/stable/Makefile
+# Heavily inspired by LightHouse's Makefile: https://github.com/sigp/lighthouse/blob/stable/Makefile
 
 # ⚠️ This Makefile is not finished yet. ⚠️
 

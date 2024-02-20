@@ -1,4 +1,4 @@
-# Copied from Lighthouse's Cross.toml file at https://github.com/sigp/lighthouse/blob/stable/Cross.toml
+# Copied from Lighthouse's Cross.toml file: https://github.com/sigp/lighthouse/blob/stable/Cross.toml
 
 [target.x86_64-unknown-linux-gnu]
 pre-build = ["apt-get install -y cmake clang-3.9"]

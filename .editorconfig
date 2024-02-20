@@ -1,4 +1,4 @@
-# copied from Lighthouse at https://github.com/sigp/lighthouse/blob/stable/.editorconfig
+# copied from Lighthouse: https://github.com/sigp/lighthouse/blob/stable/.editorconfig
 
 root = true
 [*]
