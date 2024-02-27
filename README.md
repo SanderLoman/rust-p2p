@@ -47,15 +47,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 ## Security
 
 See [SECURITY.md](SECURITY.md) for more information.
-
-## Gratitudes
-
-As we continue to develop and enhance our project, we extend our sincere gratitude to several key players in the Ethereum ecosystem whose contributions have been invaluable.
-
--   [Lighthouse](https://github.com/sigp/lighthouse): A special thank you to the Lighthouse team for their remarkable work in the Ethereum space. Their efforts in creating a secure, high-performance Eth2 client have not only pushed the boundaries of innovation but also provided us with insights and inspiration for our own development. We deeply appreciate their commitment to the Ethereum community and their ongoing contributions.
-
--   [Reth](https://github.com/paradigmxyz/reth): Our heartfelt thanks go out to the Reth team for their pioneering work in Ethereum protocol implementation. Their inventive approaches and solutions have significantly influenced our project, offering us valuable perspectives and tools to enhance our own development. We are grateful for their dedication to advancing the Ethereum ecosystem.
-
--   The Community: We would also like to extend our thanks to all the individuals and teams who have directly or indirectly contributed to our project. Your insights, feedback, and support have been instrumental in our journey, and we look forward to continuing this collaborative effort. Your contributions are a testament to the power of community-driven development in the blockchain space.
-
-To all of you, thank you for your invaluable contributions and for being an integral part of our journey.
