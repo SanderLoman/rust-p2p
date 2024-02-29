@@ -1,8 +1,8 @@
 ⚠️ **This project is still in development and not ready for production use.** ⚠️
 
-# Contower: An All-in-One Client for Ethereum
+# Contower: A New All-in-One Ethereum Client
 
-![Contower Banner](assets/repo_banner.png)
+![Contower Banner](assets/repo_banner.webp)
 
 [![build](https://github.com/SanderLoman/ConTower/actions/workflows/build.yml/badge.svg)](https://github.com/SanderLoman/ConTower/actions/workflows/build.yml)
 [![tests](https://github.com/SanderLoman/ConTower/actions/workflows/tests.yml/badge.svg)](https://github.com/SanderLoman/ConTower/actions/workflows/tests.yml)
@@ -15,17 +15,15 @@ Contower is our latest development for the Ethereum network, designed to bring f
 
 This client serves as an adaptable intermediary, capable of either facilitating relay communication and keeping track of the latest blockchain traffic with transient caching or functioning as a full node with its own database. Users have the choice to run Contower as a lean relay/proxy client, a complete node client incorporating execution and consensus mechanisms, or even both simultaneously. This flexibility ensures that Contower can meet various user needs, enhancing network functionality, efficiency, and decentralization, tailored to individual preferences and requirements.
 
-## Objectives
+### Execution, Consensus
 
--   **Unified Client Architecture:** Contower integrates execution and consensus mechanisms into a cohesive framework, with additional relay functionality. Each component can be toggled independently, allowing users to choose between running a merged execution/consensus client, activating relay capabilities, or utilizing both features simultaneously. This design provides flexibility and paves the way for future innovations in the Ethereum ecosystem.
+The Exection and Consensus layer are the core components of Ethereum clients, responsible for processing transactions and maintaining the blockchain. Contower's execution and consensus clients are designed to be modular, allowing for easy integration with other Ethereum clients. This flexibility enables users to customize their client to suit their specific needs, whether they require a full node or a lightweight relay client.
 
--   **Performance Enhancement:** Contower's design, free from the constraints of a traditional database, ensures fast processing and efficient resource use.
+### Relay Functionality
 
--   **Client Diversity:** Introducing Contower to the Ethereum network adds to its robustness and guards against systemic risks. Diverse client types contribute to a stronger network.
+Contower's relay functionality acts as a bridge between various nodes, facilitating the flow of information without the need for storing the entire blockchain. It's ideal for users who wish to participate in the network with minimal resource usage, providing a lightweight option for staying connected and updated with the latest blockchain activities.
 
--   **Broad EVM Chain Support:** Designed to be compatible with a variety of EVM chains, Contower aims to be versatile across different blockchain networks, increasing its utility and applicability.
-
--   **Configurability and Accessibility:** Contower caters to a range of users, from large-scale node operators to individual enthusiasts. Its configurable nature ensures it meets various operational needs, whether optimizing for speed or adapting to limited hardware.
+Contower's versatile design allows for these components to be used in combination or individually, providing a flexible solution that can integrate seamlessly with other Ethereum clients. Whether you require a full node capability, lightweight relay operations, or specific functionalities like execution or consensus, Contower offers a customizable solution to fit your needs.
 
 ## Community and Support
 
