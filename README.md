@@ -29,7 +29,7 @@ Contower's versatile design allows for these components to be used in combinatio
 
 Engage with our community for discussions, support, and collaboration.
 
--   [GitHub Issues](https://github.com/SanderLoman/rust-p2p/issues)
+-   [GitHub Issues](https://github.com/Nodura/Contower/issues)
 -   [Discord](https://discord.gg/vHWpWsjCqx)
 
 ## Documentation
