@@ -1,6 +1,6 @@
 # Copied from Lighthouse's Dockerfile: https://github.com/sigp/lighthouse/blob/stable/Dockerfile
 
-FROM rust:1.69.0-bullseye AS builder
+FROM rust:1.76.0-bullseye AS builder
 RUN apt-get update && apt-get -y upgrade && apt-get install -y cmake libclang-dev
 COPY . contower
 ARG FEATURES
