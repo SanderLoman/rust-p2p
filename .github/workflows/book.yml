@@ -2,9 +2,9 @@ name: book
 
 on:
     push:
-        branches: [unstable]
+        branches: [unstable, stable]
     pull_request:
-        branches: [unstable]
+        branches: [unstable, stable]
     merge_group:
 
 jobs:

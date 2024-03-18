@@ -8,7 +8,6 @@ env:
     CARGO_TERM_COLOR: always
 
 jobs:
-    # Format check
     fmt:
         name: fmt
         runs-on: ubuntu-latest
@@ -20,7 +19,6 @@ jobs:
                   components: rustfmt
             - run: cargo fmt --all --check
 
-    # Documentation check (optional, remove if not needed)
     docs:
         name: docs
         runs-on: ubuntu-latest
@@ -35,7 +33,6 @@ jobs:
               env:
                   RUSTDOCFLAGS: -D warnings
 
-    # Check if jobs are successful
     lint-success:
         name: lint success
         runs-on: ubuntu-latest
