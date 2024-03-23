@@ -1,5 +1,3 @@
-# copied from Lighthouse: https://github.com/sigp/lighthouse/blob/stable/.editorconfig
-
 root = true
 [*]
 indent_style=space
