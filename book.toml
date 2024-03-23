@@ -1,5 +1,3 @@
-# Copied from Reth's book.toml at https://github.com/paradigmxyz/reth/blob/main/book.toml
-
 [book]
 authors = ["Contower Core Contributors"]
 language = "en"
@@ -11,7 +9,7 @@ description = "A book on all things Contower"
 [output.html]
 theme = "book/theme"
 git-repository-url = "https://github.com/Nodura/Contower"
-default-theme = "ayu"
+default-theme = "Coal"
 no-section-label = true
 
 [output.html.fold]
@@ -20,10 +18,3 @@ level = 1
 
 [build]
 build-dir = "target/book"
-
-[preprocessor.template]
-before = ["links"]
-
-[preprocessor.index]
-
-[preprocessor.links]

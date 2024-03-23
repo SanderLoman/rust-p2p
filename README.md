@@ -1,12 +1,12 @@
 ⚠️ **This project is still in development and not ready for production use.** ⚠️
 
-# Contower: An All-in-One Client for Ethereum
+# Contower: A New All-in-One Ethereum Client
 
-![Contower Banner](assets/repo_banner.png)
+![Contower Banner](assets/repo_banner.webp)
 
-[![build](https://github.com/SanderLoman/ConTower/actions/workflows/build.yml/badge.svg)](https://github.com/SanderLoman/ConTower/actions/workflows/build.yml)
-[![tests](https://github.com/SanderLoman/ConTower/actions/workflows/tests.yml/badge.svg)](https://github.com/SanderLoman/ConTower/actions/workflows/tests.yml)
-[![Codecov](https://img.shields.io/codecov/c/github/SanderLoman/ConTower?token=JT1850HR9J)](https://app.codecov.io/gh/SanderLoman/ConTower)
+[![build](https://github.com/Nodura/Contower/actions/workflows/build.yml/badge.svg)](https://github.com/Nodura/Contower/actions/workflows/build.yml)
+[![tests](https://github.com/Nodura/Contower/actions/workflows/tests.yml/badge.svg)](https://github.com/Nodura/Contower/actions/workflows/tests.yml)
+[![Codecov](https://img.shields.io/codecov/c/github/Nodura/ConTower?token=JT1850HR9J)](https://app.codecov.io/gh/Nodura/ConTower)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Overview
@@ -15,23 +15,21 @@ Contower is our latest development for the Ethereum network, designed to bring f
 
 This client serves as an adaptable intermediary, capable of either facilitating relay communication and keeping track of the latest blockchain traffic with transient caching or functioning as a full node with its own database. Users have the choice to run Contower as a lean relay/proxy client, a complete node client incorporating execution and consensus mechanisms, or even both simultaneously. This flexibility ensures that Contower can meet various user needs, enhancing network functionality, efficiency, and decentralization, tailored to individual preferences and requirements.
 
-## Objectives
+### Execution, Consensus
 
--   **Unified Client Architecture:** Contower integrates execution and consensus mechanisms into a cohesive framework, with additional relay functionality. Each component can be toggled independently, allowing users to choose between running a merged execution/consensus client, activating relay capabilities, or utilizing both features simultaneously. This design provides flexibility and paves the way for future innovations in the Ethereum ecosystem.
+The Exection and Consensus layer are the core components of Ethereum clients, responsible for processing transactions and maintaining the blockchain. Contower's execution and consensus clients are designed to be modular, allowing for easy integration with other Ethereum clients. This flexibility enables users to customize their client to suit their specific needs, whether they require a full node or a lightweight relay client.
 
--   **Performance Enhancement:** Contower's design, free from the constraints of a traditional database, ensures fast processing and efficient resource use.
+### Relay Functionality
 
--   **Client Diversity:** Introducing Contower to the Ethereum network adds to its robustness and guards against systemic risks. Diverse client types contribute to a stronger network.
+Contower's relay functionality acts as a bridge between various nodes, facilitating the flow of information without the need for storing the entire blockchain. It's ideal for users who wish to participate in the network with minimal resource usage, providing a lightweight option for staying connected and updated with the latest blockchain activities.
 
--   **Broad EVM Chain Support:** Designed to be compatible with a variety of EVM chains, Contower aims to be versatile across different blockchain networks, increasing its utility and applicability.
-
--   **Configurability and Accessibility:** Contower caters to a range of users, from large-scale node operators to individual enthusiasts. Its configurable nature ensures it meets various operational needs, whether optimizing for speed or adapting to limited hardware.
+Contower's versatile design allows for these components to be used in combination or individually, providing a flexible solution that can integrate seamlessly with other Ethereum clients. Whether you require a full node capability, lightweight relay operations, or specific functionalities like execution or consensus, Contower offers a customizable solution to fit your needs.
 
 ## Community and Support
 
 Engage with our community for discussions, support, and collaboration.
 
--   [GitHub Issues](https://github.com/SanderLoman/rust-p2p/issues)
+-   [GitHub Issues](https://github.com/Nodura/Contower/issues)
 -   [Discord](https://discord.gg/vHWpWsjCqx)
 
 ## Documentation
@@ -47,15 +45,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 ## Security
 
 See [SECURITY.md](SECURITY.md) for more information.
-
-## Gratitudes
-
-As we continue to develop and enhance our project, we extend our sincere gratitude to several key players in the Ethereum ecosystem whose contributions have been invaluable.
-
--   [Lighthouse](https://github.com/sigp/lighthouse): A special thank you to the Lighthouse team for their remarkable work in the Ethereum space. Their efforts in creating a secure, high-performance Eth2 client have not only pushed the boundaries of innovation but also provided us with insights and inspiration for our own development. We deeply appreciate their commitment to the Ethereum community and their ongoing contributions.
-
--   [Reth](https://github.com/paradigmxyz/reth): Our heartfelt thanks go out to the Reth team for their pioneering work in Ethereum protocol implementation. Their inventive approaches and solutions have significantly influenced our project, offering us valuable perspectives and tools to enhance our own development. We are grateful for their dedication to advancing the Ethereum ecosystem.
-
--   The Community: We would also like to extend our thanks to all the individuals and teams who have directly or indirectly contributed to our project. Your insights, feedback, and support have been instrumental in our journey, and we look forward to continuing this collaborative effort. Your contributions are a testament to the power of community-driven development in the blockchain space.
-
-To all of you, thank you for your invaluable contributions and for being an integral part of our journey.
