@@ -10,4 +10,3 @@ github_checks:
 comment:
     layout: "reach, files, flags, components"
     require_changes: true
-
