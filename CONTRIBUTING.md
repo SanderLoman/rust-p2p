@@ -4,7 +4,7 @@
 
 Contower is an innovative project in the Ethereum ecosystem. Our community is at the heart of what we do, and we welcome contributions from everyone. We strive to create a positive, respectful, and engaging environment for all collaborators.
 
-Although Contower operates within the Ethereum framework, our focus includes unique challenges and opportunities, particularly in developing robust and efficient beacon nodes and relay mechanisms.
+Although Contower operates within the Ethereum framework, our focus includes unique challenges and opportunities.
 
 This guide is for anyone interested in contributing, whether you're new to open-source or an experienced hand looking for a new challenge.
 
@@ -22,7 +22,7 @@ Your contributions to Contower can have a significant impact. You might want to:
 
 ## How to Get Started
 
-To begin contributing to Contower, please familiarize yourself with our contributing guidelines by visiting the contributing section of our book [here](https://nodura.github.io/Contower/contributing.html).
+To begin contributing to Contower, please familiarize yourself with our contributing guidelines by visiting the contributing section of our book [here](https://nodura.github.io/Contower/contributing/contributing.html).
 
 Contributing to Contower follows a similar process to many open-source projects on GitHub. We use GitHub [Issues](https://github.com/SanderLoman/contower/issues) to track tasks and [Pull Requests](https://github.com/SanderLoman/contower/pulls) for code submissions. For informal discussions and updates, join our [Discord](https://discord.gg/vHWpWsjCqx).
 
