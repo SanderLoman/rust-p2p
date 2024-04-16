@@ -24,7 +24,7 @@ Your contributions to Contower can have a significant impact. You might want to:
 
 To begin contributing to Contower, please familiarize yourself with our contributing guidelines by visiting the contributing section of our book [here](https://nodura.github.io/Contower/contributing/contributing.html).
 
-Contributing to Contower follows a similar process to many open-source projects on GitHub. We use GitHub [Issues](https://github.com/SanderLoman/contower/issues) to track tasks and [Pull Requests](https://github.com/SanderLoman/contower/pulls) for code submissions. For informal discussions and updates, join our [Discord](https://discord.gg/vHWpWsjCqx).
+Contributing to Contower follows a similar process to many open-source projects on GitHub. We use GitHub [Issues](https://github.com/Nodura/Contower/issues) to track tasks and [Pull Requests](https://github.com/Nodura/Contower/pulls) for code submissions. For informal discussions and updates, join our [Discord](https://discord.gg/vHWpWsjCqx).
 
 ### General Workflow
 
