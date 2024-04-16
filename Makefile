@@ -18,4 +18,4 @@ PROFILE ?= release
 install:
 	cargo install --path contower --force --locked \
 		--features "$(FEATURES)" \
-		--profile "$(PROFILE)" \
+		--profile "$(PROFILE)"
