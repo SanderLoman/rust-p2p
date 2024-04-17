@@ -7,7 +7,6 @@ edition.workspace = true
 target_info = { workspace = true }
 git-version = { workspace = true }
 tokio = { workspace = true }
-dotenv = { workspace = true }
 slog = { workspace = true }
 eyre = { workspace = true }
 sloggers = { workspace = true }
