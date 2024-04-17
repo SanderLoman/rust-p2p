@@ -47,7 +47,7 @@ check-required-tools:
 
 # TODO: 
 # - Fix portable builds
-# - 
+# - Fix modern builds 
 build-x86_64: check-required-tools
 	cross build --bin contower --target $(X86_64_TAG) --features "$(CROSS_FEATURES)" --profile "$(CROSS_PROFILE)" --locked
 
