@@ -1,8 +1,5 @@
 [target.x86_64-unknown-linux-gnu]
-pre-build = "apt-get update && apt-get install --assume-yes --no-install-recommends llvm-dev libclang-6.0-dev clang-6.0"
-
-[target.arm-unknown-linux-gnueabihf]
-pre-build = "apt-get update && apt-get install --assume-yes --no-install-recommends llvm-dev libclang-6.0-dev clang-6.0"
+pre-build = ["apt-get install -y cmake clang-5.0"]
 
 [target.aarch64-unknown-linux-gnu]
-pre-build = "apt-get update && apt-get install --assume-yes --no-install-recommends llvm-dev libclang-6.0-dev clang-6.0"
+pre-build = ["apt-get install -y cmake clang-5.0"]
