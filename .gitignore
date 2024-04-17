@@ -4,6 +4,7 @@ target
 node_modules
 /node_modules
 Cargo.lock
+/bin
 ./Cargo.lock
 .vscode
 *mermaid
