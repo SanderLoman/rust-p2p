@@ -1,3 +1,4 @@
+GIT_TAG := $(shell git describe --tags --candidates 1)
 BIN_DIR = "bin"
 
 X86_64_TAG = "x86_64-unknown-linux-gnu"
