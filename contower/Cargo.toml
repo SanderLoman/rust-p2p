@@ -17,9 +17,9 @@ exit-future = { workspace = true }
 lazy_static = { workspace = true }
 clap = { workspace = true }
 execution = { workspace = true }
-jemal = { workspace = true }
+jemalloc = { workspace = true }
 
 [dev-dependencies]
 
 [features]
-jemalloc = ["jemal/jemallocator"]
+jemalloc = ["jemalloc/jemallocator"]
