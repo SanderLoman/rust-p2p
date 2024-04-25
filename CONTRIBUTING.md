@@ -46,6 +46,10 @@ For new contributors:
 4. Ensure you sign your commits. See [Signing Commits](https://help.github.com/en/github/authenticating-to-github/about-commit-signature-verification) for more information.
 5. Push your changes and submit a pull request.
 
+## Code of Conduct
+
+We adhere to the **Rust Code of Conduct** which emphasizes the values of kindness, cooperation, and community. We believe everyone should feel safe and welcome. For details, see [Rust Code of Conduct](https://www.rust-lang.org/policies/code-of-conduct).
+
 ## FAQs
 
 ### What If I Feel I Have Little to Offer?

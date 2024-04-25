@@ -1,5 +1,5 @@
 [workspace]
-members = ["contower", "consensus", "execution", "relay", "common/jemal"]
+members = ["contower", "consensus", "execution", "relay", "common/jemalloc"]
 resolver = "2"
 
 [workspace.package]
@@ -21,7 +21,7 @@ target_info = "0.1.0"
 git-version = "0.3.9"
 
 # Local dependencies
-jemal = { path = "common/jemal" }
+jemalloc = { path = "common/jemalloc" }
 
 # Execution
 execution = { path = "./execution" }
