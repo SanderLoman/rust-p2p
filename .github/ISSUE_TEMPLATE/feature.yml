@@ -1,0 +1,33 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+# labels: NOT YET DECIDED
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Thank you for suggesting a new feature. Please describe your idea and how it would benefit users.
+
+    - type: textarea
+      id: feature-description
+      attributes:
+          label: Feature Description
+          description: A clear and concise description of what you want to happen.
+      validations:
+          required: true
+
+    - type: textarea
+      id: benefit
+      attributes:
+          label: Benefit
+          description: Explain how this feature would benefit users.
+      validations:
+          required: true
+
+    - type: checkboxes
+      id: terms
+      attributes:
+          label: Code of Conduct
+          description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/Nodura/Contower/blob/stable/CONTRIBUTING.md#code-of-conduct).
+          options:
+              - label: I agree to follow the Code of Conduct
+                required: true
