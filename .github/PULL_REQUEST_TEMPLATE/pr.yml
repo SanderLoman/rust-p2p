@@ -23,8 +23,6 @@ body:
                 required: true
               - label: New feature (non-breaking change which adds functionality)
                 required: true
-              - label: Breaking change (fix or feature that would cause existing functionality not to work as expected)
-                required: true
               - label: Documentation update
                 required: true
     - type: textarea
