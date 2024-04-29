@@ -7,6 +7,14 @@ body:
           value: |
               Thank you for suggesting a new feature. Please describe your idea and how it would benefit users.
 
+    - type: checkboxes
+      id: ensure-no-duplicates
+      attributes:
+          value: |
+              Before submitting this issue, please check if someone else has already suggested the same feature.
+      validations:
+          required: true
+
     - type: textarea
       id: feature-description
       attributes:

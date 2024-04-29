@@ -7,6 +7,14 @@ body:
           value: |
               Thank you for helping us improve our documentation. Please explain what you would like to see improved.
 
+    - type: checkboxes
+      id: ensure-no-duplicates
+      attributes:
+          value: |
+              Before submitting this issue, please check if someone else has already reported the same documentation problem.
+      validations:
+          required: true
+
     - type: textarea
       id: documentation-problem
       attributes:
