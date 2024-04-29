@@ -15,10 +15,10 @@ body:
     - type: checkboxes
       id: ensure-no-duplicates
       attributes:
-          value: |
-              Before submitting this issue, please check if someone else has already reported the same bug.
-      validations:
-          required: true
+          label: Please confirm the following before submitting
+          options:
+              - label: I have checked if someone else has already reported the same bug.
+                required: false
 
     - type: textarea
       id: describe-bug
