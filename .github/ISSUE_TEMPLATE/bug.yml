@@ -13,14 +13,12 @@ body:
               **If you are reporting a security vulnerability, please do not use this template. Instead, email us at [security@nodura.org](mailto:security@nodura.org).**
 
     - type: checkboxes
-    id: ensure-no-duplicates
-    attributes:
-        label: Please confirm the following before submitting:
-        options:
-            - label: I have checked if someone else has already reported the same bug.
-    validations:
-        required: true
-
+      id: ensure-no-duplicates
+      attributes:
+          label: Please confirm the following before submitting
+          options:
+              - label: I have checked if someone else has already reported the same bug.
+                required: false
 
     - type: textarea
       id: describe-bug
