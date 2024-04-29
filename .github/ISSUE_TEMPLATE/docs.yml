@@ -1,0 +1,41 @@
+name: Documentation Request
+description: Request improvements or report problems with documentation
+# labels: NOT YET DECIDED
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Thank you for helping us improve our documentation. Please explain what you would like to see improved.
+
+    - type: checkboxes
+      id: ensure-no-duplicates
+      attributes:
+          value: |
+              Before submitting this issue, please check if someone else has already reported the same documentation problem.
+      validations:
+          required: true
+
+    - type: textarea
+      id: documentation-problem
+      attributes:
+          label: Documentation Problem
+          description: Describe what is missing or inaccurate in the documentation.
+      validations:
+          required: true
+
+    - type: textarea
+      id: suggested-improvement
+      attributes:
+          label: Suggested Improvement
+          description: How do you think we can improve this?
+      validations:
+          required: false
+
+    - type: checkboxes
+      id: terms
+      attributes:
+          label: Code of Conduct
+          description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/Nodura/Contower/blob/stable/CONTRIBUTING.md#code-of-conduct).
+          options:
+              - label: I agree to follow the Code of Conduct
+                required: true

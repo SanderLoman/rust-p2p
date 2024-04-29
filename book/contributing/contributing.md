@@ -1,7 +1,7 @@
 # Contributing to Contower
 
 [![Chat Badge]][Chat Link]
-[![Issues Badge](https://img.shields.io/github/issues/SanderLoman/Contower.svg)](https://github.com/SanderLoman/Contower/issues)
+[![Issues Badge](https://img.shields.io/github/issues/Nodura/Contower.svg)](https://github.com/Nodura/Contower/issues)
 
 [Chat Badge]: https://img.shields.io/discord/1174374333062316032?logo=discord
 [Chat Link]: https://discord.gg/vHWpWsjCqx
@@ -12,8 +12,8 @@ Contower is an evolving project in the Ethereum ecosystem, focused on bringing i
 
 1. Familiarize yourself with the [how to contribute](https://github.com/Nodura/Contower/blob/unstable/CONTRIBUTING.md) guide.
 2. Set up your development environment as described in [setup instructions](./setup.md).
-3. Check out the [open issues](https://github.com/SanderLoman/Contower/issues) for areas where you can contribute.
-    - Start with issues labeled [good first issue](https://github.com/SanderLoman/Contower/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) if you're new.
+3. Check out the [open issues](https://github.com/Nodura/Contower/issues) for areas where you can contribute.
+    - Start with issues labeled [good first issue](https://github.com/Nodura/Contower/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) if you're new.
 4. Before starting work on an issue, please comment on it to let others know you're working on it.
 5. Submit your contributions as a pull request for review.
 
@@ -26,7 +26,7 @@ Questions or discussions? Join us on [Discord](https://discord.gg/vHWpWsjCqx).
 Contower will permenantly have two branches:
 
 -   `stable`: Our primary development branch. This is where we merge new features and changes after they have been tested and are ready for release.
--   `unstable`: Our secondary development branch. This is where we merge new features and changes before they are moved to `staging` and then `stable`.
+-   `unstable`: Our secondary development branch. This is where we merge new features and changes before they are moved to `staging` and then later to `stable`.
 
 ### Rust Development
 

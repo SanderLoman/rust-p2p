@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+    - name: Contower Issue Tracker
+      url: https://github.com/Nodura/Contower/discussions
+      about: Please ask and answer questions here.
+    - name: Report Security Issues here
+      url: mailto:security@nodura.org
+      about: Please report security vulnerabilities here.

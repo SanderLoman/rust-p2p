@@ -7,7 +7,6 @@ edition.workspace = true
 target_info = { workspace = true }
 git-version = { workspace = true }
 tokio = { workspace = true }
-dotenv = { workspace = true }
 slog = { workspace = true }
 eyre = { workspace = true }
 sloggers = { workspace = true }
@@ -18,5 +17,9 @@ exit-future = { workspace = true }
 lazy_static = { workspace = true }
 clap = { workspace = true }
 execution = { workspace = true }
+jemalloc = { workspace = true }
 
 [dev-dependencies]
+
+[features]
+jemalloc = ["jemalloc/jemallocator"]
