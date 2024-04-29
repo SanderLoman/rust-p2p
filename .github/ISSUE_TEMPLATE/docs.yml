@@ -31,11 +31,7 @@ body:
       validations:
           required: false
 
-    - type: checkboxes
-      id: terms
+    - type: markdown
       attributes:
-          label: Code of Conduct
-          description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/Nodura/Contower/blob/stable/CONTRIBUTING.md#code-of-conduct).
-          options:
-              - label: I agree to follow the Code of Conduct
-                required: true
+          value: |
+              By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/Nodura/Contower/blob/stable/CONTRIBUTING.md#code-of-conduct).
