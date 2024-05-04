@@ -24,7 +24,7 @@ function extractIssueNumber(body) {
 
 async function run() {
     try {
-        const token = core.getInput("GITHUB_TOKEN", { required: true });
+        const token = core.getInput("github-token", { required: true });
         const octokit = github.getOctokit(token);
         const context = github.context;
         const prNumber = context.payload.pull_request.number;
