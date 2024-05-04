@@ -17,6 +17,8 @@ jobs:
               with:
                   days-before-stale: 30
                   days-before-close: 7
+                  stale-issue-label: "LS-Stale"
+                  stale-pr-label: "LS-Stale"
                   stale-issue-message: "This issue has been marked as stale because it has been inactive for 30 days. Please update the issue to remove the stale label."
                   stale-pr-message: "This PR has been marked as stale because it has been inactive for 30 days. Please update the PR to remove the stale label."
                   close-issue-message: "This issue has been closed due to inactivity."
