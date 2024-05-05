@@ -1,46 +1,52 @@
-module.exports = async ({ github, context }) => {
-    function shouldIncludeLabel(label) {
-        const excludePatterns = ["LS-", "P-", "U-"];
-        return !excludePatterns.some((pattern) => label.startsWith(pattern));
-    }
+const core = require("@actions/core");
+const github = require("@actions/github");
 
-    function extractIssueNumber(body) {
-        const keywords = "\\b(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\\b";
-        const patterns = [
-            new RegExp(`${keywords} https://github.com/.*/.*/issues/(\\d+)`, "gi"),
-            new RegExp(`${keywords} #\\d+`, "gi"),
-        ];
+function shouldIncludeLabel(label) {
+    const excludePatterns = ["LS-", "P-", "U-"];
+    return !excludePatterns.some((pattern) => label.startsWith(pattern));
+}
 
-        for (const pattern of patterns) {
-            const match = body.match(pattern);
-            if (match) {
-                return match[0].match(/\d+$/)[0];
-            }
+function extractIssueNumber(body) {
+    const keywords = "\\b(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\\b";
+    const patterns = [
+        new RegExp(`${keywords} https://github.com/.*/.*/issues/(\\d+)`, "gi"),
+        new RegExp(`${keywords} #\\d+`, "gi"),
+    ];
+
+    for (const pattern of patterns) {
+        const match = body.match(pattern);
+        if (match) {
+            return match[0].match(/\d+$/)[0];
         }
-        return null;
     }
+    return null;
+}
 
+async function run() {
     try {
+        const token = core.getInput("GITHUB_TOKEN", { required: true });
+        const octokit = github.getOctokit(token);
+        const context = github.context;
         const prNumber = context.payload.pull_request.number;
         const repo = context.repo;
         const prBody = context.payload.pull_request.body;
 
         const issueNumber = extractIssueNumber(prBody);
         if (!issueNumber) {
-            console.error("No issue reference found in PR description.");
+            core.setFailed("No issue reference found in PR description.");
             return;
         }
 
-        const { data: issue } = await github.rest.issues.get({
+        const { data: issue } = await octokit.issues.get({
             owner: repo.owner,
             repo: repo.repo,
-            issue_number: parseInt(issueNumber),
+            issue_number: issueNumber,
         });
 
         const labelsToAdd = issue.labels.map((label) => label.name).filter(shouldIncludeLabel);
 
         if (labelsToAdd.length > 0) {
-            await github.rest.issues.addLabels({
+            await octokit.issues.addLabels({
                 owner: repo.owner,
                 repo: repo.repo,
                 issue_number: prNumber,
@@ -48,7 +54,9 @@ module.exports = async ({ github, context }) => {
             });
         }
     } catch (error) {
-        console.error(`Failed to label PR: ${error.message}`);
-        throw error;
+        core.setFailed(`Failed to label PR: ${error.message}`);
+        console.error(error);
     }
-};
+}
+
+run();
