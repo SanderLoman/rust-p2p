@@ -1,4 +1,4 @@
-FROM rust:1.75.0-bullseye AS staging
+FROM rust:1.78.0-bullseye AS staging
 # Install dependencies and remove the cache to reduce the layer size
 RUN apt-get update && apt-get install -y cmake libclang-dev && rm -rf /var/lib/apt/lists/*
 COPY . Contower
