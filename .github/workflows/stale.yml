@@ -25,4 +25,6 @@ jobs:
                   close-pr-message: "This PR has been closed due to inactivity."
                   exempt-issue-labels: "P-Prevent-stale"
                   exempt-pr-labels: "P-Prevent-stale"
+                  exempt-all-assignees: true
+                  exempt-all-milestones: true
                   repo-token: ${{ secrets.GITHUB_TOKEN }}
