@@ -1,3 +1,5 @@
+# TODO: Fix this file
+
 name: Label Pull Request
 
 on:
@@ -6,6 +8,7 @@ on:
 
 jobs:
     label:
+        if: false
         runs-on: ubuntu-latest
         permissions:
             issues: write
@@ -18,5 +21,6 @@ jobs:
             - run: npm install @actions/github @actions/core
             - uses: actions/github-script@v7
               with:
-                  script: require('./.github/scripts/label_pr.js')
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      const script = require('./.github/scripts/label_pr.js');
+                      script({github, context});
