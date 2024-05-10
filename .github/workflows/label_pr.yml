@@ -8,6 +8,7 @@ on:
 
 jobs:
     label:
+        # Temporarily disabled until the script is ready
         if: false
         runs-on: ubuntu-latest
         permissions:
