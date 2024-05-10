@@ -1,3 +1,5 @@
+# TODO: Fix this file
+
 name: Label Pull Request
 
 on:
@@ -6,6 +8,7 @@ on:
 
 jobs:
     label:
+        if: false
         runs-on: ubuntu-latest
         permissions:
             issues: write
