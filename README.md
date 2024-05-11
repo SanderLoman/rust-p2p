@@ -4,9 +4,9 @@
 
 ![Contower Banner](assets/repo_banner.webp)
 
-[![build](https://github.com/Nodura/Contower/actions/workflows/build.yml/badge.svg)](https://github.com/Nodura/Contower/actions/workflows/build.yml)
-[![tests](https://github.com/Nodura/Contower/actions/workflows/tests.yml/badge.svg)](https://github.com/Nodura/Contower/actions/workflows/tests.yml)
-[![Codecov](https://img.shields.io/codecov/c/github/Nodura/ConTower?token=JT1850HR9J)](https://app.codecov.io/gh/Nodura/ConTower)
+[![build](https://github.com/nodura/conTower/actions/workflows/build.yml/badge.svg)](https://github.com/nodura/conTower/actions/workflows/build.yml)
+[![tests](https://github.com/nodura/conTower/actions/workflows/tests.yml/badge.svg)](https://github.com/nodura/conTower/actions/workflows/tests.yml)
+[![Codecov](https://img.shields.io/codecov/c/github/nodura/conTower?token=JT1850HR9J)](https://app.codecov.io/gh/nodura/conTower)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Overview
@@ -29,7 +29,7 @@ Contower's versatile design allows for these components to be used in combinatio
 
 Engage with our community for discussions, support, and collaboration.
 
--   [GitHub Issues](https://github.com/Nodura/Contower/issues)
+-   [GitHub Issues](https://github.com/nodura/conTower/issues)
 -   [Discord](https://discord.gg/vHWpWsjCqx)
 
 ## Documentation

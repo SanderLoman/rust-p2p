@@ -1,5 +1,5 @@
 # This Dockerfile is for cross-platform builds.
-# It is tailored for the Contower binary that should
+# It is tailored for the contower binary that should
 # already be compiled for the target architecture
 # specified in `$TARGETPLATFORM` and placed in `./bin`.
 FROM --platform=$TARGETPLATFORM ubuntu:22.04
@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
-COPY ./bin/Contower /usr/local/bin/Contower
+COPY ./bin/contower /usr/local/bin/contower
 # Create a non-root user for security purposes
 RUN useradd -m contower
 USER contower

@@ -10,8 +10,8 @@ These labels denote the specific area of the project an issue or pull request af
 
 **Examples:**
 
--   https://github.com/Nodura/Contower/labels/FA-CLI - Issues related to the Command Line Interface.
--   https://github.com/Nodura/Contower/labels/FA-DB - Issues related to the database.
+-   https://github.com/nodura/contower/labels/FA-CLI - Issues related to the Command Line Interface.
+-   https://github.com/nodura/contower/labels/FA-DB - Issues related to the database.
 
 ### Category Labels ([`C-`][C])
 
@@ -19,8 +19,8 @@ Category labels specify the type of issue or change being proposed or reported. 
 
 **Examples:**
 
--   https://github.com/Nodura/Contower/labels/C-Bug - An unexpected or incorrect behavior.
--   https://github.com/Nodura/Contower/labels/C-Enhancement - New features or requests.
+-   https://github.com/nodura/contower/labels/C-Bug - An unexpected or incorrect behavior.
+-   https://github.com/nodura/contower/labels/C-Enhancement - New features or requests.
 
 ### Process Labels ([`P-`][P])
 
@@ -28,8 +28,8 @@ Process labels convey special information to maintainers and contributors about 
 
 **Examples:**
 
--   https://github.com/Nodura/Contower/labels/P-Needs-Review - Pull requests that require code review.
--   https://github.com/Nodura/Contower/labels/P-Prevent-Stale - Prevents old inactive issues/PRs from being closed due to inactivity.
+-   https://github.com/nodura/contower/labels/P-Needs-Review - Pull requests that require code review.
+-   https://github.com/nodura/contower/labels/P-Prevent-Stale - Prevents old inactive issues/PRs from being closed due to inactivity.
 
 ### Compatibility Labels ([`COMP-`][COMP])
 
@@ -37,8 +37,8 @@ These labels indicate the compatibility or specific environments that an issue o
 
 **Examples:**
 
--   https://github.com/Nodura/Contower/labels/COMP-Linux - Linux specific issues.
--   https://github.com/Nodura/Contower/labels/COMP-Docker - Docker specific issues.
+-   https://github.com/nodura/contower/labels/COMP-Linux - Linux specific issues.
+-   https://github.com/nodura/contower/labels/COMP-Docker - Docker specific issues.
 
 ### Urgency Labels ([`U-`][U])
 
@@ -46,8 +46,8 @@ Urgency labels help prioritize issues based on the immediacy of their impact on 
 
 **Examples:**
 
--   https://github.com/Nodura/Contower/labels/U-Critical - Must be fixed immediately to prevent severe impact.
--   https://github.com/Nodura/Contower/labels/U-High - Requires immediate attention.
+-   https://github.com/nodura/contower/labels/U-Critical - Must be fixed immediately to prevent severe impact.
+-   https://github.com/nodura/contower/labels/U-High - Requires immediate attention.
 
 ### Lifecycle Status Labels ([`LS-`][LS])
 
@@ -55,8 +55,8 @@ These labels indicate the current status of an issue or pull request, providing 
 
 **Examples:**
 
--   https://github.com/Nodura/Contower/labels/LS-Blocked - Cannot move forward until changes occur.
--   https://github.com/Nodura/Contower/labels/LS-Needs-Triage - Needs to be assessed and categorized.
+-   https://github.com/nodura/contower/labels/LS-Blocked - Cannot move forward until changes occur.
+-   https://github.com/nodura/contower/labels/LS-Needs-Triage - Needs to be assessed and categorized.
 
 ## Difficulty Labels ([`D-`][D])
 
@@ -64,8 +64,8 @@ Difficulty labels are designed to communicate the level of complexity or suitabi
 
 **Examples:**
 
--   https://github.com/Nodura/Contower/labels/D-Complex - Challenging from a design or technical perspective.
--   https://github.com/Nodura/Contower/labels/D-Good-First-Issue - Ideal for newcomers to start contributing.
+-   https://github.com/nodura/contower/labels/D-Complex - Challenging from a design or technical perspective.
+-   https://github.com/nodura/contower/labels/D-Good-First-Issue - Ideal for newcomers to start contributing.
 
 ## Labeling Guidelines
 
@@ -79,10 +79,10 @@ Difficulty labels are designed to communicate the level of complexity or suitabi
 
 Labels should be applied as soon as an issue is created or a pull request is opened. Multiple labels from different categories can be applied to a single issue or PR to provide a comprehensive overview at a glance. Contributors are encouraged to add or update labels during the lifecycle of the issue or PR to reflect changes in status or scope.
 
-[FA]: https://github.com/Nodura/Contower/labels?q=FA-
-[C]: https://github.com/Nodura/Contower/labels?q=C-
-[P]: https://github.com/Nodura/Contower/labels?q=P-
-[COMP]: https://github.com/Nodura/Contower/labels?q=COMP-
-[U]: https://github.com/Nodura/Contower/labels?q=U-
-[LS]: https://github.com/Nodura/Contower/labels?q=LS-
-[D]: https://github.com/Nodura/Contower/labels?q=D-
+[FA]: https://github.com/nodura/contower/labels?q=FA-
+[C]: https://github.com/nodura/contower/labels?q=C-
+[P]: https://github.com/nodura/contower/labels?q=P-
+[COMP]: https://github.com/nodura/contower/labels?q=COMP-
+[U]: https://github.com/nodura/contower/labels?q=U-
+[LS]: https://github.com/nodura/contower/labels?q=LS-
+[D]: https://github.com/nodura/contower/labels?q=D-
