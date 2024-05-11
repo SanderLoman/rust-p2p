@@ -1,14 +1,14 @@
 FROM rust:1.78.0-bullseye AS staging
 # Install dependencies and remove the cache to reduce the layer size
 RUN apt-get update && apt-get install -y cmake libclang-dev && rm -rf /var/lib/apt/lists/*
-COPY . Contower
+COPY . contower
 ARG FEATURES
 ARG PROFILE=release
 ARG CARGO_USE_GIT_CLI=true
 ENV FEATURES $FEATURES
 ENV PROFILE $PROFILE
 ENV CARGO_NET_GIT_FETCH_WITH_CLI=$CARGO_USE_GIT_CLI
-RUN cd Contower && make
+RUN cd contower && make
 
 FROM ubuntu:22.04
 # Install dependencies and remove the cache to reduce the layer size
