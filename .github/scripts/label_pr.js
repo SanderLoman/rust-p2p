@@ -2,7 +2,7 @@ const core = require("@actions/core");
 const github = require("@actions/github");
 
 function shouldIncludeLabel(label) {
-    const excludePatterns = ["LS-", "P-", "U-"];
+    const excludePatterns = ["LS-", "P-Prevent-Stale", "D-"];
     return !excludePatterns.some((pattern) => label.startsWith(pattern));
 }
 
