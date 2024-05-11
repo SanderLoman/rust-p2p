@@ -58,6 +58,15 @@ These labels indicate the current status of an issue or pull request, providing 
 -   https://github.com/Nodura/Contower/labels/LS-Blocked - Cannot move forward until changes occur.
 -   https://github.com/Nodura/Contower/labels/LS-Needs-Triage - Needs to be assessed and categorized.
 
+## Difficulty Labels ([`D-`][D])
+
+Difficulty labels are designed to communicate the level of complexity or suitability of issues and pull requests for potential contributors. These labels help in determining the appropriateness of tasks for different skill levels.
+
+**Examples:**
+
+-   https://github.com/Nodura/Contower/labels/D-Complex - Challenging from a design or technical perspective.
+-   https://github.com/Nodura/Contower/labels/D-Good-First-Issue - Ideal for newcomers to start contributing.
+
 ## Labeling Guidelines
 
 -   **Consistency**: Use labels consistently across issues and pull requests to maintain clarity and predictability.
@@ -76,3 +85,4 @@ Labels should be applied as soon as an issue is created or a pull request is ope
 [COMP]: https://github.com/Nodura/Contower/labels?q=COMP-
 [U]: https://github.com/Nodura/Contower/labels?q=U-
 [LS]: https://github.com/Nodura/Contower/labels?q=LS-
+[D]: https://github.com/Nodura/Contower/labels?q=D-
