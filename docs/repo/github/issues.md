@@ -1,6 +1,6 @@
 # Issues in Our Project
 
-In our project, 'issues' are used as a primary method to track tasks, enhancements, bugs, and other types of work. They help maintain organization and facilitate effective collaboration among team members. Here is how we categorize and handle different kinds of issues.
+In our project, [issues](https://github.com/nodura/contower/issues) are used as a primary method to track tasks, enhancements, bugs, and other types of work. They help maintain organization and facilitate effective collaboration among team members. Here is how we categorize and handle different kinds of issues.
 
 ## Types of Issues
 
@@ -34,6 +34,6 @@ When an issue is created, it is automatically added to our repository's [Issue T
 
 ## Handling Stale Issues and Pull Requests
 
-Our project uses a GitHub Action ([stale.yml](https://github.com/nodura/contower/blob/stable/.github/workflows/stale.yml)) to manage stale issues and pull requests to ensure the repository stays up-to-date. Any issue or pull request that has not been active for 30 days is marked as stale. If there is no further activity within the next 7 days, it is automatically closed. This helps to focus on items that are currently relevant and in need of attention.
+Our project uses a GitHub Action [stale.yml](https://github.com/nodura/contower/blob/stable/.github/workflows/stale.yml) to manage stale issues and pull requests to ensure the repository stays up-to-date. Any issue or pull request that has not been active for 30 days is marked as stale. If there is no further activity within the next 7 days, it is automatically closed. This helps to focus on items that are currently relevant and in need of attention.
 
-Exemptions to this rule include issues and pull requests with any assignees, or labeled with "https://github.com/nodura/contower/labels/P-Prevent-Stale". These items are considered important and are exempt from automatic closure based on inactivity.
+Exemptions to this rule include issues and pull requests with any assignees, or labeled with https://github.com/nodura/contower/labels/P-Prevent-Stale. These items are considered important and are exempt from automatic closure based on inactivity.
