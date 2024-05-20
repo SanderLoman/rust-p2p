@@ -34,7 +34,11 @@ Engage with our community for discussions, support, and collaboration.
 
 ## Documentation
 
-See the [Book](https://nodura.github.io/Contower/) for more information.
+For comprehensive information, you can refer to two key resources:
+
+1. [Book](https://nodura.github.io/Contower/): This resource provides an overview and installation guide for Contower, helping you get started with the project.
+
+2. [docs](docs/) directory: This directory contains detailed documentation about the project's inner workings, including explanations of the static files and folders used, and how they function.
 
 ## Contributing
 
