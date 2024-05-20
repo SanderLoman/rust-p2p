@@ -1,6 +1,6 @@
 name: Feature Request
 description: Suggest a new feature or enhancement
-# labels: NOT YET DECIDED
+labels: ["C-Enhancement", "LS-Needs-Triage"]
 body:
     - type: markdown
       attributes:
@@ -34,4 +34,4 @@ body:
     - type: markdown
       attributes:
           value: |
-              By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/Nodura/Contower/blob/stable/CONTRIBUTING.md#code-of-conduct).
+              By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/nodura/contower/blob/stable/CONTRIBUTING.md#code-of-conduct).
