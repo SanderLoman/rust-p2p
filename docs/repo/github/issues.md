@@ -1,6 +1,6 @@
 # Issues in Our Project
 
-In our project, [issues](https://github.com/nodura/contower/issues) are used as a primary method to track tasks, enhancements, bugs, and other types of work. They help maintain organization and facilitate effective collaboration among team members. Here is how we categorize and handle different kinds of issues.
+In our project [issues](https://github.com/nodura/contower/issues) are used as a primary method to track tasks, enhancements, bugs, and other types of work. They help maintain organization and facilitate effective collaboration among team members. Here is how we categorize and handle different kinds of issues.
 
 ## Types of Issues
 
