@@ -29,7 +29,7 @@ To create an issue, follow these steps:
 5. If necessary, add more labels to better fit the issue.
 6. Submit the issue by clicking the "Submit new issue" button.
 
-The issues will automatically be assigned labels based on the selected template.
+The issues will automatically be assigned certain labels based on the selected template.
 
 ## Managing Issues
 
@@ -41,7 +41,7 @@ If you encounter an issue you are interested in working on, you can follow these
 
 This process helps maintain organized and controlled management of issues, ensuring that work is not duplicated and that contributors are aware of who is working on what.
 
-## Integration with "Issue Tracker" (Projects)
+## Integration with [Issue Tracker](issue_tracker.md) (Projects)
 
 When an issue is created, it is automatically added to our repository's [Issue Tracker](https://github.com/orgs/nodura/projects/1). This helps in tracking the progress of each issue within the larger context of the project development timeline. To view and manage these issues within the tracker, navigate to the [Project](https://github.com/nodura/contower/projects?query=is%3Aopen) tab in our repository.
 
