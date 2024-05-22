@@ -18,6 +18,19 @@ Documentation issues arise when there are inaccuracies, insufficient details, or
 
 Feature requests are ideas or proposals for new features to be added to the software. These issues allow users and contributors to suggest improvements or new functionality that they believe will enhance the software.
 
+## Creating an Issue
+
+To create an issue, follow these steps:
+
+1. Navigate to the [Issues page](https://github.com/nodura/contower/issues) of the repository.
+2. Click on the "New issue" button.
+3. Select the appropriate issue template.
+4. Fill in the issue form, providing as much detail as possible.
+5. If necessary, add more labels to better fit the issue.
+6. Submit the issue by clicking the "Submit new issue" button.
+
+The issues will automatically be assigned labels based on the selected template.
+
 ## Managing Issues
 
 If you encounter an issue you are interested in working on, you can follow these steps:
