@@ -45,7 +45,7 @@ For new contributors:
     - Read our [docs](./docs/repo/github/forking.md) for more information.
 3. Create a new feature branch for your task.
 4. We encourage you to sign your commits. See [Signing Commits](https://help.github.com/en/github/authenticating-to-github/about-commit-signature-verification) for more information.
-5. Push your changes and submit a pull request.
+5. Push your changes to your fork and submit a pull request.
 
 ## Code of Conduct
 
