@@ -2,7 +2,10 @@
 
 # Contower: A New All-in-One Ethereum Client
 
-![Contower Banner](assets/repo_banner.webp)
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nodura/contower/stable/assets/contower-repo-banner-white.png">
+    <img alt="Nodura Logo" src="https://raw.githubusercontent.com/nodura/contower/stable/assets/contower-repo-banner-black.png" width="auto" height="120">
+</picture>
 
 [![build](https://github.com/nodura/contower/actions/workflows/build.yml/badge.svg)](https://github.com/nodura/contower/actions/workflows/build.yml)
 [![tests](https://github.com/nodura/contower/actions/workflows/tests.yml/badge.svg)](https://github.com/nodura/contower/actions/workflows/tests.yml)
