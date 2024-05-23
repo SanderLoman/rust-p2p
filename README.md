@@ -2,11 +2,14 @@
 
 # Contower: A New All-in-One Ethereum Client
 
-![Contower Banner](assets/repo_banner.webp)
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nodura/contower/stable/assets/contower-repo-banner-white.png">
+    <img alt="Nodura Logo" src="https://raw.githubusercontent.com/nodura/contower/stable/assets/contower-repo-banner-black.png" width="auto" height="120">
+</picture>
 
-[![build](https://github.com/nodura/conTower/actions/workflows/build.yml/badge.svg)](https://github.com/nodura/conTower/actions/workflows/build.yml)
-[![tests](https://github.com/nodura/conTower/actions/workflows/tests.yml/badge.svg)](https://github.com/nodura/conTower/actions/workflows/tests.yml)
-[![Codecov](https://img.shields.io/codecov/c/github/nodura/conTower?token=JT1850HR9J)](https://app.codecov.io/gh/nodura/conTower)
+[![build](https://github.com/nodura/contower/actions/workflows/build.yml/badge.svg)](https://github.com/nodura/contower/actions/workflows/build.yml)
+[![tests](https://github.com/nodura/contower/actions/workflows/tests.yml/badge.svg)](https://github.com/nodura/contower/actions/workflows/tests.yml)
+[![Codecov](https://img.shields.io/codecov/c/github/nodura/contower?token=JT1850HR9J)](https://app.codecov.io/gh/nodura/contower)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Overview
@@ -29,14 +32,14 @@ Contower's versatile design allows for these components to be used in combinatio
 
 Engage with our community for discussions, support, and collaboration.
 
--   [GitHub Issues](https://github.com/nodura/conTower/issues)
+-   [GitHub Issues](https://github.com/nodura/contower/issues)
 -   [Discord](https://discord.gg/vHWpWsjCqx)
 
 ## Documentation
 
 For comprehensive information, you can refer to two key resources:
 
-1. [Book](https://nodura.github.io/Contower/): This resource provides an overview and installation guide for Contower, helping you get started with the project.
+1. [Book](https://nodura.github.io/contower/): This resource provides an overview and installation guide for Contower, helping you get started with the project.
 
 2. [docs](docs/) directory: This directory contains detailed documentation about the project's inner workings, including explanations of the static files and folders used, and how they function.
 
