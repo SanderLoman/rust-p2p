@@ -20,9 +20,6 @@ The Triage view is used for sorting and categorizing new issues. Here, issues ar
 
 This view shows all the issues that have been assigned to the person currently viewing the project. It uses the filter `assignee:@me` to display only the issues assigned to the logged-in user. This helps in tracking personal assignments and ensures accountability and progress tracking.
 
-<!-- TODO -->
-<!-- Improve this more -->
-
 ### 5. Custom Views
 
 Users can customize table views to suit their preferences. Which only they can see.
@@ -33,13 +30,6 @@ All issues created in the repository are automatically linked to the Issue Track
 
 1. Navigate to the [Issues page](https://github.com/nodura/contower/issues).
 2. Click on the "New issue" button and follow the steps outlined in the [Issues in Our Project](issues.md) guide.
-
-## Managing and Updating Issues
-
-Once issues are in the tracker, you can:
-
-<!-- -   Move issues between columns to indicate progress (e.g., from "To Do" to "In Progress") in your own "Assigned Issues" view.
--   Add comments or updates directly within the Issue Tracker. -->
 
 This dynamic system ensures that all team members are on the same page and can easily see what needs to be done and what is currently being worked on.
 

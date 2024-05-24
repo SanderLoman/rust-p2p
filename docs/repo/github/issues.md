@@ -43,7 +43,7 @@ This process helps maintain organized and controlled management of issues, ensur
 
 ## Integration with [Issue Tracker](issue_tracker.md) (Projects)
 
-When an issue is created, it is automatically added to our repository's [Issue Tracker](https://github.com/orgs/nodura/projects/1). This helps in tracking the progress of each issue within the larger context of the project development timeline. To view and manage these issues within the tracker, navigate to the [Project](https://github.com/nodura/contower/projects?query=is%3Aopen) tab in our repository.
+When an issue is created, it is automatically added to our repository's [Issue Tracker](https://github.com/orgs/nodura/projects/1). This helps in tracking the progress of each issue within the larger context of the project development timeline. To view and manage these issues within the tracker, navigate to the [Projects](https://github.com/nodura/contower/projects?query=is%3Aopen) tab in our repository.
 
 ## Handling Stale Issues and Pull Requests
 
