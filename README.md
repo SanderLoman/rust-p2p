@@ -1,6 +1,6 @@
-⚠️ **This project is still in development and not ready for production use.** ⚠️
+<div align="center">
 
-# Contower: A New All-in-One Ethereum Client
+⚠️ **This project is still in development and not ready for production use.** ⚠️
 
 <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nodura/contower/stable/assets/contower-repo-banner-white.png">
@@ -11,6 +11,8 @@
 [![tests](https://github.com/nodura/contower/actions/workflows/tests.yml/badge.svg)](https://github.com/nodura/contower/actions/workflows/tests.yml)
 [![Codecov](https://img.shields.io/codecov/c/github/nodura/contower?token=JT1850HR9J)](https://app.codecov.io/gh/nodura/contower)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+</div>
 
 ## Overview
 
