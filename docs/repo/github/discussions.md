@@ -6,19 +6,56 @@ Our project utilizes GitHub [Discussions](https://github.com/nodura/contower/dis
 
 ### 1. General Discussions
 
-The General Discussions section is a place for any topics that don't fit into other specific categories. Here, team members and contributors can share ideas, ask questions, and discuss general project-related topics.
+The General Discussions section is a place for any topics that don't fit into other specific categories. Here, team members and contributors can share ideas, ask questions, and discuss general project-related topics. This is a versatile area where you can:
+
+-   Introduce yourself and meet the team.
+-   Share relevant articles, resources, or news related to the project.
+-   Discuss general development practices and methodologies.
+-   Provide feedback on the project as a whole.
 
 ### 2. Q&A
 
-The Q&A section is dedicated to questions and answers. This is an excellent place for newcomers to seek help and for experienced contributors to offer support and share their knowledge. Questions can be marked as answered to help others find solutions quickly.
+The Q&A section is dedicated to questions and answers. This is an excellent place for newcomers to seek help and for experienced contributors to offer support and share their knowledge. Features of this section include:
+
+-   Post specific questions related to the project.
+-   Receive answers and suggestions from the community.
+-   Mark questions as answered to help others find solutions quickly.
+-   Browse through previously answered questions for quick help.
 
 ### 3. Ideas
 
-The Ideas section is for brainstorming and proposing new features or improvements. This is the ideal place to suggest enhancements and gather feedback from the community before creating formal issues or tasks in the Issue Tracker.
+The Ideas section is for brainstorming and proposing new features or improvements. This is the ideal place to suggest enhancements and gather feedback from the community before creating formal issues or tasks in the Issue Tracker. In this section, you can:
+
+-   Share your innovative ideas for the project.
+-   Discuss the feasibility and implementation of proposed features.
+-   Collect feedback and alternative suggestions from other contributors.
+-   Vote on ideas to prioritize what the community values most.
 
 ### 4. Announcements
 
-The Announcements section is used by the project maintainers to share important updates, such as new releases, major changes, or upcoming events. This ensures that all contributors are informed about the latest developments in the project.
+The Announcements section is used by the project maintainers to share important updates, such as new releases, major changes, or upcoming events. This ensures that all contributors are informed about the latest developments in the project. Typical announcements include:
+
+-   Release notes for new versions of the project.
+-   Major changes to project structure or goals.
+-   Scheduled maintenance or downtime.
+-   Upcoming community events or meetings.
+
+### 5. Polls
+
+The Polls section is used to gather opinions and make decisions based on community feedback. Here, maintainers can create polls on various topics to understand the community's preference or direction. This section includes:
+
+-   Creating polls to gather input on new features or changes.
+-   Voting on existing polls to voice your opinion.
+-   Viewing poll results to see the community's consensus.
+
+### 6. Show and Tell
+
+The Show and Tell section is where contributors can showcase their work related to the project. This is an encouraging space to:
+
+-   Share your completed tasks and contributions.
+-   Demonstrate how you’ve used the project in real-world applications.
+-   Get feedback and appreciation from the community.
+-   Inspire others by showcasing innovative uses of the project.
 
 ## Engaging in Discussions
 
