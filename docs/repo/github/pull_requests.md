@@ -37,6 +37,7 @@ To create a pull request, follow these steps:
 
 2. **Open the Pull Request Page:** Click on the "Pull requests" tab, then click on the "New pull request" button.
 
+<!-- TODO: improve this, stable and unstable branches not main and develop -->
 3. **Select Branches:** Choose the appropriate branches to merge from and to:
 
     - **Base:** Select the branch you want to merge your changes into (e.g., `main` or `develop`).
