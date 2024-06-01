@@ -32,8 +32,13 @@ jobs:
                       ~/.cargo/git/db
                   key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-            - name: Install cargo-tarpaulin
-              run: cargo install cargo-tarpaulin
+            - name: Check if cargo-tarpaulin is installed
+              run: |
+                  if cargo tarpaulin --version; then
+                    echo "cargo-tarpaulin already installed"
+                  else
+                    cargo install cargo-tarpaulin
+                  fi
 
             - name: Run tests with coverage
               run: cargo tarpaulin --out Xml --output-dir ./target/tarpaulin
