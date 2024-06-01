@@ -42,7 +42,7 @@ jobs:
               uses: codecov/codecov-action@v4.0.1
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
-                  slug: SanderLoman/contower
+                  slug: nodura/contower
                   files: ./target/tarpaulin/cobertura.xml
                   flags: unittests
                   name: codecov-umbrella
