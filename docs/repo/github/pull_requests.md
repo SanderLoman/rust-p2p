@@ -37,10 +37,9 @@ To create a pull request, follow these steps:
 
 2. **Open the Pull Request Page:** Click on the "Pull requests" tab, then click on the "New pull request" button.
 
-<!-- TODO: improve this, stable and unstable branches not main and develop -->
 3. **Select Branches:** Choose the appropriate branches to merge from and to:
 
-    - **Base:** Select the branch you want to merge your changes into (e.g., `main` or `develop`).
+    - **Base:** Select the branch you want to merge your changes into (e.g., `stable` or `unstable`).
     - **Compare:** Select the branch that contains your changes.
 
 4. **Fill in the PR Form:** Provide a clear and descriptive title for your pull request. In the description, include:
@@ -51,9 +50,9 @@ To create a pull request, follow these steps:
 
 5. **Apply Labels:** Add relevant labels to your pull request. Labels help categorize the PR and make it easier for reviewers to understand its context. Examples include:
 
-    - `enhancement`
-    - `bug`
-    - `documentation`
+    - https://github.com/nodura/contower/labels/C-Enhancement
+    - https://github.com/nodura/contower/labels/C-Bug
+    - https://github.com/nodura/contower/labels/C-Documentation
 
 6. **Link Issues:** If your pull request is related to an issue, link the issue in the description. This can be done by using keywords like "Fixes," "Closes," or "Resolves" followed by the issue number (e.g., "Fixes #123").
 
@@ -74,7 +73,6 @@ Once your pull request is submitted, it will be reviewed by project maintainers 
 -   **Keep It Small:** Try to keep your pull requests small and focused. Large pull requests can be difficult to review.
 -   **Be Descriptive:** Provide a clear description and context for your changes. This helps reviewers understand the purpose and impact of your changes.
 -   **Test Your Changes:** Ensure that your changes have been tested and do not break existing functionality.
--   **Follow the Code of Conduct:** Communicate respectfully and considerately during the review process.
 
 By following these guidelines, we can ensure that our pull requests are clear, organized, and facilitate effective collaboration among all contributors.
 

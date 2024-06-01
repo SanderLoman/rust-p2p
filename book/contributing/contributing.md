@@ -1,7 +1,7 @@
 # Contributing to Contower
 
 [![Chat Badge]][Chat Link]
-[![Issues Badge](https://img.shields.io/github/issues/Nodura/Contower.svg)](https://github.com/Nodura/Contower/issues)
+[![Issues Badge](https://img.shields.io/github/issues/nodura/contower.svg)](https://github.com/nodura/contower/issues)
 
 [Chat Badge]: https://img.shields.io/discord/1174374333062316032?logo=discord
 [Chat Link]: https://discord.gg/vHWpWsjCqx
@@ -10,10 +10,10 @@ Contower is an evolving project in the Ethereum ecosystem, focused on bringing i
 
 ## Getting Started
 
-1. Familiarize yourself with the [how to contribute](https://github.com/Nodura/Contower/blob/unstable/CONTRIBUTING.md) guide.
+1. Familiarize yourself with the [how to contribute](https://github.com/nodura/contower/blob/stable/CONTRIBUTING.md) guide.
 2. Set up your development environment as described in [setup instructions](./setup.md).
-3. Check out the [open issues](https://github.com/Nodura/Contower/issues) for areas where you can contribute.
-    - Start with issues labeled [good first issue](https://github.com/Nodura/Contower/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) if you're new.
+3. Check out the [open issues](https://github.com/nodura/contower/issues) for areas where you can contribute.
+    - Start with issues labeled [good first issue](https://github.com/nodura/contower/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) if you're new.
 4. Before starting work on an issue, please comment on it to let others know you're working on it.
 5. Submit your contributions as a pull request for review.
 
@@ -57,7 +57,7 @@ struct MyExampleStruct;
 impl MyExampleStruct {
     pub fn my_function(&mut self, _something: &[u8]) -> Result<String, Box<dyn Error>> {
         // TODO: Implement feature
-        // Issue link: https://github.com/Nodura/Contower/issues/XX
+        // Issue link: https://github.com/nodura/contower/issues/XX
         Ok("Example response".to_string())
     }
 }
