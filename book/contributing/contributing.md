@@ -23,7 +23,7 @@ Questions or discussions? Join us on [Discord](https://discord.gg/vHWpWsjCqx).
 
 ### New to Contributing?
 
-If you’re new to contributing or open-source, we recommend reading our [docs](../../docs/README) for more detailed instructions.
+If you’re new to contributing or open-source, we recommend reading our [docs](../../docs/README.md) for more detailed instructions.
 
 ### Branches
 
