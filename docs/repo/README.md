@@ -10,8 +10,8 @@ The repository documentation is divided into the following sections:
     -   [**Issues**](./github/issues.md): Explains the different types of issues in the project, how to create and manage them, and how to fix an issue.
     -   [**Pull Requests**](./github/pull_requests.md): Outlines the guidelines for creating a pull request, including preparing your branch, creating the PR, and submitting it for review.
     -   [**Labels**](./github/labels.md): Describes the various labels used in the repository to categorize issues and pull requests.
-    -   [**discussion.md**](./github/discussion.md): Provides guidelines for engaging in discussions on GitHub, including commenting, reviewing, and collaborating on issues and pull requests.
-    -   [**issue_tracker.md**](./github/issue_tracker.md): Explains how issues are tracked and managed using the repository's Issue Tracker.
+    -   [**Discussion**](./github/discussion.md): Provides guidelines for engaging in discussions on GitHub, including commenting, reviewing, and collaborating on issues and pull requests.
+    -   [**Issue_tracker**](./github/issue_tracker.md): Explains how issues are tracked and managed using the repository's Issue Tracker.
 
 -   [**Files**](./files/): Provides an overview of the files used in the repository, such as Makefiles, Dockerfiles, and scripts.
 
