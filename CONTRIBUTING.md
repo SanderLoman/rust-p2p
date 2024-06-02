@@ -47,6 +47,9 @@ For new contributors:
 4. We encourage you to sign your commits. See [Signing Commits](https://help.github.com/en/github/authenticating-to-github/about-commit-signature-verification) for more information.
 5. Push your changes to your fork and submit a pull request.
 
+-   If you’re new to Rust, we recommend reading the [Rust Book](https://doc.rust-lang.org/book/) for a comprehensive guide to the language.
+-   If you’re new to contributing or open-source, we recommend reading our [docs](./docs/README.md) for more detailed instructions.
+
 ## Code of Conduct
 
 We adhere to the **Rust Code of Conduct** which emphasizes the values of kindness, cooperation, and community. We believe everyone should feel safe and welcome. For details, see [Rust Code of Conduct](https://www.rust-lang.org/policies/code-of-conduct).

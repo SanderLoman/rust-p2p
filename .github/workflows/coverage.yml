@@ -15,37 +15,41 @@ jobs:
 
         steps:
             - uses: actions/checkout@v4
+
             - name: Set up Rust
               uses: actions-rs/toolchain@v1
               with:
                   toolchain: stable
                   override: true
-            - name: Cache cargo-tarpaulin
+
+            - name: Cache cargo and cargo-tarpaulin
               uses: actions/cache@v3
               with:
                   path: |
-                      ~/.cargo/bin/cargo-tarpaulin
-                      ~/.cargo/bin/tarpaulin
+                      ~/.cargo/bin
                       ~/.cargo/registry/index
                       ~/.cargo/registry/cache
                       ~/.cargo/git/db
-                  key: ${{ runner.os }}-cargo-tarpaulin-${{ hashFiles('**/Cargo.lock') }}
+                  key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
             - name: Check if cargo-tarpaulin is installed
               run: |
                   if cargo tarpaulin --version; then
-                    echo "Cargo-tarpaulin already installed"
+                    echo "cargo-tarpaulin already installed"
                   else
                     cargo install cargo-tarpaulin
                   fi
+
             - name: Run tests with coverage
               run: cargo tarpaulin --out Xml --output-dir ./target/tarpaulin
+
             - name: Upload coverage to Codecov
-              uses: codecov/codecov-action@v3
+              uses: codecov/codecov-action@v4.0.1
               with:
-                  file: ./target/tarpaulin/cobertura.xml
+                  token: ${{ secrets.CODECOV_TOKEN }}
+                  slug: nodura/contower
+                  files: ./target/tarpaulin/cobertura.xml
                   flags: unittests
                   name: codecov-umbrella
                   fail_ci_if_error: true
                   verbose: true
-              env:
-                  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
