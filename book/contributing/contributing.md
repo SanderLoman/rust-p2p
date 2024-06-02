@@ -21,6 +21,10 @@ Questions or discussions? Join us on [Discord](https://discord.gg/vHWpWsjCqx).
 
 ## Contribution Guidelines
 
+### New to Contributing?
+
+If you’re new to contributing or open-source, we recommend reading our [docs](https://github.com/nodura/contower/blob/stable/docs/README.md) for more detailed instructions.
+
 ### Branches
 
 Contower will permenantly have two branches:
