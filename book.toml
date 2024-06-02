@@ -8,7 +8,7 @@ description = "A book on all things Contower"
 
 [output.html]
 theme = "book/theme"
-git-repository-url = "https://github.com/Nodura/Contower"
+git-repository-url = "https://github.com/nodura/contower"
 default-theme = "Coal"
 no-section-label = true
 

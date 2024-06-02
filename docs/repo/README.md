@@ -18,7 +18,7 @@ The repository documentation is divided into the following sections:
     -   [**Makefiles**](./files/makefile.md): Details the purpose and usage of Makefiles in the project, including common commands and targets.
     -   [**Dockerfiles**](./files/dockerfiles.md): Explains the structure and contents of Dockerfiles used for building and running containers.
     -   [**Scripts**](./files/scripts.md): Describes the scripts used in the repository for automation and other tasks.
-    -   [**tomlfiles**](./files/tomlfiles.md): Explains the structure and contents of TOML files used in the project for configuration and metadata.
+    -   [**Tomlfiles**](./files/tomlfiles.md): Explains the structure and contents of TOML files used in the project for configuration and metadata.
 
 -   [**Workflows**](./workflows/): Outlines the workflow for contributing to the repository, including setting up the development environment, making changes, and submitting contributions.
     -   [**Book**](./workflows/book.md): Contains detailed information on installation, configuration, and operational guidance for the Contower repository.
