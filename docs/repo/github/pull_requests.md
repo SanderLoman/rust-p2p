@@ -39,7 +39,7 @@ To create a pull request, follow these steps:
 
 3. **Select Branches:** Choose the appropriate branches to merge from and to:
 
-    - **Base:** Select the branch you want to merge your changes into (e.g., `stable` or `unstable`).
+    - **Base:** Select the `unstable` branch as the base branch.
     - **Compare:** Select the branch that contains your changes.
 
 4. **Fill in the PR Form:** Provide a clear and descriptive title for your pull request. In the description, include:
