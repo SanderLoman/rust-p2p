@@ -5,8 +5,8 @@ _The "book" folder within the Contower repository primarily addresses details su
 
 This folder contains the documentation for the repository. The documentation is divided into the following sections:
 
+-   [**Architecture**](./architecture/): Details the architecture of the execution, consensus, and relay mechanisms.
 -   [**Rationale**](./rationale/): Provides an overview of the project's purpose, goals, objectives and why certain design decisions were made.
 -   [**Repository**](./repo/): Offers an in-depth look at the repository, including its structure, guidelines, and best practices.
--   [**Architecture**](./architecture/): Details the architecture of the execution, consensus, and relay mechanisms.
 
 Each section contains detailed information to help new contributors understand the project and its components. The documentation is designed to be informative, accessible, and user-friendly, providing a comprehensive guide to the Contower repository.
