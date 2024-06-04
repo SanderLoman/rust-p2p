@@ -53,6 +53,6 @@ Exemptions to this rule include issues and pull requests with any assignees, or 
 
 ## Fixing an Issue
 
-After you have fixed an issue, you should create a pull request to submit your changes for review. For detailed instructions on how to create a pull request, please refer to our [Pull Request](./pull_request) documentation.
+After you have fixed an issue, you should create a pull request to submit your changes for review. For detailed instructions on how to create a pull request, please refer to our [Pull Request](./pull_requests) documentation.
 
 By following these steps and guidelines, we can ensure that our project remains well-organized and that collaboration among team members is efficient and productive.
