@@ -33,7 +33,7 @@ Follow these steps to fork a repository:
 
         git checkout -b your_feature_name upstream/unstable
 
-    Choose a short and descriptive name for your branch. For example, if you're fixing a bug with serialization, you could name your branch `fix_cli_bug`. Or something else that describes the work you're doing.
+    Choose a short and descriptive name for your branch. For example, if you're fixing a bug in the cli, you could name your branch `fix_cli_bug`. Or something else that describes the work you're doing.
 
 ## Keeping Your Fork Updated
 

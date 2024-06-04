@@ -8,25 +8,20 @@ Creating a pull request is an essential part of the collaborative workflow in ou
 
 Before creating a pull request, make sure your changes are committed to a branch. Follow these steps:
 
-1. **Create a Branch:** Create a new branch for your changes. Name your branch descriptively, using a format like `feature/your-feature-name` or `bugfix/issue-number`.
-
+1. **Create a Branch:** Create a new branch for your changes. Name your branch descriptively.
     ```bash
-    git checkout -b feature/your-feature-name
+    git checkout -b your_feature_name upstream/unstable
     ```
-
 2. **Make Your Changes:** Implement your changes in the new branch.
 
 3. **Commit Your Changes:** Commit your changes with a clear and descriptive commit message.
-
     ```bash
     git add .
     git commit -m "Add feature XYZ"
     ```
-
 4. **Push Your Branch:** Push your branch to the remote repository.
-
     ```bash
-    git push origin feature/your-feature-name
+    git push origin your_feature_name
     ```
 
 ### 2. Create the Pull Request
@@ -76,4 +71,4 @@ Once your pull request is submitted, it will be reviewed by project maintainers 
 
 By following these guidelines, we can ensure that our pull requests are clear, organized, and facilitate effective collaboration among all contributors.
 
-For more information, refer to our [Issues Documentation](./issues).
+For more information, refer to our [Issues Documentation](./issues.md).
