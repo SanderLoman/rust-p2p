@@ -71,4 +71,4 @@ Once your pull request is submitted, it will be reviewed by project maintainers 
 
 By following these guidelines, we can ensure that our pull requests are clear, organized, and facilitate effective collaboration among all contributors.
 
-For more information, refer to our [Issues Documentation](./issues).
+For more information, refer to our [Issues Documentation](./issues.md).
