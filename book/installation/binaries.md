@@ -18,10 +18,10 @@ You can find these binaries on our [GitHub Releases page](https://github.com/nod
 After downloading the binary from GitHub in a `tar.gz` file format, extract it using the following command:
 
     ```bash
-    tar -xvzf contower-<version>-<platform>.tar.gz
+    tar -xvzf contower-*version*-*platform*.tar.gz
     ```
 
-Replace `<version>` and `<platform>` with the correct details.
+Replace `*version*` and `*platform*` with the correct details.
 
 ### Add to PATH
 
