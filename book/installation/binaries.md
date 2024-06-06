@@ -13,62 +13,91 @@ You can find these binaries on our [GitHub Releases page](https://github.com/nod
 
 ## Download and Extract
 
-To download and extract the binaries, follow the instructions for your platform:
+### Download from GitHub
+
+After downloading the binary from GitHub in a `tar.gz` file format, extract it using the following command:
+
+    ```bash
+    tar -xvzf contower-<version>-<platform>.tar.gz
+    ```
+
+Replace `<version>` and `<platform>` with the correct details.
+
+### Add to PATH
+
+To make the binary accessible from any directory, add it to your `PATH`:
+
+    ```bash
+    export PATH=$PATH:/path/to/extracted/binary
+    ```
+
+Replace `/path/to/extracted/binary` with the actual path to your extracted binary.
+
+## Comand Line Download
+
+For comand line downloads and extractions, follow these platform-specific instructions:
 
 ### Linux (x86_64 and aarch64)
 
-1. **Download the binary:**
-
+1.  **Download the binary:**
     ```bash
-    curl -LO https://github.com/nodura/contower/releases/download/<tag>/binary-x86_64-unknown-linux-gnu.tar.gz
+        curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-unknown-linux-gnu.tar.gz
     ```
-
-    Replace `<tag>` with the appropriate release tag.
-
-2. **Extract the binary:**
+    For a portable version:
     ```bash
-    tar -xvzf binary-x86_64-unknown-linux-gnu.tar.gz
+        curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-unknown-linux-gnu-portable.tar.gz
     ```
-3. **Add to PATH:**
-
+2.  **Extract the binary:**
     ```bash
-    export PATH=$PATH:/path/to/extracted/binary
+        tar -xvzf contower-x86_64-unknown-linux-gnu.tar.gz
     ```
-
-    Replace `/path/to/extracted/binary` with the path where you extracted the binary.
+3.  **Add to PATH:**
+    ```bash
+        export PATH=$PATH:/path/to/extracted/binary
+    ```
+    Update `/path/to/extracted/binary` to your specific extraction location.
 
 ### macOS (x86_64)
 
-1. **Download the binary:**
+1.  **Download the binary:**
     ```bash
-    curl -LO https://github.com/your-repo/releases/download/<tag>/binary-x86_64-apple-darwin.tar.gz
+        curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-apple-darwin.tar.gz
     ```
-    Replace `<tag>` with the appropriate release tag.
-2. **Extract the binary:**
-
+    For a portable version:
     ```bash
-    tar -xvzf binary-x86_64-apple-darwin.tar.gz
+        curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-apple-darwin-portable.tar.gz
     ```
-
-3. **Add to PATH:**
-
+2.  **Extract the binary:**
     ```bash
-    export PATH=$PATH:/path/to/extracted/binary
+        tar -xvzf contower-x86_64-apple-darwin.tar.gz
     ```
-
-    Replace `/path/to/extracted/binary` with the path where you extracted the binary.
+3.  **Add to PATH:**
+    ```bash
+        export PATH=$PATH:/path/to/extracted/binary
+    ```
+    Modify `/path/to/extracted/binary` with the correct path.
 
 ### Windows (x86_64)
 
 1. **Download the binary:**
-   Go to [GitHub Releases](https://github.com/your-repo/releases) and download `binary-x86_64-windows.zip`.
+
+    Navigate to [GitHub Releases](https://github.com/nodura/contower/releases) and select `contower-x86_64-windows.tar.gz` for download.
 
 2. **Extract the binary:**
-   Use any archive tool (e.g., 7-Zip) to extract the `.zip` file.
+
+    - Right-click the downloaded file and select `Extract All`.
+    - Choose a destination folder and click `Extract`.
 
 3. **Add to PATH:**
+
     - Press `Win + R`, type `sysdm.cpl`, and press Enter.
-    - Go to the `Advanced` tab and click `Environment Variables`.
+    - Navigate to the `Advanced` tab and click `Environment Variables`.
     - In the `System variables` section, select `Path` and click `Edit`.
     - Click `New` and add the path to the extracted binary.
-    - Click `OK` to save the changes.
+    - Confirm the changes by clicking `OK`.
+
+## Release Signing Key
+
+<!-- TODO: Add release signing key -->
+
+We are currently working on providing signed releases. Stay tuned for updates.
