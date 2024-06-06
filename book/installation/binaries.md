@@ -13,91 +13,62 @@ You can find these binaries on our [GitHub Releases page](https://github.com/nod
 
 ## Download and Extract
 
-### Download from GitHub
+To download and extract the binaries, follow the instructions for your platform:
 
-After downloading the binary from GitHub in a `tar.gz` file format, extract it using the following command:
+### Linux (x86_64 and aarch64)
+
+1. **Download the binary:**
 
     ```bash
-    tar -xvzf contower-<version>-<platform>.tar.gz
+    curl -LO https://github.com/nodura/contower/releases/download/<tag>/binary-x86_64-unknown-linux-gnu.tar.gz
     ```
 
-Replace `<version>` and `<platform>` with the correct details.
+    Replace `<tag>` with the appropriate release tag.
 
-### Add to PATH
-
-To make the binary accessible from any directory, add it to your `PATH`:
+2. **Extract the binary:**
+    ```bash
+    tar -xvzf binary-x86_64-unknown-linux-gnu.tar.gz
+    ```
+3. **Add to PATH:**
 
     ```bash
     export PATH=$PATH:/path/to/extracted/binary
     ```
 
-Replace `/path/to/extracted/binary` with the actual path to your extracted binary.
-
-## Comand Line Download
-
-For comand line downloads and extractions, follow these platform-specific instructions:
-
-### Linux (x86_64 and aarch64)
-
-1.  **Download the binary:**
-    ```bash
-        curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-unknown-linux-gnu.tar.gz
-    ```
-    For a portable version:
-    ```bash
-        curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-unknown-linux-gnu-portable.tar.gz
-    ```
-2.  **Extract the binary:**
-    ```bash
-        tar -xvzf contower-x86_64-unknown-linux-gnu.tar.gz
-    ```
-3.  **Add to PATH:**
-    ```bash
-        export PATH=$PATH:/path/to/extracted/binary
-    ```
-    Update `/path/to/extracted/binary` to your specific extraction location.
+    Replace `/path/to/extracted/binary` with the path where you extracted the binary.
 
 ### macOS (x86_64)
 
-1.  **Download the binary:**
+1. **Download the binary:**
     ```bash
-        curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-apple-darwin.tar.gz
+    curl -LO https://github.com/your-repo/releases/download/<tag>/binary-x86_64-apple-darwin.tar.gz
     ```
-    For a portable version:
+    Replace `<tag>` with the appropriate release tag.
+2. **Extract the binary:**
+
     ```bash
-        curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-apple-darwin-portable.tar.gz
+    tar -xvzf binary-x86_64-apple-darwin.tar.gz
     ```
-2.  **Extract the binary:**
+
+3. **Add to PATH:**
+
     ```bash
-        tar -xvzf contower-x86_64-apple-darwin.tar.gz
+    export PATH=$PATH:/path/to/extracted/binary
     ```
-3.  **Add to PATH:**
-    ```bash
-        export PATH=$PATH:/path/to/extracted/binary
-    ```
-    Modify `/path/to/extracted/binary` with the correct path.
+
+    Replace `/path/to/extracted/binary` with the path where you extracted the binary.
 
 ### Windows (x86_64)
 
 1. **Download the binary:**
-
-    Navigate to [GitHub Releases](https://github.com/nodura/contower/releases) and select `contower-x86_64-windows.tar.gz` for download.
+   Go to [GitHub Releases](https://github.com/your-repo/releases) and download `binary-x86_64-windows.zip`.
 
 2. **Extract the binary:**
-
-    - Right-click the downloaded file and select `Extract All`.
-    - Choose a destination folder and click `Extract`.
+   Use any archive tool (e.g., 7-Zip) to extract the `.zip` file.
 
 3. **Add to PATH:**
-
     - Press `Win + R`, type `sysdm.cpl`, and press Enter.
-    - Navigate to the `Advanced` tab and click `Environment Variables`.
+    - Go to the `Advanced` tab and click `Environment Variables`.
     - In the `System variables` section, select `Path` and click `Edit`.
     - Click `New` and add the path to the extracted binary.
-    - Confirm the changes by clicking `OK`.
-
-## Release Signing Key
-
-<!-- TODO: Add release signing key -->
-
-We are currently working on providing signed releases. Stay tuned for updates.
+    - Click `OK` to save the changes.
