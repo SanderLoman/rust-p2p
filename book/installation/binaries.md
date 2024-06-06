@@ -17,9 +17,9 @@ You can find these binaries on our [GitHub Releases page](https://github.com/nod
 
 After downloading the binary from GitHub in a `tar.gz` file format, extract it using the following command:
 
-    ```bash
-    tar -xvzf contower-<version>-<platform>.tar.gz
-    ```
+```bash
+tar -xvzf contower-<version>-<platform>.tar.gz
+```
 
 Replace `<version>` and `<platform>` with the correct details.
 
@@ -27,9 +27,9 @@ Replace `<version>` and `<platform>` with the correct details.
 
 To make the binary accessible from any directory, add it to your `PATH`:
 
-    ```bash
-    export PATH=$PATH:/path/to/extracted/binary
-    ```
+```bash
+export PATH=$PATH:/path/to/extracted/binary
+```
 
 Replace `/path/to/extracted/binary` with the actual path to your extracted binary.
 
