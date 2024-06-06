@@ -50,15 +50,15 @@ To install the prerequisites on macOS, you can use [Homebrew](https://brew.sh/).
     > - To verify that Chocolatey is ready, run `choco` and it should return the version.
 1. Install Make, CMake and LLVM using Chocolatey:
 
-```
+```powershell
 choco install make
 ```
 
-```
+```powershell
 choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
 ```
 
-```
+```powershell
 choco install llvm
 ```
 
