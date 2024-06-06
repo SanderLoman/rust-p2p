@@ -18,10 +18,10 @@ You can find these binaries on our [GitHub Releases page](https://github.com/nod
 After downloading the binary from GitHub in a `tar.gz` file format, extract it using the following command:
 
     ```bash
-    tar -xvzf contower-*version*-*platform*.tar.gz
+    tar -xvzf contower-<version>-<platform>.tar.gz
     ```
 
-Replace `*version*` and `*platform*` with the correct details.
+Replace `<version>` and `<platform>` with the correct details.
 
 ### Add to PATH
 
@@ -33,47 +33,47 @@ To make the binary accessible from any directory, add it to your `PATH`:
 
 Replace `/path/to/extracted/binary` with the actual path to your extracted binary.
 
-## Comand Line Download
+## Command Line Download
 
-For comand line downloads and extractions, follow these platform-specific instructions:
+For command line downloads and extractions, follow these platform-specific instructions:
 
 ### Linux (x86_64 and aarch64)
 
-1.  **Download the binary:**
+1. **Download the binary:**
     ```bash
-        curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-unknown-linux-gnu.tar.gz
+    curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-unknown-linux-gnu.tar.gz
     ```
     For a portable version:
     ```bash
-        curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-unknown-linux-gnu-portable.tar.gz
+    curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-unknown-linux-gnu-portable.tar.gz
     ```
-2.  **Extract the binary:**
+2. **Extract the binary:**
     ```bash
-        tar -xvzf contower-x86_64-unknown-linux-gnu.tar.gz
+    tar -xvzf contower-x86_64-unknown-linux-gnu.tar.gz
     ```
-3.  **Add to PATH:**
+3. **Add to PATH:**
     ```bash
-        export PATH=$PATH:/path/to/extracted/binary
+    export PATH=$PATH:/path/to/extracted/binary
     ```
     Update `/path/to/extracted/binary` to your specific extraction location.
 
 ### macOS (x86_64)
 
-1.  **Download the binary:**
+1. **Download the binary:**
     ```bash
-        curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-apple-darwin.tar.gz
+    curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-apple-darwin.tar.gz
     ```
     For a portable version:
     ```bash
-        curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-apple-darwin-portable.tar.gz
+    curl -LO https://github.com/nodura/contower/releases/download/latest/contower-x86_64-apple-darwin-portable.tar.gz
     ```
-2.  **Extract the binary:**
+2. **Extract the binary:**
     ```bash
-        tar -xvzf contower-x86_64-apple-darwin.tar.gz
+    tar -xvzf contower-x86_64-apple-darwin.tar.gz
     ```
-3.  **Add to PATH:**
+3. **Add to PATH:**
     ```bash
-        export PATH=$PATH:/path/to/extracted/binary
+    export PATH=$PATH:/path/to/extracted/binary
     ```
     Modify `/path/to/extracted/binary` with the correct path.
 
