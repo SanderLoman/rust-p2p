@@ -1,0 +1,32 @@
+name: Check PR Target Branch
+
+on:
+    pull_request:
+        branches:
+            - stable
+            - unstable
+
+jobs:
+    check-target-branch:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Set up Git
+              uses: actions/checkout@v2
+
+            - name: Check PR Target Branch
+              id: check_branch
+              run: |
+                  if [[ "${{ github.event.pull_request.base.ref }}" == "stable" ]]; then
+                    echo "This pull request is targeting the stable branch."
+                    exit 1
+                  elif [[ "${{ github.event.pull_request.base.ref }}" == "unstable" ]]; then
+                    echo "This pull request is targeting the unstable branch."
+                    exit 0
+                  elif [[ "${{ github.event.pull_request.base.ref }}" =~ ^(bugfix|emergency)-.*$ ]]; then
+                    echo "This pull request is for an emergency or bug fix and can be merged."
+                    exit 0
+                  else
+                    echo "Feature branches must be merged into unstable first."
+                    exit 1
+                  fi
