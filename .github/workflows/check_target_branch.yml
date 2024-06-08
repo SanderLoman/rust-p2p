@@ -40,14 +40,13 @@ jobs:
               run: |
                   AUTHOR_IS_CODE_OWNER=${{ steps.is_code_owner.outputs.is_code_owner }}
                   BRANCH=${{ github.event.pull_request.base.ref }}
-                  HEAD_BRANCH=${{ github.event.pull_request.head.ref }}
 
                   if [[ "$BRANCH" == "stable" ]]; then
-                    if [[ "$AUTHOR_IS_CODE_OWNER" == "true" && "$HEAD_BRANCH" =~ ^(bugfix|emergency)-.*$ ]]; then
-                      echo "This pull request is targeting the stable branch for an emergency or bug fix by a code owner."
+                    if [[ "$AUTHOR_IS_CODE_OWNER" == "true" ]]; then
+                      echo "This pull request is targeting the stable branch by a code owner."
                       exit 0
                     else
-                      echo "Only code owners can merge bugfix or emergency branches into stable."
+                      echo "Only code owners can merge into stable."
                       exit 1
                     fi
                   elif [[ "$BRANCH" == "unstable" ]]; then
