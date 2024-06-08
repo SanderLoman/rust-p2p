@@ -14,17 +14,44 @@ jobs:
             - name: Set up Git
               uses: actions/checkout@v2
 
+            - name: Get CODEOWNERS
+              id: codeowners
+              run: |
+                  if [[ -f $GITHUB_WORKSPACE/CODEOWNERS ]]; then
+                    cat $GITHUB_WORKSPACE/CODEOWNERS
+                  else
+                    echo "No CODEOWNERS file found"
+                    exit 1
+                  fi
+
+            - name: Check if author is a code owner
+              id: is_code_owner
+              run: |
+                  AUTHOR=${{ github.event.pull_request.user.login }}
+                  CODEOWNERS=$(cat $GITHUB_WORKSPACE/CODEOWNERS)
+                  if echo "$CODEOWNERS" | grep -q "$AUTHOR"; then
+                    echo "::set-output name=is_code_owner::true"
+                  else
+                    echo "::set-output name=is_code_owner::false"
+                  fi
+
             - name: Check PR Target Branch
               id: check_branch
               run: |
-                  if [[ "${{ github.event.pull_request.base.ref }}" == "stable" ]]; then
-                    echo "This pull request is targeting the stable branch."
-                    exit 1
-                  elif [[ "${{ github.event.pull_request.base.ref }}" == "unstable" ]]; then
+                  AUTHOR_IS_CODE_OWNER=${{ steps.is_code_owner.outputs.is_code_owner }}
+                  BRANCH=${{ github.event.pull_request.base.ref }}
+                  HEAD_BRANCH=${{ github.event.pull_request.head.ref }}
+
+                  if [[ "$BRANCH" == "stable" ]]; then
+                    if [[ "$AUTHOR_IS_CODE_OWNER" == "true" && "$HEAD_BRANCH" =~ ^(bugfix|emergency)-.*$ ]]; then
+                      echo "This pull request is targeting the stable branch for an emergency or bug fix by a code owner."
+                      exit 0
+                    else
+                      echo "Only code owners can merge bugfix or emergency branches into stable."
+                      exit 1
+                    fi
+                  elif [[ "$BRANCH" == "unstable" ]]; then
                     echo "This pull request is targeting the unstable branch."
-                    exit 0
-                  elif [[ "${{ github.event.pull_request.base.ref }}" =~ ^(bugfix|emergency)-.*$ ]]; then
-                    echo "This pull request is for an emergency or bug fix and can be merged."
                     exit 0
                   else
                     echo "Feature branches must be merged into unstable first."
