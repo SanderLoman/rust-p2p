@@ -13,15 +13,15 @@ queue_rules:
       queue_conditions:
           # TODO: Add "#approved-reviews-by >= 1" for later (not needed for now)
           - "check-success=target-branch-check"
-      merge_conditions:
+      merge_conditions: []
 
 pull_request_rules:
     - name: default
       conditions:
-          - base=stable OR base=unstable
+          - base=stable
+          - base=unstable
           - "check-success=license/cla"
           - "check-success=target-branch-check"
       actions:
           queue:
               name: default
-              merge_conditions:
