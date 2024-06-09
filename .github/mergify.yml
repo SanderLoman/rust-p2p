@@ -1,0 +1,27 @@
+queue_rules:
+    - name: default
+      batch_size: 8
+      batch_max_wait_time: 60 s
+      checks_timeout: 10800 s
+      merge_method: squash
+      commit_message_template: |
+          {{ title }} (#{{ number }})
+
+          {% for commit in commits %}
+          * {{ commit.commit_message }}
+          {% endfor %}
+      queue_conditions:
+          # TODO: Add "#approved-reviews-by >= 1" for later (not needed for now)
+          - "check-success=target-branch-check"
+      merge_conditions: []
+
+pull_request_rules:
+    - name: default
+      conditions:
+          - base=stable
+          - base=unstable
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
+      actions:
+          queue:
+              name: default
