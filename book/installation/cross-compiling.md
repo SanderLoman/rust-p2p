@@ -76,4 +76,6 @@ When using the Makefile, the set of features used for building can be controlled
 
 ## Compilation Profiles
 
-When using the Makefile, the build profile can be controlled with the environment variable `CROSS_PROFILE`. See [Compilation Profiles](#) for available profiles.
+We are still working on this feature.
+
+<!-- When using the Makefile, the build profile can be controlled with the environment variable `CROSS_PROFILE`. See [Compilation Profiles](#) for available profiles. -->
