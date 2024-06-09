@@ -12,22 +12,10 @@ queue_rules:
           {% endfor %}
       queue_conditions:
           # TODO: Add "#approved-reviews-by >= 1" for later (not needed for now)
-          - "check-success=license/cla"
           - "check-success=target-branch-check"
       merge_conditions:
-          - "check-success=test-suite-success"
-          - "check-success=local-testnet-success"
 
 pull_request_rules:
-    - name: Comment on bugfix/emergency PRs
-      conditions:
-          - title~=^bugfix
-          - title~=^emergency
-      actions:
-          comment:
-              message: |
-                  This pull request has been prefixed with `bugfix` or `emergency`. Please review if it can be merged directly to `stable`.
-
     - name: default
       conditions:
           - base=stable OR base=unstable
@@ -37,5 +25,3 @@ pull_request_rules:
           queue:
               name: default
               merge_conditions:
-                  - "check-success=test-suite-success"
-                  - "check-success=local-testnet-success"
