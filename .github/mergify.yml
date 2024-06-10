@@ -16,12 +16,24 @@ queue_rules:
       merge_conditions: []
 
 pull_request_rules:
-    - name: default
+    - name: feature-to-unstable
       conditions:
-          - base=stable
           - base=unstable
           - "check-success=license/cla"
           - "check-success=target-branch-check"
       actions:
           queue:
               name: default
+              commit_message_template: |
+                  {{ title }}
+
+    - name: unstable-to-stable
+      conditions:
+          - base=stable
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
+      actions:
+          merge:
+              method: merge
+              commit_message: |
+                  {{ title }}
