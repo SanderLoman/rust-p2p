@@ -1,9 +1,8 @@
 queue_rules:
     - name: default
       batch_size: 8
-      batch_max_wait_time: 60 s
-      checks_timeout: 10800 s
-      merge_method: squash
+      batch_max_wait_time: 60s
+      checks_timeout: 10800s
       commit_message_template: |
           {{ title }} (#{{ number }})
 
@@ -12,11 +11,13 @@ queue_rules:
           {% endfor %}
       queue_conditions:
           # TODO: Add "#approved-reviews-by >= 1" for later (not needed for now)
+          - "check-success=license/cla"
           - "check-success=target-branch-check"
       merge_conditions: []
+      speculative_checks: 5
 
 pull_request_rules:
-    - name: feature-to-unstable
+    - name: queue-feature-to-unstable
       conditions:
           - base=unstable
           - "check-success=license/cla"
@@ -26,12 +27,29 @@ pull_request_rules:
               name: default
               commit_message_template: |
                   {{ title }}
+              merge_method: squash
 
-    - name: unstable-to-stable
+    - name: queue-unstable-to-stable
       conditions:
           - base=stable
           - "check-success=license/cla"
           - "check-success=target-branch-check"
       actions:
-          merge:
-              method: merge
+          queue:
+              name: default
+              commit_message_template: |
+                  {{ title }}
+              merge_method: merge
+
+    - name: queue-feature-to-feature
+      conditions:
+          - base~=^feature/.*
+          - head~=^feature/.*
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
+      actions:
+          queue:
+              name: default
+              commit_message_template: |
+                  {{ title }}
+              merge_method: squash
