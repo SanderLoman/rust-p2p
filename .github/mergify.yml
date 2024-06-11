@@ -16,22 +16,40 @@ queue_rules:
       merge_conditions: []
       speculative_checks: 5
 
-    - name: merge-into-unstable
+pull_request_rules:
+    - name: queue-feature-to-unstable
       conditions:
           - base=unstable
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
       actions:
-          merge:
-              method: squash
+          queue:
+              name: default
+              commit_message_template: |
+                  {{ title }}
+              merge_method: squash
 
-    - name: merge-into-stable
+    - name: queue-unstable-to-stable
       conditions:
           - base=stable
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
       actions:
-          merge:
-              method: merge
+          queue:
+              name: default
+              commit_message_template: |
+                  {{ title }}
+              merge_method: merge
 
-    - name: merge-into-feature
+    - name: queue-feature-to-feature
       conditions:
-          - base=**/*
-          - base!=stable
-          - base!=unstable
+          - base~=^feature/.*
+          - head~=^feature/.*
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
+      actions:
+          queue:
+              name: default
+              commit_message_template: |
+                  {{ title }}
+              merge_method: squash
