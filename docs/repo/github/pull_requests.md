@@ -53,6 +53,10 @@ To create a pull request, follow these steps:
 
 7. **Submit the Pull Request:** Click the "Create pull request" button to submit your pull request for review.
 
+### 3. Sign the Contributor License Agreement (CLA)
+
+If this is your first time creating a pull request for this project, you will need to sign the Contributor License Agreement (CLA). The CLA is required to ensure that we have the legal rights to use your contributions. You will be prompted to sign the CLA when you open your pull request. Follow the instructions provided to complete this process.
+
 ## Reviewing and Merging
 
 Once your pull request is submitted, it will be reviewed by project maintainers or other contributors. Here are the steps involved:
