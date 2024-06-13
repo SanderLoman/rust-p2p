@@ -1,3 +1,59 @@
+queue_rules:
+    - name: default
+      batch_size: 8
+      batch_max_wait_time: 60 s
+      checks_timeout: 3600 s
+      queue_conditions:
+          - check-success=license/cla
+          - check-success=target-branch-check
+      merge_conditions:
+          - check-success=license/cla
+          - check-success=target-branch-check
+      commit_message_template: |
+          {{ title }} (#{{ number }})
+
+          {% for commit in commits %}
+          * {{ commit.commit_message }}
+          {% endfor %}
+
+          {% for commit in commits %}
+          Co-Authored-By: {{ commit.author }} <{{ commit.email_author }}>
+          {% endfor %}
+pull_request_rules:
+    - name: merge into stable from unstable
+      conditions:
+          - base=stable
+          - head=unstable
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
+      actions:
+          queue:
+              name: default
+
+    - name: merge into unstable from any other branch (excluding stable)
+      conditions:
+          - base=unstable
+          - head!=unstable
+          - head!=stable
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
+      actions:
+          queue:
+              name: default
+              method: squash
+
+    - name: merge any branch into any other branch (excluding merges to/from stable or unstable)
+      conditions:
+          - base!=stable
+          - base!=unstable
+          - head!=stable
+          - head!=unstable
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
+      actions:
+          queue:
+              name: default
+              method: squash
 # queue_rules:
 #     - name: default
 #       batch_size: 8
