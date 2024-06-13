@@ -4,11 +4,15 @@ queue_rules:
       batch_max_wait_time: 60 s
       checks_timeout: 3600 s
       queue_conditions:
-          - check-success=license/cla
-          - check-success=target-branch-check
+          - base=stable
+          - head=unstable
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
       merge_conditions:
-          - check-success=license/cla
-          - check-success=target-branch-check
+          - base=stable
+          - head=unstable
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
       commit_message_template: |
           {{ title }} (#{{ number }})
 
@@ -25,11 +29,17 @@ queue_rules:
       batch_max_wait_time: 60 s
       checks_timeout: 3600 s
       queue_conditions:
-          - check-success=license/cla
-          - check-success=target-branch-check
+          - base=unstable
+          - head!=unstable
+          - head!=stable
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
       merge_conditions:
-          - check-success=license/cla
-          - check-success=target-branch-check
+          - base=unstable
+          - head!=unstable
+          - head!=stable
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
       commit_message_template: |
           {{ title }} (#{{ number }})
 
@@ -46,11 +56,19 @@ queue_rules:
       batch_max_wait_time: 60 s
       checks_timeout: 3600 s
       queue_conditions:
-          - check-success=license/cla
-          - check-success=target-branch-check
+          - base!=stable
+          - base!=unstable
+          - head!=stable
+          - head!=unstable
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
       merge_conditions:
-          - check-success=license/cla
-          - check-success=target-branch-check
+          - base!=stable
+          - base!=unstable
+          - head!=stable
+          - head!=unstable
+          - "check-success=license/cla"
+          - "check-success=target-branch-check"
       commit_message_template: |
           {{ title }} (#{{ number }})
 
