@@ -109,3 +109,33 @@ make
 ```
 
 ## Feature Flags
+
+Contower uses feature flags to enable or disable certain features during the build process. You can enable or disable these flags by setting the `FEATURES` environment variable. For example, to enable the `jemalloc` and `portable` features, run the following command:
+
+```bash
+FEATURES="jemalloc,portable" make
+```
+
+We are currently still working on implementing different features, for now you can use the following flag:
+
+-   `jemalloc` - Enables jemalloc memory allocator.
+-   `portable` - Enables portable builds.
+
+Default features are enabled by default. To disable default features, use the following command:
+
+```bash
+CARGO_INSTALL_EXTRA_FLAGS="--no-default-features" make
+```
+
+## Compilation Profiles
+
+Contower supports different compilation profiles to optimize the build process for different use cases. You can set the `PROFILE` environment variable to one of the following values:
+
+-   `release`: default for source builds, enables most optimisations while not taking too long to compile.
+-   `maxperf`: default for binary releases, enables aggressive optimisations including full LTO. Although compiling with this profile improves some benchmarks by around 20% compared to release, it imposes a significant cost at compile time and is only recommended if you have a fast CPU.
+
+To build Contower with the `maxperf` profile, run the following command:
+
+```bash
+PROFILE="maxperf" make
+```
