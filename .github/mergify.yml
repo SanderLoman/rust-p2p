@@ -1,5 +1,5 @@
 queue_rules:
-    - name: stable-queue
+    - name: stable
       batch_size: 8
       batch_max_wait_time: 60 s
       checks_timeout: 3600 s
@@ -24,7 +24,7 @@ queue_rules:
           Co-Authored-By: {{ commit.author }} <{{ commit.email_author }}>
           {% endfor %}
 
-    - name: unstable-queue
+    - name: unstable
       batch_size: 8
       batch_max_wait_time: 60 s
       checks_timeout: 3600 s
@@ -51,7 +51,7 @@ queue_rules:
           Co-Authored-By: {{ commit.author }} <{{ commit.email_author }}>
           {% endfor %}
 
-    - name: feature-queue
+    - name: feature
       batch_size: 8
       batch_max_wait_time: 60 s
       checks_timeout: 3600 s
@@ -89,7 +89,7 @@ pull_request_rules:
           - "check-success=target-branch-check"
       actions:
           queue:
-              name: stable-queue
+              name: stable
               merge_method: merge
 
     - name: merge into unstable from any other branch (excluding stable)
@@ -101,7 +101,7 @@ pull_request_rules:
           - "check-success=target-branch-check"
       actions:
           queue:
-              name: unstable-queue
+              name: unstable
               merge_method: squash
 
     - name: merge any branch into any other branch (excluding merges to/from stable or unstable)
@@ -114,5 +114,5 @@ pull_request_rules:
           - "check-success=target-branch-check"
       actions:
           queue:
-              name: feature-queue
+              name: feature
               merge_method: squash
