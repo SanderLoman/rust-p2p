@@ -131,8 +131,8 @@ CARGO_INSTALL_EXTRA_FLAGS="--no-default-features" make
 
 Contower supports different compilation profiles to optimize the build process for different use cases. You can set the `PROFILE` environment variable to one of the following values:
 
--   `release`: default for source builds, enables most optimisations while not taking too long to compile.
--   `maxperf`: default for binary releases, enables aggressive optimisations including full LTO. Although compiling with this profile improves some benchmarks by around 20% compared to release, it imposes a significant cost at compile time and is only recommended if you have a fast CPU.
+-   `release` - default for source builds, enables most optimisations while not taking too long to compile.
+-   `maxperf` - default for binary releases, enables aggressive optimisations including full LTO. Although compiling with this profile improves some benchmarks by around 20% compared to `release`, it imposes a significant cost at compile time and is only recommended if you have a fast CPU.
 
 To build Contower with the `maxperf` profile, run the following command:
 
